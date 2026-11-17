@@ -1,6 +1,6 @@
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.use('jazz-studio-v1').then((cache) => {
+    caches.use('jazz-studio-v2').then((cache) => {
       return cache.addAll(['index.html', 'manifest.json']);
     })
   );
