@@ -487,14 +487,53 @@
 
       <!-- STAP 2: KIES HET AANTAL AKKOORDEN & START -->
       <div class="space-y-3">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2.5">
             <span class="w-6 h-6 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">2</span>
-            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 2: Kies Spelmodus</h2>
+            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 2: Spelersnaam, Daily & Spelmodus</h2>
           </div>
-          <button id="clearHighscoresBtn" type="button" class="text-xs text-slate-500 hover:text-rose-400 transition">
-            Wis topscores
-          </button>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1.5 bg-club-950 border border-slate-700/80 rounded-xl px-2.5 py-1">
+              <span class="text-xs">👤</span>
+              <input id="startPlayerNameInput" type="text" maxlength="18" placeholder="Jouw naam..."
+                class="bg-transparent text-xs font-bold text-white placeholder-slate-500 focus:outline-none w-28 sm:w-36" />
+            </div>
+            <button id="clearHighscoresBtn" type="button" class="text-xs text-slate-500 hover:text-rose-400 transition">
+              Wis lokale tijden
+            </button>
+          </div>
+        </div>
+
+        <!-- NIEUW: DAILY CHALLENGE BANNER (10 VASTE AKKOORDEN PER DAG, 1 POGING) -->
+        <div class="rounded-2xl bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-purple-500/15 border-2 border-amber-500/50 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-mono text-[11px] font-extrabold uppercase tracking-wider">
+                🔥 Daily Challenge
+              </span>
+              <span id="dailyDateBadge" class="font-mono text-xs font-bold text-amber-300">Vandaag</span>
+              <span class="text-[11px] font-mono text-slate-400 bg-club-950/80 px-2 py-0.5 rounded border border-slate-800">
+                Vast: Maj / Min / Dim / Aug / 7ths (Geen Extensions)
+              </span>
+            </div>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">
+              10 Dezelfde Akkoorden voor Iedereen &bull; Slechts 1 Poging per Dag!
+            </h3>
+            <p id="dailyStatusSubtext" class="text-xs text-slate-300">
+              Iedereen krijgt vandaag exact dezelfde 10 akkoorden en inversies. Zet de snelste tijd op het online Daily-klassement!
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0">
+            <div class="px-3 py-2 rounded-xl bg-club-950/90 border border-slate-800 text-left">
+              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Jouw Daily Vandaag</div>
+              <div id="bestScoreDaily" class="font-mono text-sm font-extrabold text-emerald-400">Nog niet gespeeld</div>
+            </div>
+            <button id="startDailyBtn" type="button"
+              class="flex-1 md:flex-initial px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95">
+              🔥 Start Daily Challenge →
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -576,6 +615,40 @@
               Vrij Oefenen →
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- STAP 3: LIVE ONLINE RANGLIJST (FIREBASE REALTIME DATABASE) -->
+      <div id="leaderboardCard" class="bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🏆</span>
+            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Online Ranglijst (Vrienden & Daily)</h2>
+            <span id="leaderboardStatusIndicator" class="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">Live</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button type="button" data-lb-tab="daily" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950 transition">
+              🔥 Daily Vandaag
+            </button>
+            <button type="button" data-lb-tab="10" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition">
+              ⚡ 10 Akkoorden
+            </button>
+            <button type="button" data-lb-tab="20" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition">
+              🔥 20 Akkoorden
+            </button>
+            <button type="button" data-lb-tab="50" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition">
+              👑 50 Akkoorden
+            </button>
+            <button id="refreshLeaderboardBtn" type="button" title="Ververs Ranglijst"
+              class="px-2.5 py-1 rounded-xl text-xs font-bold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition active:scale-95">
+              🔄
+            </button>
+          </div>
+        </div>
+
+        <div id="leaderboardListContainer" class="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+          <div class="text-xs text-slate-400 py-4 text-center font-mono">Ranglijst laden...</div>
         </div>
       </div>
     </section>
@@ -788,6 +861,33 @@
         </div>
       </div>
 
+      <!-- NIEUW: SCORE OPSLAAN OP ONLINE RANGLIJST & DEEL DAILY KNOP -->
+      <div class="max-w-3xl mx-auto bg-club-950/90 border border-amber-500/40 rounded-2xl p-4 md:p-5 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <h3 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-300">
+              🌍 Plaats jouw tijd op het Online Leaderboard
+            </h3>
+            <p id="scoreSubmitStatusText" class="text-xs text-slate-400">
+              Vul je naam in om je score met je vrienden te delen.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="resultsPlayerNameInput" type="text" maxlength="18" placeholder="Jouw naam..."
+              class="px-3 py-2 rounded-xl bg-club-900 border border-slate-700 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 w-40 sm:w-48" />
+            <button id="submitOnlineScoreBtn" type="button"
+              class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow transition active:scale-95 disabled:opacity-50">
+              🚀 Score Opslaan
+            </button>
+            <button id="shareDailyResultBtn" type="button"
+              class="hidden px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs sm:text-sm transition active:scale-95">
+              📋 Deel Daily Score
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Overzicht per gespeeld akkoord (Split times) -->
       <div class="max-w-3xl mx-auto bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3">
         <div class="flex items-center justify-between">
@@ -798,6 +898,9 @@
           <!-- Splits worden via JS gevuld -->
         </div>
       </div>
+
+      <!-- Plek waar het Online Leaderboard ook direct op het eindscherm verschijnt -->
+      <div id="resultsLeaderboardMount" class="max-w-3xl mx-auto"></div>
 
       <!-- Knoppen onderaan Eindscherm -->
       <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
@@ -1092,15 +1195,29 @@
     ];
 
     const STORAGE_KEY_PREFIX = 'jazz_inversie_best_ms_';
+    const PLAYER_NAME_STORAGE_KEY = 'jazz_player_name';
+    const DAILY_PLAYED_DATE_KEY = 'jazz_daily_played_date';
+    const DAILY_BEST_MS_PREFIX = 'jazz_daily_best_ms_';
+    const FIREBASE_DB_URL = 'https://jazz-inversie-studio-default-rtdb.europe-west1.firebasedatabase.app';
+
+    // Vaste akkoordenpool voor de Daily Challenge (Major, Minor, Diminished, Augmented & Sevenths — géén Further Extensions)
+    const DAILY_CHORD_TYPES = [
+      'maj', 'min', 'dim', 'aug',
+      'maj7', '7', 'm7', 'dim7', 'm7b5', '7#5', 'maj7#5'
+    ];
 
     // =========================================================================
     // 2. APPLICATIE STATE
     // =========================================================================
     const state = {
       view: 'start',          // 'start' | 'game' | 'results'
-      gameMode: '10',         // '10' | '20' | '50' | 'free'
+      gameMode: '10',         // 'daily' | '10' | '20' | '50' | 'free'
       targetChordsCount: 10,
       currentChordIndex: 0,
+      dailySequence: [],      // Vaste reeks van 10 akkoorden voor de Daily Challenge van vandaag
+      lastCompletedRun: null, // Gegevens van de laatst voltooide ronde voor online opslag
+      scoreSubmittedForCurrentRun: false,
+      activeLeaderboardTab: 'daily',
 
       // Moeilijkheid Keuzevakken (Stap 1)
       diffMajor: true,
@@ -1184,7 +1301,364 @@
       return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
     }
 
+    // =========================================================================
+    // 3B. DAILY CHALLENGE SEEDED PRNG & DATUM-LOGICA (1 POGING PER DAG)
+    // =========================================================================
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getTodayDisplayDate() {
+      const now = new Date();
+      const d = String(now.getDate()).padStart(2, '0');
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const y = now.getFullYear();
+      return `${d}/${m}/${y}`;
+    }
+
+    // Deterministische hash & Mulberry32 PRNG zodat iedereen op dezelfde dag exact dezelfde 10 akkoorden krijgt
+    function createSeededRandom(seedStr) {
+      let h = 1779033703 ^ seedStr.length;
+      for (let i = 0; i < seedStr.length; i++) {
+        h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+        h = (h << 13) | (h >>> 19);
+      }
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      let a = (h ^= h >>> 16) >>> 0;
+
+      return function () {
+        let t = (a += 0x6D2B79F5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function generateDailySequenceForDate(dateStr) {
+      const rng = createSeededRandom(`JAZZ_DAILY_V1_${dateStr}`);
+      const sequence = [];
+      let prevSignature = '';
+
+      for (let i = 0; i < 10; i++) {
+        let pick = null;
+        let attempts = 0;
+        do {
+          const rootObj = ROOTS[Math.floor(rng() * ROOTS.length)];
+          const typeKey = DAILY_CHORD_TYPES[Math.floor(rng() * DAILY_CHORD_TYPES.length)];
+          const chordDef = CHORD_TYPES[typeKey];
+          const numInvs = chordDef.intervals.length; // 3 of 4
+          const lhInv = Math.floor(rng() * numInvs);
+          const allInvs = Array.from({ length: numInvs }, (_, idx) => idx).filter(idx => idx !== lhInv);
+          const rhInv = allInvs[Math.floor(rng() * allInvs.length)];
+          const sig = `${rootObj.name}${chordDef.suffix}-${lhInv}-${rhInv}`;
+
+          pick = { rootObj, typeKey, lhInv, rhInv, sig };
+          attempts++;
+        } while (pick.sig === prevSignature && attempts < 10);
+
+        prevSignature = pick.sig;
+        sequence.push(pick);
+      }
+      return sequence;
+    }
+
+    function hasPlayedDailyToday() {
+      try {
+        return localStorage.getItem(DAILY_PLAYED_DATE_KEY) === getTodayDateString();
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function markDailyPlayedToday() {
+      try {
+        localStorage.setItem(DAILY_PLAYED_DATE_KEY, getTodayDateString());
+      } catch (e) {}
+    }
+
+    function getDailyBestMsToday() {
+      try {
+        const raw = localStorage.getItem(DAILY_BEST_MS_PREFIX + getTodayDateString());
+        if (!raw) return null;
+        const val = parseFloat(raw);
+        return Number.isFinite(val) && val > 0 ? val : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveDailyBestMsToday(ms) {
+      try {
+        localStorage.setItem(DAILY_BEST_MS_PREFIX + getTodayDateString(), String(Math.round(ms)));
+      } catch (e) {}
+    }
+
+    function getStoredPlayerName() {
+      try {
+        return (localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || '').trim();
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function setStoredPlayerName(name) {
+      const clean = (name || '').trim().slice(0, 18);
+      try {
+        localStorage.setItem(PLAYER_NAME_STORAGE_KEY, clean);
+      } catch (e) {}
+      const startInput = document.getElementById('startPlayerNameInput');
+      const resInput = document.getElementById('resultsPlayerNameInput');
+      if (startInput && startInput.value !== clean) startInput.value = clean;
+      if (resInput && resInput.value !== clean) resInput.value = clean;
+      return clean;
+    }
+
+    function updateDailyBannerUI() {
+      const todayBadge = document.getElementById('dailyDateBadge');
+      const bestDailyEl = document.getElementById('bestScoreDaily');
+      const startDailyBtn = document.getElementById('startDailyBtn');
+      const subtextEl = document.getElementById('dailyStatusSubtext');
+      if (!todayBadge || !bestDailyEl || !startDailyBtn) return;
+
+      todayBadge.textContent = getTodayDisplayDate();
+      const played = hasPlayedDailyToday();
+      const todayMs = getDailyBestMsToday();
+
+      if (todayMs !== null) {
+        bestDailyEl.textContent = formatTimeDetailedMs(todayMs);
+      } else if (played) {
+        bestDailyEl.textContent = 'Poging gebruikt';
+      } else {
+        bestDailyEl.textContent = 'Nog niet gespeeld';
+      }
+
+      if (played) {
+        startDailyBtn.disabled = true;
+        startDailyBtn.textContent = '✅ Daily Vandaag Gespeeld';
+        startDailyBtn.className = 'flex-1 md:flex-initial px-5 py-3 rounded-xl bg-club-800 border border-emerald-500/40 text-emerald-300 font-extrabold text-xs sm:text-sm opacity-80 cursor-not-allowed';
+        if (subtextEl) {
+          subtextEl.textContent = 'Je hebt de Daily Challenge van vandaag al gespeeld. Morgen om 00:00 staat er een nieuwe reeks van 10 akkoorden klaar!';
+        }
+      } else {
+        startDailyBtn.disabled = false;
+        startDailyBtn.textContent = `🔥 Start Daily (${getTodayDisplayDate()}) →`;
+        startDailyBtn.className = 'flex-1 md:flex-initial px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95';
+        if (subtextEl) {
+          subtextEl.textContent = 'Iedereen krijgt vandaag exact dezelfde 10 akkoorden en inversies. Zet de snelste tijd op het online Daily-klassement!';
+        }
+      }
+    }
+
+    // =========================================================================
+    // 3C. FIREBASE REALTIME DATABASE LEADERBOARD (FETCH REST API)
+    // =========================================================================
+    function getDifficultySummaryLabel() {
+      if (state.gameMode === 'daily') return 'Daily Mix';
+      const parts = [];
+      if (state.diffMajor) parts.push('Maj');
+      if (state.diffMinor) parts.push('Min');
+      if (state.diffDiminished) parts.push('Dim');
+      if (state.diffAugmented) parts.push('Aug');
+      if (state.diffSevenths) parts.push('7th');
+      if (state.diffExtensions) parts.push('Ext');
+      return parts.join('+') || 'Basis';
+    }
+
+    async function submitScoreToFirebase(playerName) {
+      if (!state.lastCompletedRun || state.scoreSubmittedForCurrentRun) return;
+      const cleanName = setStoredPlayerName(playerName);
+      const statusText = document.getElementById('scoreSubmitStatusText');
+      const submitBtn = document.getElementById('submitOnlineScoreBtn');
+
+      if (!cleanName) {
+        if (statusText) {
+          statusText.textContent = '⚠️ Vul eerst een spelersnaam in om je score op te slaan.';
+          statusText.className = 'text-xs text-amber-300 font-semibold';
+        }
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Opslaan...';
+      }
+
+      const run = state.lastCompletedRun;
+      const payload = {
+        name: cleanName,
+        mode: run.mode,
+        timeMs: Math.round(run.timeMs),
+        avgSec: parseFloat(run.avgSec),
+        mix: run.mixLabel,
+        penalties: run.penaltiesCount,
+        date: run.dateStr,
+        timestamp: Date.now()
+      };
+
+      const endpoint = run.mode === 'daily'
+        ? `${FIREBASE_DB_URL}/daily/${run.dateStr}.json`
+        : `${FIREBASE_DB_URL}/scores.json`;
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+
+        state.scoreSubmittedForCurrentRun = true;
+        if (submitBtn) {
+          submitBtn.textContent = '✅ Opgeslagen!';
+        }
+        if (statusText) {
+          statusText.textContent = `Top! Je tijd (${formatTimeDetailedMs(run.timeMs)}) staat nu live op de ranglijst onder "${cleanName}".`;
+          statusText.className = 'text-xs text-emerald-400 font-semibold';
+        }
+
+        // Schakel leaderboard-tab naar de zojuist gespeelde modus en ververs direct
+        setLeaderboardTab(run.mode === 'daily' ? 'daily' : run.mode);
+      } catch (err) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '🚀 Opnieuw proberen';
+        }
+        if (statusText) {
+          statusText.textContent = '⚠️ Kon geen verbinding maken met de online database. Controleer je internet.';
+          statusText.className = 'text-xs text-rose-400 font-semibold';
+        }
+      }
+    }
+
+    function setLeaderboardTab(tabKey) {
+      state.activeLeaderboardTab = tabKey;
+      document.querySelectorAll('.lb-tab-btn').forEach(btn => {
+        const isCurrent = btn.dataset.lbTab === tabKey;
+        btn.className = isCurrent
+          ? 'lb-tab-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950 transition'
+          : 'lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition';
+      });
+      fetchAndRenderLeaderboard();
+    }
+
+    async function fetchAndRenderLeaderboard() {
+      const container = document.getElementById('leaderboardListContainer');
+      const statusBadge = document.getElementById('leaderboardStatusIndicator');
+      if (!container) return;
+
+      const tab = state.activeLeaderboardTab;
+      const todayStr = getTodayDateString();
+      const url = tab === 'daily'
+        ? `${FIREBASE_DB_URL}/daily/${todayStr}.json`
+        : `${FIREBASE_DB_URL}/scores.json`;
+
+      container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center font-mono">Ranglijst ophalen...</div>';
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        let entries = data ? Object.values(data) : [];
+        if (tab !== 'daily') {
+          entries = entries.filter(item => item && String(item.mode) === String(tab));
+        } else {
+          entries = entries.filter(item => item && Number.isFinite(item.timeMs));
+        }
+
+        // Sorteer op snelste tijd (laagste timeMs bovenaan) en houd per speler de beste poging bij
+        entries.sort((a, b) => (a.timeMs || 9999999) - (b.timeMs || 9999999));
+
+        const bestPerPlayer = [];
+        const seenNames = new Set();
+        for (const entry of entries) {
+          const key = (entry.name || 'Anoniem').trim().toLowerCase();
+          if (!seenNames.has(key)) {
+            seenNames.add(key);
+            bestPerPlayer.push(entry);
+          }
+          if (bestPerPlayer.length >= 15) break;
+        }
+
+        if (statusBadge) {
+          statusBadge.textContent = tab === 'daily' ? `Live (${ getTodayDisplayDate() })` : 'Live';
+        }
+
+        if (bestPerPlayer.length === 0) {
+          container.innerHTML = `
+            <div class="text-xs text-slate-400 py-5 text-center">
+              Nog geen scores voor <span class="text-white font-bold">${tab === 'daily' ? 'de Daily Challenge van vandaag' : tab + ' Akkoorden'}</span>. Speel een ronde en zet de eerste tijd!
+            </div>
+          `;
+          return;
+        }
+
+        const currentName = getStoredPlayerName().toLowerCase();
+        container.innerHTML = '';
+
+        bestPerPlayer.forEach((item, idx) => {
+          const rank = idx + 1;
+          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+          const isMe = currentName && (item.name || '').trim().toLowerCase() === currentName;
+
+          const row = document.createElement('div');
+          row.className = `flex items-center justify-between px-3 py-2 rounded-xl border text-xs ${
+            isMe
+              ? 'bg-amber-500/15 border-amber-500/50 text-white'
+              : 'bg-club-900/90 border-slate-800/90 text-slate-200'
+          }`;
+
+          const leftSide = document.createElement('div');
+          leftSide.className = 'flex items-center gap-2.5 min-w-0';
+
+          const rankSpan = document.createElement('span');
+          rankSpan.className = 'font-mono font-extrabold w-6 text-center shrink-0';
+          rankSpan.textContent = medal;
+
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'font-extrabold text-white truncate';
+          nameSpan.textContent = item.name || 'Speler';
+
+          const mixSpan = document.createElement('span');
+          mixSpan.className = 'hidden sm:inline-block px-2 py-0.5 rounded bg-club-950 border border-slate-800 font-mono text-[10px] text-slate-400';
+          mixSpan.textContent = item.mix || 'Mix';
+
+          leftSide.appendChild(rankSpan);
+          leftSide.appendChild(nameSpan);
+          leftSide.appendChild(mixSpan);
+
+          const rightSide = document.createElement('div');
+          rightSide.className = 'flex items-center gap-3 shrink-0 font-mono';
+
+          const avgSpan = document.createElement('span');
+          avgSpan.className = 'text-[11px] text-slate-400 hidden sm:inline';
+          const chordsCount = tab === 'daily' ? 10 : parseInt(tab, 10) || 10;
+          const avgCalc = (item.timeMs / 1000 / chordsCount).toFixed(2);
+          avgSpan.textContent = `${avgCalc}s / akk`;
+
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'font-extrabold text-sm text-emerald-400';
+          timeSpan.textContent = formatTimeDetailedMs(item.timeMs);
+
+          rightSide.appendChild(avgSpan);
+          rightSide.appendChild(timeSpan);
+
+          row.appendChild(leftSide);
+          row.appendChild(rightSide);
+          container.appendChild(row);
+        });
+      } catch (err) {
+        container.innerHTML = '<div class="text-xs text-rose-400 py-4 text-center">Kon ranglijst tijdelijk niet laden.</div>';
+      }
+    }
+
     function renderStartScreenHighscores() {
+      updateDailyBannerUI();
       ['10', '20', '50'].forEach(modeKey => {
         const bestEl = document.getElementById(`bestScore${modeKey}`);
         const avgEl = document.getElementById(`bestAvg${modeKey}`);
@@ -1468,7 +1942,14 @@
 
       let rootObj, typeKey, lhInv, rhInv;
 
-      if (forceFirstExample && state.activeTypes.includes('m7')) {
+      if (state.gameMode === 'daily' && state.dailySequence.length > 0) {
+        const pickIndex = Math.max(0, Math.min(state.dailySequence.length - 1, state.currentChordIndex - 1));
+        const dailyPick = state.dailySequence[pickIndex];
+        rootObj = dailyPick.rootObj;
+        typeKey = dailyPick.typeKey;
+        lhInv = dailyPick.lhInv;
+        rhInv = dailyPick.rhInv;
+      } else if (forceFirstExample && state.activeTypes.includes('m7')) {
         rootObj = ROOTS[0]; // C
         typeKey = 'm7';
         lhInv = 0;          // Grondligging (C - Eb - G - Bb)
@@ -1526,7 +2007,7 @@
       }
 
       const signature = `${rootObj.name}${chordDef.suffix}-${lhInv}-${rhInv}`;
-      if (!forceFirstExample && state.currentChallenge && state.currentChallenge.signature === signature && (rootPool.length > 1 || state.activeTypes.length > 1)) {
+      if (state.gameMode !== 'daily' && !forceFirstExample && state.currentChallenge && state.currentChallenge.signature === signature && (rootPool.length > 1 || state.activeTypes.length > 1)) {
         return generateNewChallenge(false);
       }
 
@@ -1593,6 +2074,8 @@
       const filterBtn = document.getElementById('toggleSettingsBtn');
       const settingsPanel = document.getElementById('settingsPanel');
       const step2Container = startEl.querySelector('.space-y-3');
+      const leaderboardCard = document.getElementById('leaderboardCard');
+      const resultsLbMount = document.getElementById('resultsLeaderboardMount');
 
       startEl.classList.add('hidden');
       gameEl.classList.add('hidden');
@@ -1608,14 +2091,23 @@
         if (step2Container) {
           startEl.insertBefore(settingsPanel, step2Container);
         }
+        if (leaderboardCard && leaderboardCard.parentNode !== startEl) {
+          startEl.appendChild(leaderboardCard);
+        }
         settingsPanel.classList.remove('hidden');
         renderStartScreenHighscores();
+        fetchAndRenderLeaderboard();
       } else if (viewName === 'game') {
         gameEl.classList.remove('hidden');
         backBtn.classList.remove('hidden');
         backBtn.classList.add('flex');
-        filterBtn.classList.remove('hidden');
-        filterBtn.classList.add('flex');
+        if (state.gameMode === 'daily') {
+          filterBtn.classList.add('hidden');
+          filterBtn.classList.remove('flex');
+        } else {
+          filterBtn.classList.remove('hidden');
+          filterBtn.classList.add('flex');
+        }
         // Verplaats settingsPanel boven gameView (standaard ingeklapt tijdens spelen)
         gameEl.parentNode.insertBefore(settingsPanel, gameEl);
         settingsPanel.classList.add('hidden');
@@ -1626,16 +2118,28 @@
         backBtn.classList.remove('hidden');
         backBtn.classList.add('flex');
         filterBtn.classList.add('hidden');
+        if (leaderboardCard && resultsLbMount) {
+          resultsLbMount.appendChild(leaderboardCard);
+        }
+        fetchAndRenderLeaderboard();
       }
     }
 
     function startGameSession(mode) {
+      if (mode === 'daily' && hasPlayedDailyToday()) {
+        updateDailyBannerUI();
+        setLeaderboardTab('daily');
+        return;
+      }
+
       requestWakeLock();
       state.gameMode = mode;
       state.chordSplits = [];
       state.penaltyMs = 0;
       state.currentChordPenaltyMs = 0;
       state.currentChordIndex = 1;
+      state.scoreSubmittedForCurrentRun = false;
+      state.lastCompletedRun = null;
 
       const timedHud = document.getElementById('timedHudBar');
       const freeBar = document.getElementById('freePlayMetronomeBar');
@@ -1654,6 +2158,19 @@
         skipBtn.classList.remove('hidden');
         skipLabel.textContent = 'Overslaan';
         stopStopwatch();
+      } else if (mode === 'daily') {
+        state.targetChordsCount = 10;
+        state.dailySequence = generateDailySequenceForDate(getTodayDateString());
+        // Vergrendel de Daily Challenge van vandaag direct bij het starten (1 poging per dag)
+        markDailyPlayedToday();
+        timedHud.classList.remove('hidden');
+        nextBtn.classList.add('hidden');
+        nextBtn.classList.remove('flex');
+        skipBtn.classList.remove('hidden');
+        skipLabel.textContent = '+15s';
+
+        updateHudProgress();
+        startStopwatch();
       } else {
         state.targetChordsCount = parseInt(mode, 10);
         timedHud.classList.remove('hidden');
@@ -1758,15 +2275,30 @@
       stopStopwatch();
 
       const modeKey = state.gameMode;
-      const prevBestMs = getBestTimeMs(modeKey);
+      const isDaily = modeKey === 'daily';
+      const prevBestMs = isDaily ? getDailyBestMsToday() : getBestTimeMs(modeKey);
       const isNewRecord = prevBestMs === null || finalMs < prevBestMs;
 
-      if (isNewRecord) {
+      if (isDaily) {
+        saveDailyBestMsToday(finalMs);
+      } else if (isNewRecord) {
         saveBestTimeMs(modeKey, finalMs);
       }
 
       const bestNowMs = isNewRecord ? finalMs : prevBestMs;
       const avgSec = (finalMs / 1000 / state.targetChordsCount).toFixed(2);
+      const penaltiesCount = state.chordSplits.filter(s => s.skipped || s.usedSolution).length;
+
+      state.lastCompletedRun = {
+        mode: modeKey,
+        timeMs: finalMs,
+        avgSec,
+        mixLabel: getDifficultySummaryLabel(),
+        penaltiesCount,
+        dateStr: getTodayDateString(),
+        displayDate: getTodayDisplayDate()
+      };
+      state.scoreSubmittedForCurrentRun = false;
 
       document.getElementById('finalTotalTime').textContent = formatTimeDetailedMs(finalMs);
       document.getElementById('finalAvgTime').textContent = `${avgSec}s`;
@@ -1775,20 +2307,47 @@
       const badge = document.getElementById('recordBadge');
       const title = document.getElementById('resultsTitle');
       const sub = document.getElementById('resultsSubtitle');
+      const playAgainBtn = document.getElementById('playAgainBtn');
+      const shareDailyBtn = document.getElementById('shareDailyResultBtn');
 
-      if (isNewRecord) {
-        badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider';
-        badge.textContent = prevBestMs === null
-          ? '🏆 Eerste Topscore Gezet!'
-          : `🏆 Nieuw Persoonlijk Record! (-${((prevBestMs - finalMs) / 1000).toFixed(2)}s)`;
+      if (isDaily) {
+        badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider';
+        badge.textContent = `🔥 Daily Challenge (${getTodayDisplayDate()}) Voltooid!`;
+        title.textContent = `Daily Tijd: ${formatTimeDetailedMs(finalMs)}`;
+        sub.textContent = `Je hebt de 10 vaste Daily-akkoorden van vandaag uitgespeeld (${avgSec}s / akkoord).`;
+        playAgainBtn.classList.add('hidden');
+        shareDailyBtn.classList.remove('hidden');
       } else {
-        const diffSec = ((finalMs - prevBestMs) / 1000).toFixed(2);
-        badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-wider';
-        badge.textContent = `⏱️ +${diffSec}s boven je record (${formatTimeDetailedMs(prevBestMs)})`;
+        playAgainBtn.classList.remove('hidden');
+        shareDailyBtn.classList.add('hidden');
+        if (isNewRecord) {
+          badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider';
+          badge.textContent = prevBestMs === null
+            ? '🏆 Eerste Topscore Gezet!'
+            : `🏆 Nieuw Persoonlijk Record! (-${((prevBestMs - finalMs) / 1000).toFixed(2)}s)`;
+        } else {
+          const diffSec = ((finalMs - prevBestMs) / 1000).toFixed(2);
+          badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-wider';
+          badge.textContent = `⏱️ +${diffSec}s boven je record (${formatTimeDetailedMs(prevBestMs)})`;
+        }
+        title.textContent = `${state.targetChordsCount} Akkoorden Voltooid!`;
+        sub.textContent = `Gemiddeld ${avgSec} seconden per twee-handige akkoordomkering.`;
       }
 
-      title.textContent = `${state.targetChordsCount} Akkoorden Voltooid!`;
-      sub.textContent = `Gemiddeld ${avgSec} seconden per twee-handige akkoordomkering.`;
+      // Bereid online leaderboard-invoer voor
+      const savedName = getStoredPlayerName();
+      const resNameInput = document.getElementById('resultsPlayerNameInput');
+      const submitBtn = document.getElementById('submitOnlineScoreBtn');
+      const statusText = document.getElementById('scoreSubmitStatusText');
+      if (resNameInput) resNameInput.value = savedName;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🚀 Score Opslaan';
+      }
+      if (statusText) {
+        statusText.textContent = 'Vul je naam in om je score op het online leaderboard te zetten.';
+        statusText.className = 'text-xs text-slate-400';
+      }
 
       // Render lijst met alle gespeelde akkoorden en hun tussentijd
       const splitsContainer = document.getElementById('splitsList');
@@ -1824,7 +2383,13 @@
         splitsContainer.appendChild(row);
       });
 
+      state.activeLeaderboardTab = isDaily ? 'daily' : modeKey;
       switchView('results');
+
+      // Als de speler al een naam had ingevuld, stuur de score direct automatisch door naar Firebase
+      if (savedName) {
+        submitScoreToFirebase(savedName);
+      }
     }
 
     // =========================================================================
@@ -2471,6 +3036,77 @@
         });
       });
 
+      // Start Daily Challenge knop
+      const startDailyBtn = document.getElementById('startDailyBtn');
+      if (startDailyBtn) {
+        startDailyBtn.addEventListener('click', () => {
+          startGameSession('daily');
+        });
+      }
+
+      // Spelersnaam synchronisatie tussen Startscherm en Eindscherm
+      const startNameInput = document.getElementById('startPlayerNameInput');
+      if (startNameInput) {
+        startNameInput.value = getStoredPlayerName();
+        startNameInput.addEventListener('input', (e) => {
+          setStoredPlayerName(e.target.value);
+        });
+      }
+
+      const resNameInput = document.getElementById('resultsPlayerNameInput');
+      if (resNameInput) {
+        resNameInput.value = getStoredPlayerName();
+        resNameInput.addEventListener('input', (e) => {
+          setStoredPlayerName(e.target.value);
+        });
+      }
+
+      // Online score opslaan knop op Eindscherm
+      const submitScoreBtn = document.getElementById('submitOnlineScoreBtn');
+      if (submitScoreBtn) {
+        submitScoreBtn.addEventListener('click', () => {
+          const nameVal = document.getElementById('resultsPlayerNameInput').value;
+          submitScoreToFirebase(nameVal);
+        });
+      }
+
+      // Deel Daily Score knop (Kopieert samenvatting naar klembord)
+      const shareDailyBtn = document.getElementById('shareDailyResultBtn');
+      if (shareDailyBtn) {
+        shareDailyBtn.addEventListener('click', () => {
+          if (!state.lastCompletedRun) return;
+          const run = state.lastCompletedRun;
+          const cleanCount = state.chordSplits.filter(s => !s.skipped && !s.usedSolution).length;
+          const shareText = `🎹 Jazz Inversie Daily (${run.displayDate}) — 10/10 in ${formatTimeDetailedMs(run.timeMs)} (${run.avgSec}s/akk • ✨ ${cleanCount}/10 zonder hulp)`;
+
+          const tempInput = document.createElement('textarea');
+          tempInput.value = shareText;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          try { document.execCommand('copy'); } catch (err) {}
+          document.body.removeChild(tempInput);
+
+          shareDailyBtn.textContent = '✅ Gekopieerd!';
+          setTimeout(() => {
+            shareDailyBtn.textContent = '📋 Deel Daily Score';
+          }, 2200);
+        });
+      }
+
+      // Leaderboard Tabs & Ververs-knop
+      document.querySelectorAll('.lb-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          setLeaderboardTab(btn.dataset.lbTab);
+        });
+      });
+
+      const refreshLbBtn = document.getElementById('refreshLeaderboardBtn');
+      if (refreshLbBtn) {
+        refreshLbBtn.addEventListener('click', () => {
+          fetchAndRenderLeaderboard();
+        });
+      }
+
       // Terug naar Startscherm knoppen
       document.getElementById('backToStartBtn').addEventListener('click', () => {
         switchView('start');
@@ -2735,6 +3371,7 @@
       computeActiveChordTypes();
       renderStartScreenHighscores();
       initEvents();
+      fetchAndRenderLeaderboard();
       // Bereid het eerste voorbeeld (Cm7 met LH Root en RH 2e Inversie) alvast voor
       generateNewChallenge(true);
 
