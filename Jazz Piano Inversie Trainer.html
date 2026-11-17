@@ -1,0 +1,2640 @@
+<!DOCTYPE html>
+<html lang="nl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jazz Piano Inversie Trainer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            club: {
+              950: '#080b12',
+              900: '#0f1420',
+              800: '#171f30',
+              700: '#232e45',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #080b12;
+      background-image:
+        radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.08), transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.08), transparent 40%);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    /* Pianoklavier styling */
+    .piano-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .piano-container {
+      position: relative;
+      display: flex;
+      height: 165px;
+      min-width: 680px;
+      user-select: none;
+    }
+    @media (min-width: 768px) {
+      .piano-container {
+        height: 195px;
+        min-width: 100%;
+      }
+    }
+    .white-key {
+      flex: 1;
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 92%, #cbd5e1 100%);
+      border: 1px solid #334155;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.12s ease, transform 0.08s ease;
+    }
+    .white-key:active {
+      transform: translateY(2px);
+    }
+    .white-key.lh-active {
+      background: linear-gradient(180deg, #67e8f9 0%, #06b6d4 85%, #0891b2 100%);
+      box-shadow: inset 0 -4px 10px rgba(8, 145, 178, 0.5), 0 0 14px rgba(6, 182, 212, 0.45);
+    }
+    .white-key.rh-active {
+      background: linear-gradient(180deg, #fde68a 0%, #f59e0b 85%, #d97706 100%);
+      box-shadow: inset 0 -4px 10px rgba(180, 83, 9, 0.5), 0 0 14px rgba(245, 158, 11, 0.45);
+    }
+    .black-key {
+      position: absolute;
+      top: 0;
+      width: 2.2%;
+      height: 60%;
+      background: linear-gradient(180deg, #1e293b 0%, #090d16 88%, #020617 100%);
+      border: 1px solid #020617;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+      z-index: 2;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+      transition: background 0.12s ease, transform 0.08s ease;
+    }
+    .black-key:active {
+      transform: translateX(-50%) translateY(2px);
+    }
+    .black-key.lh-active {
+      background: linear-gradient(180deg, #22d3ee 0%, #0284c7 90%, #0369a1 100%);
+      box-shadow: 0 0 14px rgba(34, 211, 238, 0.65);
+    }
+    .black-key.rh-active {
+      background: linear-gradient(180deg, #fbbf24 0%, #d97706 90%, #b45309 100%);
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.65);
+    }
+
+    /* Live MIDI / Klik ingedrukte toets visualisatie */
+    .white-key.midi-pressed {
+      box-shadow: inset 0 0 0 3px #10b981, 0 0 18px rgba(16, 185, 129, 0.75) !important;
+      transform: translateY(2px);
+    }
+    .black-key.midi-pressed {
+      box-shadow: inset 0 0 0 2.5px #10b981, 0 0 18px rgba(16, 185, 129, 0.85) !important;
+      transform: translateX(-50%) translateY(2px);
+    }
+    .midi-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 9999px;
+      background-color: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      margin-bottom: 3px;
+      pointer-events: none;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateY(6px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-chord {
+      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    .animate-shake {
+      animation: shakeError 0.35s ease-in-out;
+    }
+    @keyframes flashSuccess {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      50% { box-shadow: 0 0 35px 8px rgba(16, 185, 129, 0.45); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .flash-green {
+      animation: flashSuccess 0.65s ease-out;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-amber-500/30 selection:text-amber-200">
+
+  <div class="max-w-6xl mx-auto px-4 py-5 md:py-7 space-y-5">
+
+    <!-- Top Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-extrabold text-lg">
+          ♪
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white">
+            Jazz Inversie Studio
+            <span class="text-xs font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 align-middle ml-1">MIDI Time Attack</span>
+          </h1>
+          <p class="text-xs md:text-sm text-slate-400">Speel 2-handige jazz-omkeringen zo snel mogelijk en verbreek je topscore</p>
+        </div>
+      </div>
+
+      <!-- Navigatie & Acties rechtsboven -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="backToStartBtn" type="button"
+          class="hidden items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
+          <span>🏠</span>
+          <span>Startscherm</span>
+        </button>
+        <button id="practiceModeBtn" type="button"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold border transition-all bg-club-900 border-slate-700 text-slate-300 hover:border-amber-500/50">
+          <span id="practiceIcon">👁️</span>
+          <span id="practiceBtnLabel">Verberg toetsen (Blind)</span>
+        </button>
+        <button id="toggleSettingsBtn" type="button"
+          class="hidden items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
+          <span>⚙️</span>
+          <span>Filters</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Web MIDI Verbindingsbalk (altijd zichtbaar op elk scherm) -->
+    <section class="bg-club-900/95 border border-slate-800 rounded-2xl p-3.5 md:p-4 shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+        <button id="connectMidiBtn" type="button"
+          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all active:scale-95">
+          <span>🎹</span>
+          <span id="connectMidiBtnText">Verbind MIDI Piano</span>
+        </button>
+
+        <!-- Status Badge -->
+        <div id="midiStatusBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-club-950 border border-slate-700/80 text-xs font-medium text-slate-300">
+          <span id="midiStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+          <span id="midiStatusText">Niet verbonden (of klik toetsen met muis)</span>
+        </div>
+
+        <!-- MIDI Apparaat Selector -->
+        <select id="midiDeviceSelect" class="hidden bg-club-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500">
+          <option value="all">Alle MIDI-apparaten</option>
+        </select>
+
+        <!-- Reset vastgelopen noten -->
+        <button id="resetMidiNotesBtn" type="button" title="Wis alle ingedrukte MIDI- of muistoetsen"
+          class="px-3 py-1.5 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-xs font-semibold text-slate-300 transition">
+          Reset toetsen
+        </button>
+      </div>
+
+      <!-- Rechts: Streak & Auto-volgend -->
+      <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-2.5 lg:pt-0 border-slate-800/80">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input id="clickToggleModeCheckbox" type="checkbox" checked class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+          <span class="text-xs font-medium text-slate-300" title="Klik op het klavier om toetsen ingedrukt te houden zonder MIDI-piano">Muis-klik houdt toets vast</span>
+        </label>
+
+        <div class="flex items-center gap-2 bg-club-950 px-3.5 py-1.5 rounded-xl border border-slate-800">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Streak</span>
+          <span id="streakCounter" class="font-mono text-base font-extrabold text-emerald-400">0</span>
+          <span class="text-xs text-slate-500">/</span>
+          <span id="totalSolvedCounter" class="font-mono text-xs font-bold text-slate-300">0 juist</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Browser ondersteuning waarschuwing (indien geen Web MIDI) -->
+    <div id="midiUnsupportedBanner" class="hidden bg-amber-950/50 border border-amber-500/40 rounded-2xl p-3.5 text-xs md:text-sm text-amber-200 flex items-start gap-3">
+      <span class="text-lg">⚠️</span>
+      <div>
+        <strong class="font-bold text-amber-300 block mb-0.5">Web MIDI wordt niet ondersteund in deze browser</strong>
+        Open deze pagina in <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong> of <strong>Brave</strong> om je digitale USB-piano direct te koppelen. Geen MIDI-kabel bij de hand? Je kunt de gevraagde toetsen ook gewoon met je muis aanklikken op het klavier onderaan!
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SCHERM 1: STARTSCHERM (STAP 1: MOEILIJKHEID -> STAP 2: SPELMODUS)   -->
+    <!-- =================================================================== -->
+    <section id="startScreenView" class="bg-club-900/95 border border-slate-800 rounded-3xl p-5 md:p-8 shadow-2xl space-y-8">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+          Volledig aanpasbare jazz-training
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Stel je Oefensessie Samen
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-400">
+          Kies eerst bij <strong>Stap 1</strong> je moeilijkheidsniveau met de keuzevakken en start daarna bij <strong>Stap 2</strong> een potje van 10, 20 of 50 akkoorden!
+        </p>
+      </div>
+
+      <!-- STAP 1: KIES JE MOEILIJKHEIDSNIVEAU (KEUZEVAKKEN) -->
+      <div id="settingsPanel" class="bg-club-950/90 border border-slate-800 rounded-2xl p-5 md:p-6 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3.5">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">1</span>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 1: Kies je Moeilijkheidsniveau</h3>
+              <p class="text-xs text-slate-400">Vink aan welke akkoordfamilies en extensies er gevraagd mogen worden</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button id="selectAllDiffBtn" type="button"
+              class="px-3 py-1.5 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-xs font-semibold text-amber-300 transition">
+              ✨ Vink alles aan (Volledige Mix)
+            </button>
+            <button id="resetBasicDiffBtn" type="button"
+              class="px-3 py-1.5 rounded-xl bg-club-900 hover:bg-club-800 border border-slate-700 text-xs font-semibold text-slate-300 transition">
+              Basis Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 Grote Moeilijkheids-Keuzevakken (4 Basis Families + 2 Uitbreidingen) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <!-- Checkbox 1: Major -->
+          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Basis Familie</span>
+                <input id="cbDiffMajor" type="checkbox" checked class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
+              </div>
+              <div class="text-base font-extrabold text-white">Major (Groot)</div>
+              <p class="text-xs text-slate-400 mt-1">Grote drieklanken zoals <span class="font-mono text-slate-200">C</span>, <span class="font-mono text-slate-200">F</span>, <span class="font-mono text-slate-200">Bb</span> (3 noten/hand) en basis voor <span class="font-mono text-slate-200">maj7</span>, <span class="font-mono text-slate-200">7</span>, <span class="font-mono text-slate-200">maj9</span>, <span class="font-mono text-slate-200">13</span>.</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-amber-300/90">
+              Formule: 1 – 3 – 5
+            </div>
+          </label>
+
+          <!-- Checkbox 2: Minor -->
+          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Basis Familie</span>
+                <input id="cbDiffMinor" type="checkbox" checked class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
+              </div>
+              <div class="text-base font-extrabold text-white">Minor (Klein)</div>
+              <p class="text-xs text-slate-400 mt-1">Kleine drieklanken zoals <span class="font-mono text-slate-200">Cm</span>, <span class="font-mono text-slate-200">Dm</span>, <span class="font-mono text-slate-200">Gm</span> (3 noten/hand) en basis voor <span class="font-mono text-slate-200">m7</span>, <span class="font-mono text-slate-200">m9</span>, <span class="font-mono text-slate-200">m11</span>, <span class="font-mono text-slate-200">m13</span>.</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-cyan-300/90">
+              Formule: 1 – b3 – 5
+            </div>
+          </label>
+
+          <!-- Checkbox 3: Diminished -->
+          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">Basis Familie</span>
+                <input id="cbDiffDiminished" type="checkbox" class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
+              </div>
+              <div class="text-base font-extrabold text-white">Diminished (Verminderd)</div>
+              <p class="text-xs text-slate-400 mt-1">Verminderde drieklanken (<span class="font-mono text-slate-200">dim</span> / <span class="font-mono text-slate-200">°</span>) en met 7ths/extensions ook <span class="font-mono text-slate-200">dim7</span>, <span class="font-mono text-slate-200">m7b5</span> (<span class="font-mono text-slate-200">ø7</span>), <span class="font-mono text-slate-200">dim(maj7)</span> en <span class="font-mono text-slate-200">m9b5</span>.</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-rose-300/90">
+              Formule: 1 – b3 – b5 (– bb7 / b7)
+            </div>
+          </label>
+
+          <!-- Checkbox 4: Augmented -->
+          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-orange-500/15 text-orange-300 border border-orange-500/30">Basis Familie</span>
+                <input id="cbDiffAugmented" type="checkbox" class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
+              </div>
+              <div class="text-base font-extrabold text-white">Augmented (Overmatig)</div>
+              <p class="text-xs text-slate-400 mt-1">Overmatige drieklanken (<span class="font-mono text-slate-200">aug</span> / <span class="font-mono text-slate-200">+</span>) en met 7ths/extensions ook <span class="font-mono text-slate-200">7#5</span>, <span class="font-mono text-slate-200">maj7#5</span> en <span class="font-mono text-slate-200">9#5</span>.</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-orange-300/90">
+              Formule: 1 – 3 – #5 (– b7 / 7)
+            </div>
+          </label>
+
+          <!-- Checkbox 5: Sevenths -->
+          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Uitbreiding (Modifier)</span>
+                <input id="cbDiffSevenths" type="checkbox" checked class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
+              </div>
+              <div class="text-base font-extrabold text-white">Sevenths (7ths)</div>
+              <p class="text-xs text-slate-400 mt-1">Voegt vierklanken toe aan je gekozen families (<span class="font-mono text-slate-200">maj7</span>, <span class="font-mono text-slate-200">7</span>, <span class="font-mono text-slate-200">m7</span>, <span class="font-mono text-slate-200">dim7</span>, <span class="font-mono text-slate-200">m7b5</span>, <span class="font-mono text-slate-200">7#5</span>, <span class="font-mono text-slate-200">maj7#5</span>).</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-emerald-300/90">
+              4 noten / hand (Grond t/m 3e)
+            </div>
+          </label>
+
+          <!-- Checkbox 6: Further Extensions -->
+          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">Jazz Pro (Modifier)</span>
+                <input id="cbDiffExtensions" type="checkbox" class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
+              </div>
+              <div class="text-base font-extrabold text-white">Further Extensions</div>
+              <p class="text-xs text-slate-400 mt-1">Voegt <span class="font-mono text-slate-200">9ths</span>, <span class="font-mono text-slate-200">11ths</span> en <span class="font-mono text-slate-200">13ths</span> toe aan je gekozen families (bijv. <span class="font-mono text-slate-200">Cmaj9</span>, <span class="font-mono text-slate-200">Bbmaj13</span>, <span class="font-mono text-slate-200">Cm11</span>, <span class="font-mono text-slate-200">C9#5</span>, <span class="font-mono text-slate-200">Cm9b5</span>).</p>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-purple-300/90">
+              4-noot jazz-voicing / hand
+            </div>
+          </label>
+        </div>
+
+        <!-- Waarschuwing als alle basis-families uitgevinkt dreigen te worden -->
+        <p id="filterWarning" class="hidden text-xs font-semibold text-rose-400">
+          ⚠️ Laat minimaal één basisfamilie (Major, Minor, Diminished of Augmented) aangevinkt staan zodat er akkoorden gegenereerd kunnen worden.
+        </p>
+
+        <!-- Live Pool Preview Balk + Mix-instelling -->
+        <div class="bg-club-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Actieve Akkoorden-Pool:</span>
+              <span id="poolCountBadge" class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono text-xs font-bold">6 types</span>
+            </div>
+            <div id="activePoolPreview" class="font-mono text-xs sm:text-sm text-emerald-300 font-semibold flex flex-wrap gap-1.5">
+              <!-- Wordt dynamisch gevuld via JS -->
+            </div>
+          </div>
+
+          <label class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-club-950 border border-slate-800 cursor-pointer shrink-0 select-none">
+            <input id="includeTriadsWhenExtendedCb" type="checkbox" checked class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+            <span class="text-xs text-slate-300 font-medium">
+              Behoud ook simpele drieklanken in de mix <span class="text-slate-500">(bijv. <strong class="text-slate-300">C</strong> én <strong class="text-slate-300">Bbmaj13</strong>)</span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Extra Voorkeuren: Toonsoorten & Hand-regel -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
+          <!-- Toonsoorten -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Toonsoorten</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
+                <input type="radio" name="keySet" value="all" checked class="w-4 h-4 accent-amber-500">
+                <div>
+                  <div class="text-xs sm:text-sm font-medium text-slate-200">Alle 12 toonsoorten</div>
+                  <div class="text-[11px] text-slate-400">Inclusief Db, F#, Ab, A, E, B</div>
+                </div>
+              </label>
+              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
+                <input type="radio" name="keySet" value="basic" class="w-4 h-4 accent-amber-500">
+                <div>
+                  <div class="text-xs sm:text-sm font-medium text-slate-200">6 Basis toonsoorten</div>
+                  <div class="text-[11px] text-slate-400">C, F, Bb, Eb, G, D</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Hand-regel -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Omkeringen per hand</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
+                <input type="radio" name="handRule" value="random" checked class="w-4 h-4 accent-amber-500">
+                <div>
+                  <div class="text-xs sm:text-sm font-medium text-slate-200">Alle combinaties (LH ≠ RH)</div>
+                  <div class="text-[11px] text-slate-400">Elke hand een andere omkering</div>
+                </div>
+              </label>
+              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
+                <input type="radio" name="handRule" value="zones" class="w-4 h-4 accent-amber-500">
+                <div>
+                  <div class="text-xs sm:text-sm font-medium text-slate-200">Vaste zones per hand</div>
+                  <div class="text-[11px] text-slate-400">LH: lage omk. &bull; RH: hoge omk.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAP 2: KIES HET AANTAL AKKOORDEN & START -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">2</span>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 2: Kies je Spelmodus (10, 20 of 50 Akkoorden)</h3>
+              <p class="text-xs text-slate-400">De stopwatch start zodra het eerste akkoord verschijnt</p>
+            </div>
+          </div>
+          <button id="clearHighscoresBtn" type="button" class="text-xs text-slate-500 hover:text-rose-400 transition">
+            Wis topscores
+          </button>
+        </div>
+
+        <!-- 4 Modus Kaarten: 10, 20, 50 Akkoorden + Vrij Oefenen -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- 10 Akkoorden Sprint -->
+          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-amber-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold">SPRINT</span>
+                <span class="text-2xl">⚡</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-white">10 Akkoorden</h3>
+              <p class="text-xs text-slate-400 mt-1">Korte, explosieve sessie om je reactiesnelheid te testen.</p>
+
+              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore (10)</div>
+                <div id="bestScore10" class="font-mono text-lg font-extrabold text-emerald-400 mt-0.5">Nog geen tijd</div>
+                <div id="bestAvg10" class="font-mono text-[11px] text-slate-500">—</div>
+              </div>
+            </div>
+
+            <button type="button" data-start-mode="10"
+              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm shadow-md shadow-amber-500/20 transition active:scale-95">
+              Start 10 Akkoorden →
+            </button>
+          </div>
+
+          <!-- 20 Akkoorden Run -->
+          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-cyan-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold">STANDAARD RUN</span>
+                <span class="text-2xl">🔥</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-white">20 Akkoorden</h3>
+              <p class="text-xs text-slate-400 mt-1">De ideale balans tussen snelheid en concentratie.</p>
+
+              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore (20)</div>
+                <div id="bestScore20" class="font-mono text-lg font-extrabold text-emerald-400 mt-0.5">Nog geen tijd</div>
+                <div id="bestAvg20" class="font-mono text-[11px] text-slate-500">—</div>
+              </div>
+            </div>
+
+            <button type="button" data-start-mode="20"
+              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-extrabold text-sm shadow-md shadow-cyan-500/20 transition active:scale-95">
+              Start 20 Akkoorden →
+            </button>
+          </div>
+
+          <!-- 50 Akkoorden Marathon -->
+          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-purple-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">MARATHON</span>
+                <span class="text-2xl">👑</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-white">50 Akkoorden</h3>
+              <p class="text-xs text-slate-400 mt-1">Ultieme jazz-workout voor onverslaanbaar spiergeheugen.</p>
+
+              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore (50)</div>
+                <div id="bestScore50" class="font-mono text-lg font-extrabold text-emerald-400 mt-0.5">Nog geen tijd</div>
+                <div id="bestAvg50" class="font-mono text-[11px] text-slate-500">—</div>
+              </div>
+            </div>
+
+            <button type="button" data-start-mode="50"
+              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-300 hover:to-indigo-400 text-slate-950 font-extrabold text-sm shadow-md shadow-purple-500/20 transition active:scale-95">
+              Start 50 Akkoorden →
+            </button>
+          </div>
+
+          <!-- Vrij Oefenen (Eindeloos + Metronoom) -->
+          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800/80 to-club-900 border border-slate-700/80 hover:border-emerald-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-bold">STUDIO MODUS</span>
+                <span class="text-2xl">🎷</span>
+              </div>
+              <h3 class="text-xl font-extrabold text-white">Vrij Oefenen</h3>
+              <p class="text-xs text-slate-400 mt-1">Eindeloos oefenen zonder tijdsdruk, inclusief BPM-metronoom.</p>
+
+              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🎯 Functies</div>
+                <div class="text-xs font-semibold text-slate-300 mt-1">Metronoom &bull; Rhodes Audio &bull; Eigen tempo</div>
+              </div>
+            </div>
+
+            <button type="button" data-start-mode="free"
+              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-club-700 hover:bg-slate-700 border border-slate-600 text-white font-bold text-sm transition active:scale-95">
+              Open Vrij Oefenen →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- SCHERM 2: ACTIEF SPELSCHERM (TIMED RUN OF VRIJ OEFENEN)             -->
+    <!-- =================================================================== -->
+    <main id="gameView" class="hidden bg-club-900/95 border border-slate-800 rounded-3xl p-5 md:p-7 shadow-2xl space-y-6 transition-all">
+
+      <!-- Voortgang & Live Stopwatch Balk (Zichtbaar in 10/20/50 modus) -->
+      <div id="timedHudBar" class="bg-club-950/90 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
+          <div>
+            <div id="activeModeBadge" class="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold">10 AKKOORDEN SPRINT</div>
+            <div class="flex items-baseline gap-2 mt-0.5">
+              <span class="text-xs text-slate-400">Voortgang:</span>
+              <span id="chordProgressText" class="font-mono text-lg font-extrabold text-white">Akkoord 1 / 10</span>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-28 sm:w-36 h-2.5 bg-club-800 rounded-full overflow-hidden border border-slate-700/80">
+            <div id="chordProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all duration-300" style="width: 10%"></div>
+          </div>
+          <button id="hudTargetRecordWrapper" type="button" class="hidden"></button>
+          <div class="text-right">
+            <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Te kloppen record</span>
+            <span id="hudTargetRecord" class="font-mono text-xs font-bold text-emerald-400">Nog geen record</span>
+          </div>
+
+          <div class="relative bg-club-900 border border-amber-500/40 rounded-xl px-4 py-2 text-right shadow-inner">
+            <span class="text-[10px] font-mono uppercase tracking-wider text-amber-300/80 block">Tijd</span>
+            <span id="liveStopwatchDisplay" class="font-mono text-2xl sm:text-3xl font-extrabold text-white tracking-tight">00:00.0</span>
+            <span id="penaltyToast" class="hidden absolute -top-3 -right-2 px-2 py-0.5 rounded-full bg-rose-600 text-white font-mono text-[11px] font-extrabold shadow-lg border border-rose-300 animate-bounce">
+              +10s straftijd
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bovenste rij: Huidig Akkoord + Actieknoppen -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-5 pb-5 border-b border-slate-800/80">
+        <div class="text-center md:text-left">
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+              Speel dit akkoord met twee handen
+            </span>
+            <span id="chordFormulaBadge" class="hidden items-center px-2.5 py-1 rounded-full bg-club-950 border border-slate-700 text-slate-300 font-mono text-xs font-bold">
+              Tonica – b3 – 5 – b7
+            </span>
+          </div>
+          <div id="chordDisplayContainer" class="animate-chord">
+            <h2 id="chordSymbol" class="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white font-mono">
+              Cm7
+            </h2>
+            <p id="chordFullName" class="text-sm md:text-base text-slate-400 mt-1">
+              C mineur 7
+            </p>
+          </div>
+        </div>
+
+        <!-- Actieknoppen -->
+        <div class="flex flex-wrap items-center justify-center gap-2.5 w-full md:w-auto">
+          <button id="playChordBtn" type="button"
+            class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-100 font-semibold text-xs sm:text-sm transition-all active:scale-95">
+            <span>🔊</span>
+            <span>Beluister</span>
+          </button>
+
+          <button id="revealBtn" type="button"
+            class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-semibold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-45 disabled:pointer-events-none">
+            <span>💡</span>
+            <span id="revealBtnLabel">Toon Oplossing (+10s)</span>
+          </button>
+
+          <button id="demoSolveBtn" type="button" title="Simuleer de juiste toetsen op het klavier om te testen"
+            class="flex items-center justify-center gap-1.5 px-3.5 py-3 rounded-2xl bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-300 font-semibold text-xs sm:text-sm transition-all active:scale-95">
+            <span>🪄</span>
+            <span id="demoSolveBtnLabel">Test Juiste Noten</span>
+          </button>
+
+          <button id="skipPenaltyBtn" type="button"
+            class="flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-semibold text-xs sm:text-sm transition-all active:scale-95">
+            <span>⏭️</span>
+            <span id="skipBtnLabel">Overslaan (+15s)</span>
+          </button>
+
+          <button id="nextChordBtn" type="button"
+            class="hidden items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-95">
+            <span>Volgend Akkoord</span>
+            <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[11px] font-mono bg-slate-950/20 rounded text-slate-950">Spatie</kbd>
+          </button>
+        </div>
+      </div>
+
+      <!-- Twee kaarten naast elkaar: Linkerhand (LH) en Rechterhand (RH) met individuele status -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <!-- Linkerhand Kaart -->
+        <div id="lhCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-950/40 via-club-800/80 to-club-800/50 border border-cyan-500/30 p-5 shadow-lg transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></span>
+              <h3 id="lhCardHeader" class="text-sm font-bold uppercase tracking-wider text-cyan-300">Linkerhand (Laagste 4 noten)</h3>
+            </div>
+            <span id="lhStatusBadge" class="text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-2.5 py-1 rounded-lg border border-slate-700">
+              Wacht op noten...
+            </span>
+          </div>
+
+          <div id="lhInversionName" class="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+            Grondligging (Root)
+          </div>
+
+          <div class="bg-club-950/70 rounded-xl p-3 border border-slate-800/90 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Doel (laag → hoog):</span>
+            <div id="lhNotesDisplay" class="font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide">
+              ❓ Zoek zelf de juiste noten op het klavier
+            </div>
+          </div>
+
+          <div class="mt-2.5 flex items-center justify-between text-xs px-1">
+            <span class="text-slate-400">Nu ingedrukt (LH):</span>
+            <span id="playedLhNotes" class="font-mono font-bold text-slate-200">—</span>
+          </div>
+        </div>
+
+        <!-- Rechterhand Kaart -->
+        <div id="rhCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-950/40 via-club-800/80 to-club-800/50 border border-amber-500/30 p-5 shadow-lg transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]"></span>
+              <h3 id="rhCardHeader" class="text-sm font-bold uppercase tracking-wider text-amber-300">Rechterhand (Hoogste 4 noten)</h3>
+            </div>
+            <span id="rhStatusBadge" class="text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-2.5 py-1 rounded-lg border border-slate-700">
+              Wacht op noten...
+            </span>
+          </div>
+
+          <div id="rhInversionName" class="text-2xl sm:text-3xl font-extrabold text-white mb-3">
+            2e Omkering
+          </div>
+
+          <div class="bg-club-950/70 rounded-xl p-3 border border-slate-800/90 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Doel (laag → hoog):</span>
+            <div id="rhNotesDisplay" class="font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide">
+              ❓ Zoek zelf de juiste noten op het klavier
+            </div>
+          </div>
+
+          <div class="mt-2.5 flex items-center justify-between text-xs px-1">
+            <span class="text-slate-400">Nu ingedrukt (RH):</span>
+            <span id="playedRhNotes" class="font-mono font-bold text-slate-200">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Algemene Live MIDI Feedback Banner -->
+      <div id="feedbackBanner" class="rounded-2xl p-4 border bg-club-950/90 border-slate-800 flex items-center justify-between gap-3 transition-all">
+        <div class="flex items-center gap-3">
+          <span id="feedbackIcon" class="text-2xl">🎹</span>
+          <div>
+            <p id="feedbackHeadline" class="text-sm md:text-base font-bold text-slate-200">
+              Speel de 8 gevraagde noten tegelijk op je MIDI-piano (of klik ze aan op het klavier)
+            </p>
+            <p id="feedbackSubtext" class="text-xs text-slate-400 mt-0.5">
+              De 4 laagste noten worden gecontroleerd voor je linkerhand, de 4 hoogste voor je rechterhand.
+            </p>
+          </div>
+        </div>
+        <span id="octaveProjectionHint" class="hidden text-[11px] font-mono text-emerald-400/90 bg-emerald-950/60 border border-emerald-500/20 px-2.5 py-1 rounded-lg shrink-0">
+          88-toetsen projectie actief
+        </span>
+      </div>
+
+      <!-- Timer & Metronoom Balk (Alleen getoond in Vrij Oefenen) -->
+      <div id="freePlayMetronomeBar" class="hidden bg-club-950/80 border border-slate-800/90 rounded-2xl p-4 flex-col lg:flex-row items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 w-full lg:w-auto">
+          <button id="timerToggleBtn" type="button"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 transition-all">
+            <span id="timerBtnIcon">▶</span>
+            <span id="timerBtnText">Start Metronoom</span>
+          </button>
+
+          <!-- BPM Instelling -->
+          <div class="flex items-center gap-2.5 bg-club-900 px-3.5 py-2 rounded-xl border border-slate-800">
+            <label for="bpmSlider" class="text-xs font-semibold text-slate-400">BPM</label>
+            <input id="bpmSlider" type="range" min="40" max="140" value="70" class="w-24 sm:w-28 accent-amber-500 cursor-pointer">
+            <span id="bpmValue" class="font-mono text-sm font-bold text-amber-400 w-8 text-right">70</span>
+          </div>
+
+          <!-- Tellen per akkoord -->
+          <div class="flex items-center gap-1.5 bg-club-900 p-1 rounded-xl border border-slate-800">
+            <button type="button" data-beats="4" class="beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 transition">4 tellen</button>
+            <button type="button" data-beats="8" class="beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">8 tellen</button>
+          </div>
+
+          <!-- Klik geluid -->
+          <button id="clickToggleBtn" type="button"
+            class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-club-900 border border-amber-500/40 text-amber-300 transition">
+            <span>🔔</span>
+            <span>Klik: Aan</span>
+          </button>
+        </div>
+
+        <div id="beatDotsContainer" class="flex items-center gap-2"></div>
+      </div>
+
+      <!-- Visueel Pianoklavier (4 octaven: C2 tot B5) -->
+      <div class="space-y-2.5 pt-1">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+          <div class="flex flex-wrap items-center gap-4">
+            <span class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-cyan-400 inline-block"></span> Doel Linkerhand
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span> Doel Rechterhand
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_#10b981]"></span> Ingedrukt (MIDI / Muis-klik)
+            </span>
+          </div>
+          <span class="text-slate-500">4 octaven (C2 – B5) &bull; Klik toetsen aan of speel op je MIDI-piano</span>
+        </div>
+
+        <div class="piano-wrapper rounded-2xl border border-slate-800 bg-club-950 p-2 shadow-inner">
+          <div id="pianoKeyboard" class="piano-container">
+            <!-- Toetsen worden gegenereerd via JS -->
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- SCHERM 3: EINDSCHERM & TOPSCORES                                    -->
+    <!-- =================================================================== -->
+    <section id="resultsView" class="hidden bg-club-900/95 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2">
+        <div id="recordBadge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider">
+          🏆 Nieuw Persoonlijk Record!
+        </div>
+        <h2 id="resultsTitle" class="text-3xl sm:text-4xl font-extrabold text-white">
+          Ronde Voltooid!
+        </h2>
+        <p id="resultsSubtitle" class="text-sm text-slate-400">
+          Je hebt alle akkoorden met twee verschillende inversies gespeeld.
+        </p>
+      </div>
+
+      <!-- Grote Statistieken Kaarten -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <div class="bg-club-950 border border-slate-800 rounded-2xl p-5 text-center">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Totale Tijd</span>
+          <div id="finalTotalTime" class="font-mono text-3xl sm:text-4xl font-extrabold text-white mt-1">00:42.8</div>
+        </div>
+
+        <div class="bg-club-950 border border-slate-800 rounded-2xl p-5 text-center">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gemiddeld per akkoord</span>
+          <div id="finalAvgTime" class="font-mono text-3xl sm:text-4xl font-extrabold text-amber-400 mt-1">4.3s</div>
+        </div>
+
+        <div class="bg-club-950 border border-slate-800 rounded-2xl p-5 text-center">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Beste Tijd (Topscore)</span>
+          <div id="finalBestTime" class="font-mono text-3xl sm:text-4xl font-extrabold text-emerald-400 mt-1">00:42.8</div>
+        </div>
+      </div>
+
+      <!-- Overzicht per gespeeld akkoord (Split times) -->
+      <div class="max-w-3xl mx-auto bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Tijd per gespeeld akkoord</h3>
+          <span class="text-xs text-slate-500">Gesorteerd op volgorde</span>
+        </div>
+        <div id="splitsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+          <!-- Splits worden via JS gevuld -->
+        </div>
+      </div>
+
+      <!-- Knoppen onderaan Eindscherm -->
+      <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+        <button id="playAgainBtn" type="button"
+          class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm md:text-base shadow-lg shadow-amber-500/20 transition active:scale-95">
+          🔄 Opnieuw spelen (Zelfde modus)
+        </button>
+        <button id="resultsToStartBtn" type="button"
+          class="px-6 py-3.5 rounded-2xl bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 font-bold text-sm md:text-base transition active:scale-95">
+          🏠 Terug naar Startscherm
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. MUZIEKTHEORIE & AKKOORD-DATA (DRIEKLANKEN, 7THS & FURTHER EXTENSIONS)
+    // =========================================================================
+    const ROOTS = [
+      { name: 'C',  midiBase: 0,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
+      { name: 'Db', midiBase: 1,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: false },
+      { name: 'D',  midiBase: 2,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'], basic: true },
+      { name: 'Eb', midiBase: 3,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
+      { name: 'E',  midiBase: 4,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], basic: false },
+      { name: 'F',  midiBase: 5,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
+      { name: 'F#', midiBase: 6,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], basic: false },
+      { name: 'G',  midiBase: 7,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
+      { name: 'Ab', midiBase: 8,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: false },
+      { name: 'A',  midiBase: 9,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'], basic: false },
+      { name: 'Bb', midiBase: 10, notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
+      { name: 'B',  midiBase: 11, notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], basic: false },
+    ];
+
+    // Alle ondersteunde akkoordtypes verdeeld over Triads (3 noten per hand), Sevenths (4 noten per hand) en Further Extensions (4-noot jazz-voicing per hand)
+    const CHORD_TYPES = {
+      // --- DRIEKLANKEN (3 noten per hand, 3 omkeringen: Grond, 1e, 2e) ---
+      'maj': {
+        suffix: '',
+        displaySuffix: 'major',
+        label: 'groot (majeur drieklank)',
+        formula: '1 – 3 – 5 (3 noten/hand)',
+        family: 'major',
+        tier: 'triad',
+        intervals: [0, 4, 7]
+      },
+      'min': {
+        suffix: 'm',
+        displaySuffix: 'm',
+        label: 'klein (mineur drieklank)',
+        formula: '1 – b3 – 5 (3 noten/hand)',
+        family: 'minor',
+        tier: 'triad',
+        intervals: [0, 3, 7]
+      },
+      'dim': {
+        suffix: 'dim',
+        displaySuffix: 'dim',
+        label: 'verminderde drieklank (°)',
+        formula: '1 – b3 – b5 (3 noten/hand)',
+        family: 'diminished',
+        tier: 'triad',
+        intervals: [0, 3, 6]
+      },
+      'aug': {
+        suffix: 'aug',
+        displaySuffix: 'aug',
+        label: 'overmatige drieklank (+)',
+        formula: '1 – 3 – #5 (3 noten/hand)',
+        family: 'augmented',
+        tier: 'triad',
+        intervals: [0, 4, 8]
+      },
+
+      // --- SEVENTHS (4 noten per hand, 4 omkeringen: Grond, 1e, 2e, 3e) ---
+      'maj7': {
+        suffix: 'maj7',
+        displaySuffix: 'maj7',
+        label: 'majeur 7',
+        formula: '1 – 3 – 5 – 7',
+        family: 'major',
+        tier: 'seventh',
+        intervals: [0, 4, 7, 11]
+      },
+      '7': {
+        suffix: '7',
+        displaySuffix: '7',
+        label: 'dominant 7',
+        formula: '1 – 3 – 5 – b7',
+        family: 'major',
+        tier: 'seventh',
+        intervals: [0, 4, 7, 10]
+      },
+      'm7': {
+        suffix: 'm7',
+        displaySuffix: 'm7',
+        label: 'mineur 7',
+        formula: '1 – b3 – 5 – b7',
+        family: 'minor',
+        tier: 'seventh',
+        intervals: [0, 3, 7, 10]
+      },
+      'dim7': {
+        suffix: 'dim7',
+        displaySuffix: 'dim7',
+        label: 'volledig verminderd 7 (°7)',
+        formula: '1 – b3 – b5 – bb7(6)',
+        family: 'diminished',
+        tier: 'seventh',
+        intervals: [0, 3, 6, 9]
+      },
+      'm7b5': {
+        suffix: 'm7b5',
+        displaySuffix: 'm7b5',
+        label: 'halfverminderd 7 (ø7)',
+        formula: '1 – b3 – b5 – b7',
+        family: 'diminished',
+        tier: 'seventh',
+        intervals: [0, 3, 6, 10]
+      },
+      '7#5': {
+        suffix: '7#5',
+        displaySuffix: '7#5',
+        label: 'overmatig dominant 7 (aug7)',
+        formula: '1 – 3 – #5 – b7',
+        family: 'augmented',
+        tier: 'seventh',
+        intervals: [0, 4, 8, 10]
+      },
+      'maj7#5': {
+        suffix: 'maj7#5',
+        displaySuffix: 'maj7#5',
+        label: 'overmatig majeur 7',
+        formula: '1 – 3 – #5 – 7',
+        family: 'augmented',
+        tier: 'seventh',
+        intervals: [0, 4, 8, 11]
+      },
+
+      // --- FURTHER EXTENSIONS (9ths, 11ths, 13ths als speelbare 4-noot jazz-voicing per hand) ---
+      'maj9': {
+        suffix: 'maj9',
+        displaySuffix: 'maj9',
+        label: 'majeur 9 (voicing: 1-9-3-7)',
+        formula: '1 – 9 – 3 – 7 (zonder kwint)',
+        family: 'major',
+        tier: 'extension',
+        intervals: [0, 2, 4, 11]
+      },
+      '9': {
+        suffix: '9',
+        displaySuffix: '9',
+        label: 'dominant 9 (voicing: 1-9-3-b7)',
+        formula: '1 – 9 – 3 – b7 (zonder kwint)',
+        family: 'major',
+        tier: 'extension',
+        intervals: [0, 2, 4, 10]
+      },
+      'maj13': {
+        suffix: 'maj13',
+        displaySuffix: 'maj13',
+        label: 'majeur 13 (voicing: 1-3-13-7)',
+        formula: '1 – 3 – 13 – 7 (zonder kwint)',
+        family: 'major',
+        tier: 'extension',
+        intervals: [0, 4, 9, 11]
+      },
+      '13': {
+        suffix: '13',
+        displaySuffix: '13',
+        label: 'dominant 13 (voicing: 1-3-13-b7)',
+        formula: '1 – 3 – 13 – b7 (zonder kwint)',
+        family: 'major',
+        tier: 'extension',
+        intervals: [0, 4, 9, 10]
+      },
+      'm9': {
+        suffix: 'm9',
+        displaySuffix: 'm9',
+        label: 'mineur 9 (voicing: 1-9-b3-b7)',
+        formula: '1 – 9 – b3 – b7 (zonder kwint)',
+        family: 'minor',
+        tier: 'extension',
+        intervals: [0, 2, 3, 10]
+      },
+      'm11': {
+        suffix: 'm11',
+        displaySuffix: 'm11',
+        label: 'mineur 11 (voicing: 1-b3-11-b7)',
+        formula: '1 – b3 – 11 – b7 (zonder kwint)',
+        family: 'minor',
+        tier: 'extension',
+        intervals: [0, 3, 5, 10]
+      },
+      'm13': {
+        suffix: 'm13',
+        displaySuffix: 'm13',
+        label: 'mineur 13 (voicing: 1-b3-13-b7)',
+        formula: '1 – b3 – 13 – b7 (zonder kwint)',
+        family: 'minor',
+        tier: 'extension',
+        intervals: [0, 3, 9, 10]
+      },
+      'dim(maj7)': {
+        suffix: 'dim(maj7)',
+        displaySuffix: 'dim(maj7)',
+        label: 'verminderd majeur 7 (voicing: 1-b3-b5-7)',
+        formula: '1 – b3 – b5 – 7',
+        family: 'diminished',
+        tier: 'extension',
+        intervals: [0, 3, 6, 11]
+      },
+      'm9b5': {
+        suffix: 'm9b5',
+        displaySuffix: 'm9b5',
+        label: 'halfverminderd 9 (voicing: 1-9-b5-b7)',
+        formula: '1 – 9 – b5 – b7 (zonder b3)',
+        family: 'diminished',
+        tier: 'extension',
+        intervals: [0, 2, 6, 10]
+      },
+      '9#5': {
+        suffix: '9#5',
+        displaySuffix: '9#5',
+        label: 'overmatig dominant 9 (voicing: 1-9-3-#5)',
+        formula: '1 – 9 – 3 – #5 (met verhoogde kwint)',
+        family: 'augmented',
+        tier: 'extension',
+        intervals: [0, 2, 4, 8]
+      }
+    };
+
+    const INVERSION_NAMES = [
+      'Grondligging (Root)',
+      '1e Omkering',
+      '2e Omkering',
+      '3e Omkering'
+    ];
+
+    const STORAGE_KEY_PREFIX = 'jazz_inversie_best_ms_';
+
+    // =========================================================================
+    // 2. APPLICATIE STATE
+    // =========================================================================
+    const state = {
+      view: 'start',          // 'start' | 'game' | 'results'
+      gameMode: '10',         // '10' | '20' | '50' | 'free'
+      targetChordsCount: 10,
+      currentChordIndex: 0,
+
+      // Moeilijkheid Keuzevakken (Stap 1)
+      diffMajor: true,
+      diffMinor: true,
+      diffDiminished: false,
+      diffAugmented: false,
+      diffSevenths: true,
+      diffExtensions: false,
+      includeTriadsWhenExtended: true,
+      activeTypes: ['maj', 'min', 'maj7', '7', 'm7'],
+
+      keySet: 'all',          // 'all' | 'basic'
+      handRule: 'random',     // 'random' | 'zones'
+      practiceMode: true,     // Standaard altijd verborgen doelnoten tot oplossing gevraagd of opgelost
+      revealed: false,
+      solutionUsedForCurrentChord: false,
+      currentChordPenaltyMs: 0,
+      currentChallenge: null,
+
+      // Stopwatch voor 10 / 20 / 50 modus
+      stopwatchRunning: false,
+      runStartTimeMs: 0,
+      chordStartTimeMs: 0,
+      penaltyMs: 0,
+      elapsedMs: 0,
+      stopwatchRafId: null,
+      penaltyToastTimeoutId: null,
+      chordSplits: [],        // [{ symbol, lhInv, rhInv, timeMs, skipped, usedSolution }]
+      bpm: 70,
+      beatsPerChord: 4,
+      currentBeat: 0,
+      clickSound: true,
+      timerIntervalId: null,
+
+      // Web MIDI & Live Validatie
+      midiAccess: null,
+      selectedMidiInputId: 'all',
+      midiConnected: false,
+      activeMidiNotes: new Set(),
+      mouseClickToggleMode: true,
+      challengeSolved: false,
+      autoNextTimeoutId: null,
+      streak: 0,
+      totalSolved: 0
+    };
+
+    // =========================================================================
+    // 3. TOPSCORES (LOCALSTORAGE) & TIJDFORMATTERING
+    // =========================================================================
+    function getBestTimeMs(modeKey) {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_PREFIX + modeKey);
+        if (!raw) return null;
+        const val = parseFloat(raw);
+        return Number.isFinite(val) && val > 0 ? val : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveBestTimeMs(modeKey, ms) {
+      try {
+        localStorage.setItem(STORAGE_KEY_PREFIX + modeKey, String(Math.round(ms)));
+      } catch (e) {}
+    }
+
+    function formatTimeMs(ms) {
+      const totalSeconds = Math.max(0, ms / 1000);
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = Math.floor(totalSeconds % 60);
+      const tenths = Math.floor((totalSeconds * 10) % 10);
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
+    }
+
+    function formatTimeDetailedMs(ms) {
+      const totalSeconds = Math.max(0, ms / 1000);
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = (totalSeconds % 60).toFixed(2).padStart(5, '0');
+      return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    }
+
+    function renderStartScreenHighscores() {
+      ['10', '20', '50'].forEach(modeKey => {
+        const bestEl = document.getElementById(`bestScore${modeKey}`);
+        const avgEl = document.getElementById(`bestAvg${modeKey}`);
+        if (!bestEl || !avgEl) return;
+
+        const bestMs = getBestTimeMs(modeKey);
+        if (bestMs !== null) {
+          bestEl.textContent = formatTimeDetailedMs(bestMs);
+          const avgSec = (bestMs / 1000 / parseInt(modeKey, 10)).toFixed(2);
+          avgEl.textContent = `Gemiddeld ${avgSec}s / akkoord`;
+        } else {
+          bestEl.textContent = 'Nog geen tijd';
+          avgEl.textContent = 'Speel een potje om een record te zetten';
+        }
+      });
+    }
+
+    // =========================================================================
+    // 4. WEB AUDIO API SYNTHESIZER (WARME RHODES PIANO + METRONOOM + CHIME)
+    // =========================================================================
+    let audioCtx = null;
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function playRhodesNote(midi, startTime = 0, duration = 1.4, velocity = 0.14) {
+      ensureAudioContext();
+      const now = Math.max(audioCtx.currentTime, startTime);
+      const freq = midiToFreq(midi);
+
+      const mainOsc = audioCtx.createOscillator();
+      const tineOsc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      const tineGain = audioCtx.createGain();
+
+      mainOsc.type = 'triangle';
+      mainOsc.frequency.setValueAtTime(freq, now);
+
+      tineOsc.type = 'sine';
+      tineOsc.frequency.setValueAtTime(freq * 2, now);
+
+      tineGain.gain.setValueAtTime(velocity * 0.35, now);
+      tineGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+
+      gainNode.gain.setValueAtTime(0.001, now);
+      gainNode.gain.linearRampToValueAtTime(velocity, now + 0.018);
+      gainNode.gain.exponentialRampToValueAtTime(velocity * 0.55, now + 0.25);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      mainOsc.connect(gainNode);
+      tineOsc.connect(tineGain);
+      tineGain.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      mainOsc.start(now);
+      tineOsc.start(now);
+      mainOsc.stop(now + duration + 0.05);
+      tineOsc.stop(now + duration + 0.05);
+    }
+
+    function playCurrentVoicing() {
+      if (!state.currentChallenge) return;
+      ensureAudioContext();
+      const now = audioCtx.currentTime;
+      const allMidis = [
+        ...state.currentChallenge.lh.midis,
+        ...state.currentChallenge.rh.midis
+      ];
+      allMidis.forEach((midi, index) => {
+        playRhodesNote(midi, now + index * 0.028, 1.65, 0.12);
+      });
+    }
+
+    function playSuccessChime() {
+      try {
+        ensureAudioContext();
+        const now = audioCtx.currentTime;
+        [72, 76, 79, 84].forEach((midi, idx) => {
+          playRhodesNote(midi, now + idx * 0.045, 0.45, 0.08);
+        });
+      } catch (e) {}
+    }
+
+    function playMetronomeClick(isAccent = false) {
+      if (!state.clickSound) return;
+      ensureAudioContext();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(isAccent ? 1150 : 760, now);
+
+      gain.gain.setValueAtTime(isAccent ? 0.16 : 0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.05);
+    }
+
+    // =========================================================================
+    // 5. MOEILIJKHEIDS-POOL & VOICING GENERATOR (3 OF 4 NOTEN PER HAND)
+    // =========================================================================
+    function computeActiveChordTypes() {
+      const families = [];
+      if (state.diffMajor) families.push('major');
+      if (state.diffMinor) families.push('minor');
+      if (state.diffDiminished) families.push('diminished');
+      if (state.diffAugmented) families.push('augmented');
+
+      const hasHigherTiers = state.diffSevenths || state.diffExtensions;
+      const includeTriads = !hasHigherTiers || state.includeTriadsWhenExtended;
+
+      const result = [];
+      Object.entries(CHORD_TYPES).forEach(([key, def]) => {
+        if (!families.includes(def.family)) return;
+        if (def.tier === 'triad' && includeTriads) result.push(key);
+        if (def.tier === 'seventh' && state.diffSevenths) result.push(key);
+        if (def.tier === 'extension' && state.diffExtensions) result.push(key);
+      });
+
+      // Fallback voor het geval er niets in zit
+      if (result.length === 0) {
+        if (state.diffMajor) result.push('maj');
+        else if (state.diffMinor) result.push('min');
+        else if (state.diffDiminished) result.push('dim');
+        else if (state.diffAugmented) result.push('aug');
+        else result.push('maj');
+      }
+
+      state.activeTypes = result;
+      updateDifficultyPreviewUI();
+    }
+
+    function updateDifficultyPreviewUI() {
+      const previewEl = document.getElementById('activePoolPreview');
+      const countBadge = document.getElementById('poolCountBadge');
+      if (!previewEl || !countBadge) return;
+
+      countBadge.textContent = `${state.activeTypes.length} akkoordtypes`;
+      previewEl.innerHTML = '';
+
+      // Laat concrete voorbeelden zien (afwisselend C en Bb zodat bijv. C major, Cdim, Caug en Bbmaj13 direct zichtbaar zijn)
+      state.activeTypes.forEach((typeKey, idx) => {
+        const def = CHORD_TYPES[typeKey];
+        const sampleRoot = idx % 2 === 0 ? 'C' : 'Bb';
+        const labelText = def.suffix === '' ? `${sampleRoot} major` : `${sampleRoot}${def.suffix}`;
+        const pill = document.createElement('span');
+        pill.className = 'px-2 py-0.5 rounded-md bg-club-950 border border-slate-700/90 text-xs text-slate-200';
+        pill.textContent = labelText;
+        previewEl.appendChild(pill);
+      });
+
+      // Update de visuele rand van de 6 keuzevak-kaarten
+      const cardBindings = [
+        { id: 'cbDiffMajor', active: state.diffMajor },
+        { id: 'cbDiffMinor', active: state.diffMinor },
+        { id: 'cbDiffDiminished', active: state.diffDiminished },
+        { id: 'cbDiffAugmented', active: state.diffAugmented },
+        { id: 'cbDiffSevenths', active: state.diffSevenths },
+        { id: 'cbDiffExtensions', active: state.diffExtensions }
+      ];
+      cardBindings.forEach(({ id, active }) => {
+        const cb = document.getElementById(id);
+        if (!cb) return;
+        const card = cb.closest('.diff-card');
+        if (!card) return;
+        if (active) {
+          card.classList.remove('border-slate-800', 'opacity-75');
+          card.classList.add('border-amber-500/60');
+        } else {
+          card.classList.remove('border-amber-500/60');
+          card.classList.add('border-slate-800', 'opacity-75');
+        }
+      });
+    }
+
+    function buildInversionVoicing(rootObj, intervals, inversionIndex, targetMinMidi) {
+      const numNotes = intervals.length; // 3 voor drieklanken, 4 voor 7ths & extensions
+      const rotated = [];
+      for (let i = 0; i < numNotes; i++) {
+        const idx = (i + inversionIndex) % numNotes;
+        let semitone = intervals[idx];
+        while (i > 0 && semitone <= rotated[i - 1]) {
+          semitone += 12;
+        }
+        rotated.push(semitone);
+      }
+
+      let baseMidi = 36 + rootObj.midiBase + rotated[0]; // Start vanaf C2 (36)
+      while (baseMidi < targetMinMidi) {
+        baseMidi += 12;
+      }
+      while (baseMidi > targetMinMidi + 11) {
+        baseMidi -= 12;
+      }
+
+      const midis = rotated.map(semi => baseMidi + (semi - rotated[0]));
+      const noteNames = midis.map(m => rootObj.notes[m % 12]);
+
+      return {
+        inversionIndex,
+        inversionName: INVERSION_NAMES[inversionIndex],
+        midis,
+        noteNames
+      };
+    }
+
+    function generateNewChallenge(forceFirstExample = false) {
+      computeActiveChordTypes();
+
+      const availableRoots = state.keySet === 'basic'
+        ? ROOTS.filter(r => r.basic)
+        : ROOTS;
+
+      let rootObj, typeKey, lhInv, rhInv;
+
+      if (forceFirstExample && state.activeTypes.includes('m7')) {
+        rootObj = ROOTS[0]; // C
+        typeKey = 'm7';
+        lhInv = 0;          // Grondligging (C - Eb - G - Bb)
+        rhInv = 2;          // 2e Omkering  (G - Bb - C - Eb)
+      } else {
+        rootObj = availableRoots[Math.floor(Math.random() * availableRoots.length)];
+        typeKey = state.activeTypes[Math.floor(Math.random() * state.activeTypes.length)];
+        const chordDefTemp = CHORD_TYPES[typeKey];
+        const numInversions = chordDefTemp.intervals.length; // 3 bij triads, 4 bij 7ths/extensions
+
+        if (state.handRule === 'zones') {
+          if (numInversions === 3) {
+            lhInv = Math.random() < 0.5 ? 0 : 1;
+            rhInv = lhInv === 1 ? 2 : (Math.random() < 0.5 ? 1 : 2);
+          } else {
+            lhInv = Math.random() < 0.5 ? 0 : 1;
+            rhInv = Math.random() < 0.5 ? 2 : 3;
+          }
+        } else {
+          lhInv = Math.floor(Math.random() * numInversions);
+          const allInvs = Array.from({ length: numInversions }, (_, i) => i);
+          const remaining = allInvs.filter(i => i !== lhInv);
+          rhInv = remaining[Math.floor(Math.random() * remaining.length)];
+        }
+      }
+
+      const chordDef = CHORD_TYPES[typeKey];
+      const notesPerHand = chordDef.intervals.length;
+
+      // Bouw exacte MIDI-noten voor LH en RH
+      const lh = buildInversionVoicing(rootObj, chordDef.intervals, lhInv, 41);
+      let rh = buildInversionVoicing(rootObj, chordDef.intervals, rhInv, 58);
+
+      // Zorg dat rechterhand altijd hoger ligt dan de hoogste noot van de linkerhand
+      const highestLh = lh.midis[lh.midis.length - 1];
+      while (rh.midis[0] <= highestLh && rh.midis[rh.midis.length - 1] + 12 <= 83) {
+        rh.midis = rh.midis.map(m => m + 12);
+      }
+
+      const signature = `${rootObj.name}${chordDef.suffix}-${lhInv}-${rhInv}`;
+      if (!forceFirstExample && state.currentChallenge && state.currentChallenge.signature === signature && (availableRoots.length > 1 || state.activeTypes.length > 1)) {
+        return generateNewChallenge(false);
+      }
+
+      const expectedPitchClasses = chordDef.intervals.map(i => (rootObj.midiBase + i) % 12);
+      const lhExpectedPCs = lh.midis.map(m => m % 12);
+      const rhExpectedPCs = rh.midis.map(m => m % 12);
+
+      // Gebruik een extra duidelijk symbool: bijv. "C major" of "Cm" of "Bbmaj13"
+      const displaySymbol = chordDef.suffix === ''
+        ? `${rootObj.name} major`
+        : `${rootObj.name}${chordDef.suffix}`;
+
+      if (state.autoNextTimeoutId) {
+        clearTimeout(state.autoNextTimeoutId);
+        state.autoNextTimeoutId = null;
+      }
+
+      state.challengeSolved = false;
+      state.chordStartTimeMs = performance.now();
+      state.activeMidiNotes.clear();
+      state.revealed = false;
+      state.solutionUsedForCurrentChord = false;
+      state.currentChordPenaltyMs = 0;
+
+      state.currentChallenge = {
+        signature,
+        rootObj,
+        chordDef,
+        notesPerHand,
+        totalExpectedNotes: notesPerHand * 2,
+        symbol: displaySymbol,
+        fullName: `${rootObj.name} ${chordDef.label}`,
+        formula: chordDef.formula,
+        expectedPitchClasses,
+        lhExpectedPCs,
+        rhExpectedPCs,
+        lh,
+        rh
+      };
+
+      renderChallenge();
+      evaluateMidiInput();
+    }
+
+    // =========================================================================
+    // 6. SPELVERLOOP: STARTEN, STOPWATCH & RONDE VOLTOOIEN
+    // =========================================================================
+    function switchView(viewName) {
+      state.view = viewName;
+      const startEl = document.getElementById('startScreenView');
+      const gameEl = document.getElementById('gameView');
+      const resultsEl = document.getElementById('resultsView');
+      const backBtn = document.getElementById('backToStartBtn');
+      const filterBtn = document.getElementById('toggleSettingsBtn');
+      const settingsPanel = document.getElementById('settingsPanel');
+      const step2Container = startEl.querySelector('.space-y-4');
+
+      startEl.classList.add('hidden');
+      gameEl.classList.add('hidden');
+      resultsEl.classList.add('hidden');
+
+      if (viewName === 'start') {
+        stopStopwatch();
+        stopTimer();
+        startEl.classList.remove('hidden');
+        backBtn.classList.add('hidden');
+        filterBtn.classList.add('hidden');
+        // Plaats Stap 1 (settingsPanel) terug boven Stap 2 op het Startscherm
+        startEl.insertBefore(settingsPanel, step2Container);
+        settingsPanel.classList.remove('hidden');
+        renderStartScreenHighscores();
+      } else if (viewName === 'game') {
+        gameEl.classList.remove('hidden');
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+        filterBtn.classList.remove('hidden');
+        filterBtn.classList.add('flex');
+        // Verplaats settingsPanel boven gameView (standaard ingeklapt tijdens spelen)
+        gameEl.parentNode.insertBefore(settingsPanel, gameEl);
+        settingsPanel.classList.add('hidden');
+      } else if (viewName === 'results') {
+        stopStopwatch();
+        stopTimer();
+        resultsEl.classList.remove('hidden');
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+        filterBtn.classList.add('hidden');
+      }
+    }
+
+    function startGameSession(mode) {
+      state.gameMode = mode;
+      state.chordSplits = [];
+      state.penaltyMs = 0;
+      state.currentChordPenaltyMs = 0;
+      state.currentChordIndex = 1;
+
+      const timedHud = document.getElementById('timedHudBar');
+      const freeBar = document.getElementById('freePlayMetronomeBar');
+      const nextBtn = document.getElementById('nextChordBtn');
+      const skipBtn = document.getElementById('skipPenaltyBtn');
+      const skipLabel = document.getElementById('skipBtnLabel');
+
+      if (mode === 'free') {
+        timedHud.classList.add('hidden');
+        freeBar.classList.remove('hidden');
+        freeBar.classList.add('flex');
+        nextBtn.classList.remove('hidden');
+        nextBtn.classList.add('flex');
+        skipBtn.classList.remove('hidden');
+        skipLabel.textContent = 'Overslaan';
+        stopStopwatch();
+      } else {
+        state.targetChordsCount = parseInt(mode, 10);
+        timedHud.classList.remove('hidden');
+        freeBar.classList.add('hidden');
+        freeBar.classList.remove('flex');
+        nextBtn.classList.add('hidden');
+        nextBtn.classList.remove('flex');
+        skipBtn.classList.remove('hidden');
+        skipLabel.textContent = 'Overslaan (+15s)';
+
+        const modeTitles = {
+          '10': '⚡ 10 AKKOORDEN SPRINT',
+          '20': '🔥 20 AKKOORDEN RUN',
+          '50': '👑 50 AKKOORDEN MARATHON'
+        };
+        document.getElementById('activeModeBadge').textContent = modeTitles[mode] || 'TIMED CHALLENGE';
+
+        const bestMs = getBestTimeMs(mode);
+        document.getElementById('hudTargetRecord').textContent = bestMs !== null
+          ? formatTimeDetailedMs(bestMs)
+          : 'Nog geen record';
+
+        updateHudProgress();
+        startStopwatch();
+      }
+
+      switchView('game');
+      generateNewChallenge(false);
+    }
+
+    function updateHudProgress() {
+      if (state.gameMode === 'free') return;
+      const idx = state.currentChordIndex;
+      const total = state.targetChordsCount;
+      document.getElementById('chordProgressText').textContent = `Akkoord ${idx} / ${total}`;
+      const pct = Math.min(100, Math.round(((idx - 1) / total) * 100));
+      document.getElementById('chordProgressBar').style.width = `${ Math.max(6, pct) }%`;
+    }
+
+    function startStopwatch() {
+      stopStopwatch();
+      state.stopwatchRunning = true;
+      state.runStartTimeMs = performance.now();
+      state.chordStartTimeMs = state.runStartTimeMs;
+      state.elapsedMs = 0;
+
+      function tick() {
+        if (!state.stopwatchRunning) return;
+        const now = performance.now();
+        state.elapsedMs = (now - state.runStartTimeMs) + state.penaltyMs;
+        document.getElementById('liveStopwatchDisplay').textContent = formatTimeMs(state.elapsedMs);
+        state.stopwatchRafId = requestAnimationFrame(tick);
+      }
+
+      state.stopwatchRafId = requestAnimationFrame(tick);
+    }
+
+    function stopStopwatch() {
+      state.stopwatchRunning = false;
+      if (state.stopwatchRafId) {
+        cancelAnimationFrame(state.stopwatchRafId);
+        state.stopwatchRafId = null;
+      }
+    }
+
+    function showPenaltyToast(text = '+10s straftijd') {
+      const toast = document.getElementById('penaltyToast');
+      if (!toast) return;
+      toast.textContent = text;
+      toast.classList.remove('hidden');
+      if (state.penaltyToastTimeoutId) {
+        clearTimeout(state.penaltyToastTimeoutId);
+      }
+      state.penaltyToastTimeoutId = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2200);
+    }
+
+    function handleChordCompleted(wasSkipped = false) {
+      const now = performance.now();
+      const skipPenaltyMs = (wasSkipped && state.gameMode !== 'free') ? 15000 : 0;
+      const splitMs = (now - state.chordStartTimeMs) + state.currentChordPenaltyMs + skipPenaltyMs;
+
+      if (state.currentChallenge) {
+        state.chordSplits.push({
+          index: state.currentChordIndex,
+          symbol: state.currentChallenge.symbol,
+          lhName: state.currentChallenge.lh.inversionName,
+          rhName: state.currentChallenge.rh.inversionName,
+          lhNotes: state.currentChallenge.lh.noteNames.join('-'),
+          rhNotes: state.currentChallenge.rh.noteNames.join('-'),
+          timeMs: splitMs,
+          skipped: wasSkipped,
+          usedSolution: state.solutionUsedForCurrentChord
+        });
+      }
+
+      if (state.gameMode === 'free') {
+        generateNewChallenge(false);
+        return;
+      }
+
+      if (state.currentChordIndex >= state.targetChordsCount) {
+        // Volledige sessie van 10, 20 of 50 akkoorden is klaar!
+        document.getElementById('chordProgressBar').style.width = '100%';
+        finishTimedRun();
+      } else {
+        state.currentChordIndex++;
+        updateHudProgress();
+        generateNewChallenge(false);
+      }
+    }
+
+    function finishTimedRun() {
+      const finalMs = (performance.now() - state.runStartTimeMs) + state.penaltyMs;
+      stopStopwatch();
+
+      const modeKey = state.gameMode;
+      const prevBestMs = getBestTimeMs(modeKey);
+      const isNewRecord = prevBestMs === null || finalMs < prevBestMs;
+
+      if (isNewRecord) {
+        saveBestTimeMs(modeKey, finalMs);
+      }
+
+      const bestNowMs = isNewRecord ? finalMs : prevBestMs;
+      const avgSec = (finalMs / 1000 / state.targetChordsCount).toFixed(2);
+
+      document.getElementById('finalTotalTime').textContent = formatTimeDetailedMs(finalMs);
+      document.getElementById('finalAvgTime').textContent = `${avgSec}s`;
+      document.getElementById('finalBestTime').textContent = formatTimeDetailedMs(bestNowMs);
+
+      const badge = document.getElementById('recordBadge');
+      const title = document.getElementById('resultsTitle');
+      const sub = document.getElementById('resultsSubtitle');
+
+      if (isNewRecord) {
+        badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider';
+        badge.textContent = prevBestMs === null
+          ? '🏆 Eerste Topscore Gezet!'
+          : `🏆 Nieuw Persoonlijk Record! (-${((prevBestMs - finalMs) / 1000).toFixed(2)}s)`;
+      } else {
+        const diffSec = ((finalMs - prevBestMs) / 1000).toFixed(2);
+        badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-wider';
+        badge.textContent = `⏱️ +${diffSec}s boven je record (${formatTimeDetailedMs(prevBestMs)})`;
+      }
+
+      title.textContent = `${state.targetChordsCount} Akkoorden Voltooid!`;
+      sub.textContent = `Gemiddeld ${avgSec} seconden per twee-handige akkoordomkering.`;
+
+      // Render lijst met alle gespeelde akkoorden en hun tussentijd
+      const splitsContainer = document.getElementById('splitsList');
+      splitsContainer.innerHTML = '';
+      state.chordSplits.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-2.5 rounded-xl bg-club-900 border border-slate-800/90 text-xs';
+        const secStr = (item.timeMs / 1000).toFixed(2) + 's';
+        let statusRight = secStr;
+        let statusColor = 'text-emerald-400';
+
+        if (item.skipped && item.usedSolution) {
+          statusRight = `⏭️ Overgeslagen (+15s) & 💡 Oplossing (+10s) • ${secStr}`;
+          statusColor = 'text-rose-400';
+        } else if (item.skipped) {
+          statusRight = `⏭️ Overgeslagen (+15s straf) • ${secStr}`;
+          statusColor = 'text-rose-400';
+        } else if (item.usedSolution) {
+          statusRight = `💡 Oplossing (+10s) • ${secStr}`;
+          statusColor = 'text-amber-300';
+        }
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="font-mono text-slate-500 font-bold">#${item.index}</span>
+            <span class="font-mono font-extrabold text-white text-sm">${item.symbol}</span>
+            <span class="text-[11px] text-slate-400">LH: ${item.lhName.replace(' (Root)', '')} &bull; RH: ${item.rhName}</span>
+          </div>
+          <span class="font-mono font-bold ${statusColor}">
+            ${statusRight}
+          </span>
+        `;
+        splitsContainer.appendChild(row);
+      });
+
+      switchView('results');
+    }
+
+    // =========================================================================
+    // 7. PIANOKLAVIER OPBOUW (4 OCTAVEN: C2 = MIDI 36 t/m B5 = MIDI 83)
+    // =========================================================================
+    const START_MIDI = 36; // C2
+    const END_MIDI = 83;   // B5 (4 octaven)
+    const keyElements = new Map();
+
+    function buildPianoKeyboard() {
+      const container = document.getElementById('pianoKeyboard');
+      container.innerHTML = '';
+      keyElements.clear();
+
+      const whiteMidis = [];
+      for (let m = START_MIDI; m <= END_MIDI; m++) {
+        const pc = m % 12;
+        const isBlack = [1, 3, 6, 8, 10].includes(pc);
+        if (!isBlack) whiteMidis.push(m);
+      }
+
+      const totalWhites = whiteMidis.length;
+      let whiteIndex = 0;
+
+      for (let m = START_MIDI; m <= END_MIDI; m++) {
+        const pc = m % 12;
+        const isBlack = [1, 3, 6, 8, 10].includes(pc);
+        const octave = Math.floor(m / 12) - 1;
+
+        const keyEl = document.createElement('div');
+        keyEl.dataset.midi = m;
+
+        if (!isBlack) {
+          keyEl.className = 'white-key';
+          const label = document.createElement('span');
+          label.className = 'key-label text-[10px] font-mono font-bold text-slate-500 pointer-events-none';
+          label.textContent = pc === 0 ? `C${octave}` : '';
+          keyEl.appendChild(label);
+
+          container.appendChild(keyEl);
+          whiteIndex++;
+        } else {
+          keyEl.className = 'black-key';
+          const leftPercent = (whiteIndex / totalWhites) * 100;
+          keyEl.style.left = `${leftPercent}%`;
+
+          const label = document.createElement('span');
+          label.className = 'key-label text-[9px] font-mono font-bold text-slate-950 pointer-events-none';
+          label.textContent = '';
+          keyEl.appendChild(label);
+
+          container.appendChild(keyEl);
+        }
+
+        // Klikken op een toets speelt Rhodes-geluid én zet de toets aan/uit voor testen zonder MIDI
+        keyEl.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          playRhodesNote(m, audioCtx ? audioCtx.currentTime : 0, 1.0, 0.16);
+
+          if (state.mouseClickToggleMode) {
+            if (state.activeMidiNotes.has(m)) {
+              state.activeMidiNotes.delete(m);
+            } else {
+              state.activeMidiNotes.add(m);
+            }
+            evaluateMidiInput();
+          }
+        });
+
+        keyElements.set(m, keyEl);
+      }
+    }
+
+    // =========================================================================
+    // 8. UI RENDERING & LIVE MIDI KLAVIER VISUALISATIE
+    // =========================================================================
+    function renderChallenge() {
+      const ch = state.currentChallenge;
+      if (!ch) return;
+
+      const container = document.getElementById('chordDisplayContainer');
+      container.classList.remove('animate-chord');
+      void container.offsetWidth;
+      container.classList.add('animate-chord');
+
+      document.getElementById('chordSymbol').textContent = ch.symbol;
+      document.getElementById('chordFullName').textContent = ch.fullName;
+
+      const formulaBadge = document.getElementById('chordFormulaBadge');
+      formulaBadge.textContent = `Formule: ${ch.formula}`;
+      if (state.revealed) {
+        formulaBadge.classList.remove('hidden');
+        formulaBadge.classList.add('inline-flex');
+      } else {
+        formulaBadge.classList.add('hidden');
+        formulaBadge.classList.remove('inline-flex');
+      }
+
+      document.getElementById('lhCardHeader').textContent = `Linkerhand (Laagste ${ch.notesPerHand} noten)`;
+      document.getElementById('rhCardHeader').textContent = `Rechterhand (Hoogste ${ch.notesPerHand} noten)`;
+      document.getElementById('demoSolveBtnLabel').textContent = `Test ${ch.totalExpectedNotes} Noten`;
+
+      document.getElementById('lhInversionName').textContent = ch.lh.inversionName;
+      document.getElementById('rhInversionName').textContent = ch.rh.inversionName;
+
+      const lhNotesEl = document.getElementById('lhNotesDisplay');
+      const rhNotesEl = document.getElementById('rhNotesDisplay');
+      const revealBtn = document.getElementById('revealBtn');
+      const revealBtnLabel = document.getElementById('revealBtnLabel');
+
+      const isTimedMode = state.gameMode !== 'free';
+
+      if (state.revealed) {
+        lhNotesEl.textContent = ch.lh.noteNames.join(' – ');
+        rhNotesEl.textContent = ch.rh.noteNames.join(' – ');
+        lhNotesEl.className = 'font-mono text-sm sm:text-base font-bold text-cyan-300 tracking-wide';
+        rhNotesEl.className = 'font-mono text-sm sm:text-base font-bold text-amber-300 tracking-wide';
+
+        revealBtn.disabled = true;
+        revealBtnLabel.textContent = state.solutionUsedForCurrentChord
+          ? (isTimedMode ? 'Oplossing getoond (+10s)' : 'Oplossing getoond')
+          : 'Oplossing zichtbaar';
+      } else {
+        lhNotesEl.textContent = '❓ Zoek zelf de juiste noten op het klavier';
+        rhNotesEl.textContent = '❓ Zoek zelf de juiste noten op het klavier';
+        lhNotesEl.className = 'font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide';
+        rhNotesEl.className = 'font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide';
+
+        revealBtn.disabled = false;
+        revealBtnLabel.textContent = isTimedMode ? 'Toon Oplossing (+10s)' : 'Toon Oplossing';
+      }
+
+      updatePianoHighlights();
+    }
+
+    function updatePianoHighlights() {
+      keyElements.forEach((el, midi) => {
+        el.classList.remove('lh-active', 'rh-active');
+        const label = el.querySelector('.key-label');
+        const pc = midi % 12;
+        const octave = Math.floor(midi / 12) - 1;
+        const isBlack = [1, 3, 6, 8, 10].includes(pc);
+        label.textContent = (!isBlack && pc === 0) ? `C${octave}` : '';
+        label.className = isBlack
+          ? 'key-label text-[9px] font-mono font-bold text-slate-950 pointer-events-none'
+          : 'key-label text-[10px] font-mono font-bold text-slate-500 pointer-events-none';
+      });
+
+      if (state.revealed && state.currentChallenge) {
+        const { lh, rh } = state.currentChallenge;
+
+        lh.midis.forEach((midi, idx) => {
+          const el = keyElements.get(midi);
+          if (el) {
+            el.classList.add('lh-active');
+            const label = el.querySelector('.key-label');
+            label.textContent = lh.noteNames[idx];
+            label.classList.remove('text-slate-500');
+            label.classList.add('text-slate-950');
+          }
+        });
+
+        rh.midis.forEach((midi, idx) => {
+          const el = keyElements.get(midi);
+          if (el) {
+            el.classList.add('rh-active');
+            const label = el.querySelector('.key-label');
+            label.textContent = rh.noteNames[idx];
+            label.classList.remove('text-slate-500');
+            label.classList.add('text-slate-950');
+          }
+        });
+      }
+
+      updateMidiKeyHighlights();
+    }
+
+    function projectMidiToVisibleRange(midi) {
+      let projected = midi;
+      let shifted = false;
+      while (projected < START_MIDI) {
+        projected += 12;
+        shifted = true;
+      }
+      while (projected > END_MIDI) {
+        projected -= 12;
+        shifted = true;
+      }
+      return { projected, shifted };
+    }
+
+    function updateMidiKeyHighlights() {
+      keyElements.forEach((el) => {
+        el.classList.remove('midi-pressed');
+        const oldDot = el.querySelector('.midi-dot');
+        if (oldDot) oldDot.remove();
+      });
+
+      let anyOctaveProjected = false;
+
+      state.activeMidiNotes.forEach((midi) => {
+        const { projected, shifted } = projectMidiToVisibleRange(midi);
+        if (shifted) anyOctaveProjected = true;
+
+        const el = keyElements.get(projected);
+        if (el) {
+          el.classList.add('midi-pressed');
+          if (!el.querySelector('.midi-dot')) {
+            const dot = document.createElement('span');
+            dot.className = 'midi-dot';
+            el.prepend(dot);
+          }
+        }
+      });
+
+      const hintEl = document.getElementById('octaveProjectionHint');
+      if (anyOctaveProjected) {
+        hintEl.classList.remove('hidden');
+      } else {
+        hintEl.classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // 9. WEB MIDI API & DYNAMISCHE 6- OF 8-NOOT INVERSIE-VALIDATIE PER HAND
+    // =========================================================================
+    function formatMidiNoteName(midi, rootObj = null) {
+      const pc = midi % 12;
+      const names = rootObj ? rootObj.notes : ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+      return `${names[pc]}`;
+    }
+
+    function arraysEqual(a, b) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+      }
+      return true;
+    }
+
+    // Controleert of een hand (3 noten bij drieklank of 4 noten bij 7th/extension) exact de gevraagde stijgende volgorde speelt
+    function validateHandNotes(handMidis, expectedPCs, ch) {
+      const n = ch.notesPerHand;
+      if (handMidis.length < n) {
+        return { valid: false, statusText: `${handMidis.length}/${n} noten...`, state: 'waiting' };
+      }
+      const pcs = handMidis.map(m => m % 12);
+      const spanSemitones = handMidis[n - 1] - handMidis[0];
+      const matchesOrder = arraysEqual(pcs, expectedPCs);
+      const isClosePosition = spanSemitones <= 14;
+
+      if (matchesOrder && isClosePosition) {
+        return { valid: true, statusText: '✅ Juiste ligging!', state: 'ok' };
+      }
+
+      const bassPc = pcs[0];
+      const invIdx = ch.expectedPitchClasses.indexOf(bassPc);
+      if (invIdx !== -1 && !matchesOrder) {
+        return {
+          valid: false,
+          statusText: `❌ Speelt ${INVERSION_NAMES[invIdx].replace(' (Root)', '')}`,
+          state: 'err'
+        };
+      }
+      return { valid: false, statusText: '❌ Verkeerde noten/volgorde', state: 'err' };
+    }
+
+    function updateHandStatusCard(handPrefix, evalResult) {
+      const badge = document.getElementById(`${handPrefix}StatusBadge`);
+      if (!badge) return;
+      badge.textContent = evalResult.statusText;
+      badge.className = 'text-xs font-mono font-bold px-2.5 py-1 rounded-lg border ';
+      if (evalResult.state === 'ok') {
+        badge.className += 'bg-emerald-950/90 border-emerald-500/50 text-emerald-300';
+      } else if (evalResult.state === 'err') {
+        badge.className += 'bg-rose-950/90 border-rose-500/50 text-rose-300';
+      } else {
+        badge.className += 'bg-club-950/80 border-slate-700 text-slate-300';
+      }
+    }
+
+    function setFeedbackUI(type, headline, subtext) {
+      const banner = document.getElementById('feedbackBanner');
+      const iconEl = document.getElementById('feedbackIcon');
+      const headEl = document.getElementById('feedbackHeadline');
+      const subEl = document.getElementById('feedbackSubtext');
+
+      banner.classList.remove(
+        'bg-club-950/90', 'border-slate-800',
+        'bg-emerald-950/60', 'border-emerald-500/60',
+        'bg-rose-950/60', 'border-rose-500/60',
+        'bg-cyan-950/50', 'border-cyan-500/40',
+        'animate-shake'
+      );
+
+      if (type === 'success') {
+        banner.classList.add('bg-emerald-950/60', 'border-emerald-500/60');
+        iconEl.textContent = '✅';
+        headEl.className = 'text-sm md:text-base font-extrabold text-emerald-300';
+      } else if (type === 'error') {
+        banner.classList.add('bg-rose-950/60', 'border-rose-500/60', 'animate-shake');
+        iconEl.textContent = '❌';
+        headEl.className = 'text-sm md:text-base font-extrabold text-rose-300';
+      } else if (type === 'playing') {
+        banner.classList.add('bg-cyan-950/50', 'border-cyan-500/40');
+        iconEl.textContent = '🎶';
+        headEl.className = 'text-sm md:text-base font-bold text-cyan-200';
+      } else {
+        banner.classList.add('bg-club-950/90', 'border-slate-800');
+        iconEl.textContent = '🎹';
+        headEl.className = 'text-sm md:text-base font-bold text-slate-200';
+      }
+
+      headEl.textContent = headline;
+      subEl.textContent = subtext;
+    }
+
+    function evaluateMidiInput() {
+      updateMidiKeyHighlights();
+      const ch = state.currentChallenge;
+      if (!ch || state.view !== 'game') return;
+
+      const nPerHand = ch.notesPerHand;
+      const totalReq = ch.totalExpectedNotes;
+
+      const sorted = Array.from(state.activeMidiNotes).sort((a, b) => a - b);
+      const count = sorted.length;
+
+      const playedLhEl = document.getElementById('playedLhNotes');
+      const playedRhEl = document.getElementById('playedRhNotes');
+
+      if (count === 0) {
+        playedLhEl.textContent = '—';
+        playedRhEl.textContent = '—';
+        updateHandStatusCard('lh', { statusText: `Wacht op ${nPerHand} noten...`, state: 'waiting' });
+        updateHandStatusCard('rh', { statusText: `Wacht op ${nPerHand} noten...`, state: 'waiting' });
+        if (!state.challengeSolved) {
+          const hintNotesText = state.revealed
+            ? `Speel ${ch.symbol}: Links (${ch.lh.noteNames.join('-')}) + Rechts (${ch.rh.noteNames.join('-')})`
+            : `Speel ${ch.symbol}: Links in ${ch.lh.inversionName} + Rechts in ${ch.rh.inversionName}`;
+          setFeedbackUI(
+            'idle',
+            hintNotesText,
+            `Houd alle ${totalReq} toetsen (${nPerHand} links + ${nPerHand} rechts) tegelijk ingedrukt op je MIDI-piano of klavier.`
+          );
+        }
+        return;
+      }
+
+      const lhSlice = sorted.slice(0, Math.min(nPerHand, count));
+      const rhSlice = count > nPerHand ? sorted.slice(nPerHand, totalReq) : [];
+
+      playedLhEl.textContent = lhSlice.length
+        ? lhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' – ')
+        : '—';
+      playedRhEl.textContent = rhSlice.length
+        ? rhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' – ')
+        : '—';
+
+      if (state.challengeSolved) return;
+
+      // Controleer LH en RH
+      const lhEval = validateHandNotes(lhSlice, ch.lhExpectedPCs, ch);
+      const rhEval = validateHandNotes(rhSlice, ch.rhExpectedPCs, ch);
+      updateHandStatusCard('lh', lhEval);
+      updateHandStatusCard('rh', rhEval);
+
+      // Controleer op een toon die helemaal niet in de gevraagde voicing thuishoort
+      const wrongNoteMidi = sorted.find(m => !ch.expectedPitchClasses.includes(m % 12));
+      if (wrongNoteMidi !== undefined) {
+        const wrongName = ch.rootObj.notes[wrongNoteMidi % 12];
+        const subText = state.revealed
+          ? `Gevraagde noten: LH (${ch.lh.noteNames.join(' - ')}) en RH (${ch.rh.noteNames.join(' - ')})`
+          : `Zoek de juiste noten voor ${ch.symbol} of klik op '💡 Toon Oplossing' als je vastzit.`;
+        setFeedbackUI(
+          'error',
+          `Let op: ${wrongName} hoort niet in ${ch.symbol}`,
+          subText
+        );
+        return;
+      }
+
+      if (count < totalReq) {
+        setFeedbackUI(
+          'playing',
+          `Aan het zoeken... (${count}/${totalReq} toetsen ingedrukt)`,
+          lhEval.valid
+            ? `Linkerhand (${ch.lh.inversionName}) klopt! Voeg nu je rechterhand (${ch.rh.inversionName}) toe.`
+            : `Speel ${nPerHand} noten links (${ch.lh.inversionName}) en ${nPerHand} noten rechts (${ch.rh.inversionName}).`
+        );
+        return;
+      }
+
+      if (count > totalReq) {
+        setFeedbackUI(
+          'error',
+          `Te veel toetsen ingedrukt (${count}/${totalReq})`,
+          `Laat overtollige toetsen los zodat je precies ${nPerHand} noten per hand speelt.`
+        );
+        return;
+      }
+
+      // Precies het vereiste aantal toetsen (6 of 8) ingedrukt
+      const handsSeparated = lhSlice[nPerHand - 1] < rhSlice[0];
+
+      if (lhEval.valid && rhEval.valid && handsSeparated) {
+        // VOLLEDIG JUIST!
+        state.challengeSolved = true;
+        state.streak++;
+        state.totalSolved++;
+        document.getElementById('streakCounter').textContent = state.streak;
+        document.getElementById('totalSolvedCounter').textContent = `${state.totalSolved} juist`;
+
+        if (!state.revealed) {
+          state.revealed = true;
+          renderChallenge();
+        }
+
+        playSuccessChime();
+
+        const gameEl = document.getElementById('gameView');
+        gameEl.classList.remove('flash-green');
+        void gameEl.offsetWidth;
+        gameEl.classList.add('flash-green');
+
+        setFeedbackUI(
+          'success',
+          `Raak! ${ch.symbol} (${ch.lh.noteNames.join(' ')} + ${ch.rh.noteNames.join(' ')}) helemaal juist!`,
+          'Op naar het volgende akkoord...'
+        );
+
+        state.autoNextTimeoutId = setTimeout(() => {
+          handleChordCompleted(false);
+        }, 550);
+        return;
+      }
+
+      // Juist aantal noten ingedrukt, maar een van beide handen heeft de verkeerde omkering
+      state.streak = 0;
+      document.getElementById('streakCounter').textContent = '0';
+
+      const detailHint = state.revealed
+        ? `Links moet zijn: ${ch.lh.noteNames.join(' – ')} • Rechts moet zijn: ${ch.rh.noteNames.join(' – ')}`
+        : `Controleer welke toon onderaan ligt bij ${ch.lh.inversionName} (links) en ${ch.rh.inversionName} (rechts), of gebruik '💡 Toon Oplossing'.`;
+
+      if (!lhEval.valid && !rhEval.valid) {
+        setFeedbackUI(
+          'error',
+          'Beide handen hebben nog niet de juiste omkering',
+          detailHint
+        );
+      } else if (!lhEval.valid) {
+        setFeedbackUI(
+          'error',
+          `Rechterhand is goed, maar Linkerhand speelt nog niet ${ch.lh.inversionName}`,
+          state.revealed
+            ? `Speel met links van laag naar hoog: ${ch.lh.noteNames.join(' – ')}`
+            : `Je rechterhand staat goed! Zoek nu met je linkerhand naar de ${ch.lh.inversionName}.`
+        );
+      } else {
+        setFeedbackUI(
+          'error',
+          `Linkerhand is goed, maar Rechterhand speelt nog niet ${ch.rh.inversionName}`,
+          state.revealed
+            ? `Speel met rechts van laag naar hoog: ${ch.rh.noteNames.join(' – ')}`
+            : `Je linkerhand staat goed! Zoek nu met je rechterhand naar de ${ch.rh.inversionName}.`
+        );
+      }
+    }
+
+    function handleMidiMessage(event) {
+      const [status, note, velocity] = event.data;
+      const command = status & 0xf0;
+
+      if (command === 0x90 && velocity > 0) {
+        state.activeMidiNotes.add(note);
+        evaluateMidiInput();
+      } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
+        state.activeMidiNotes.delete(note);
+        evaluateMidiInput();
+      }
+    }
+
+    function refreshMidiInputs() {
+      if (!state.midiAccess) return;
+      const inputs = Array.from(state.midiAccess.inputs.values());
+      const badge = document.getElementById('midiStatusBadge');
+      const dot = document.getElementById('midiStatusDot');
+      const text = document.getElementById('midiStatusText');
+      const btnText = document.getElementById('connectMidiBtnText');
+      const selectEl = document.getElementById('midiDeviceSelect');
+
+      // Vul dropdown
+      selectEl.innerHTML = '<option value="all">Alle MIDI-apparaten</option>';
+      inputs.forEach(input => {
+        const opt = document.createElement('option');
+        opt.value = input.id;
+        opt.textContent = input.name || `MIDI Poort ${input.id}`;
+        selectEl.appendChild(opt);
+      });
+
+      inputs.forEach((input) => {
+        input.onmidimessage = (e) => {
+          if (state.selectedMidiInputId === 'all' || state.selectedMidiInputId === input.id) {
+            handleMidiMessage(e);
+          }
+        };
+      });
+
+      if (inputs.length > 0) {
+        state.midiConnected = true;
+        selectEl.classList.remove('hidden');
+        const deviceNames = inputs.map(i => i.name || 'MIDI Piano').join(', ');
+        badge.classList.remove('border-slate-700/80', 'text-slate-300');
+        badge.classList.add('border-emerald-500/50', 'bg-emerald-950/50', 'text-emerald-300');
+        dot.classList.remove('bg-slate-500', 'bg-amber-400');
+        dot.classList.add('bg-emerald-400', 'shadow-[0_0_8px_#10b981]');
+        text.textContent = `Verbonden: ${deviceNames}`;
+        btnText.textContent = 'MIDI Verbonden';
+      } else {
+        state.midiConnected = false;
+        selectEl.classList.add('hidden');
+        badge.classList.add('border-slate-700/80', 'text-slate-300');
+        badge.classList.remove('border-emerald-500/50', 'bg-emerald-950/50', 'text-emerald-300');
+        dot.classList.remove('bg-emerald-400', 'shadow-[0_0_8px_#10b981]');
+        dot.classList.add('bg-amber-400');
+        text.textContent = 'Geen USB-MIDI piano gedetecteerd (muis-klik actief)';
+        btnText.textContent = 'Verbind MIDI Piano';
+      }
+    }
+
+    async function connectMidiPiano() {
+      const unsupportedBanner = document.getElementById('midiUnsupportedBanner');
+      if (!navigator.requestMIDIAccess) {
+        unsupportedBanner.classList.remove('hidden');
+        document.getElementById('midiStatusText').textContent = 'Browser ondersteunt geen Web MIDI (gebruik muis-klik)';
+        return;
+      }
+
+      try {
+        const access = await navigator.requestMIDIAccess({ sysex: false });
+        state.midiAccess = access;
+        unsupportedBanner.classList.add('hidden');
+        access.onstatechange = () => refreshMidiInputs();
+        refreshMidiInputs();
+      } catch (err) {
+        document.getElementById('midiStatusText').textContent = 'MIDI-toegang geweigerd (gebruik muis-klik)';
+        document.getElementById('midiStatusDot').classList.add('bg-rose-500');
+      }
+    }
+
+    // =========================================================================
+    // 10. METRONOOM LOGICA (VOOR VRIJ OEFENEN)
+    // =========================================================================
+    function renderBeatDots() {
+      const container = document.getElementById('beatDotsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      for (let i = 1; i <= state.beatsPerChord; i++) {
+        const dot = document.createElement('div');
+        const isCurrent = state.timerRunning && state.currentBeat === i;
+        dot.className = `w-3.5 h-3.5 rounded-full transition-all ${
+          isCurrent
+            ? (i === 1 ? 'bg-amber-400 scale-125 shadow-[0_0_10px_#fbbf24]' : 'bg-cyan-400 scale-110 shadow-[0_0_8px_#22d3ee]')
+            : 'bg-slate-800 border border-slate-700'
+        }`;
+        container.appendChild(dot);
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.timerRunning = true;
+      state.currentBeat = 0;
+
+      const btn = document.getElementById('timerToggleBtn');
+      btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-400');
+      btn.classList.add('bg-rose-500', 'hover:bg-rose-400');
+      document.getElementById('timerBtnIcon').textContent = '⏹';
+      document.getElementById('timerBtnText').textContent = 'Stop Metronoom';
+
+      const intervalMs = (60 / state.bpm) * 1000;
+      tickMetronome();
+      state.timerIntervalId = setInterval(tickMetronome, intervalMs);
+    }
+
+    function stopTimer() {
+      state.timerRunning = false;
+      if (state.timerIntervalId) {
+        clearInterval(state.timerIntervalId);
+        state.timerIntervalId = null;
+      }
+      state.currentBeat = 0;
+      renderBeatDots();
+
+      const btn = document.getElementById('timerToggleBtn');
+      if (btn) {
+        btn.classList.add('bg-emerald-500', 'hover:bg-emerald-400');
+        btn.classList.remove('bg-rose-500', 'hover:bg-rose-400');
+        document.getElementById('timerBtnIcon').textContent = '▶';
+        document.getElementById('timerBtnText').textContent = 'Start Metronoom';
+      }
+    }
+
+    function tickMetronome() {
+      state.currentBeat++;
+      if (state.currentBeat > state.beatsPerChord) {
+        state.currentBeat = 1;
+        generateNewChallenge(false);
+      }
+      if (state.practiceMode && state.currentBeat === state.beatsPerChord && !state.revealed) {
+        state.revealed = true;
+        renderChallenge();
+      }
+      playMetronomeClick(state.currentBeat === 1);
+      renderBeatDots();
+    }
+
+    // =========================================================================
+    // 11. EVENT LISTENERS & INITIALISATIE
+    // =========================================================================
+    function initEvents() {
+      // Startscherm modus knoppen (10, 20, 50, Vrij Oefenen)
+      document.querySelectorAll('.start-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.startMode;
+          startGameSession(mode);
+        });
+      });
+
+      // Terug naar Startscherm knoppen
+      document.getElementById('backToStartBtn').addEventListener('click', () => {
+        switchView('start');
+      });
+      document.getElementById('resultsToStartBtn').addEventListener('click', () => {
+        switchView('start');
+      });
+
+      // Opnieuw spelen op Eindscherm
+      document.getElementById('playAgainBtn').addEventListener('click', () => {
+        startGameSession(state.gameMode);
+      });
+
+      // Wis topscores
+      document.getElementById('clearHighscoresBtn').addEventListener('click', () => {
+        ['10', '20', '50'].forEach(k => {
+          try { localStorage.removeItem(STORAGE_KEY_PREFIX + k); } catch (e) {}
+        });
+        renderStartScreenHighscores();
+      });
+
+      // MIDI verbinden & poort selectie
+      document.getElementById('connectMidiBtn').addEventListener('click', () => {
+        connectMidiPiano();
+      });
+      document.getElementById('midiDeviceSelect').addEventListener('change', (e) => {
+        state.selectedMidiInputId = e.target.value;
+        state.activeMidiNotes.clear();
+        evaluateMidiInput();
+      });
+
+      // Reset toetsen
+      document.getElementById('resetMidiNotesBtn').addEventListener('click', () => {
+        state.activeMidiNotes.clear();
+        evaluateMidiInput();
+      });
+
+      // Muis-klik toggle modus
+      document.getElementById('clickToggleModeCheckbox').addEventListener('change', (e) => {
+        state.mouseClickToggleMode = e.target.checked;
+        if (!state.mouseClickToggleMode) {
+          state.activeMidiNotes.clear();
+          evaluateMidiInput();
+        }
+      });
+
+      // Test 8 Noten knop (vult direct de 8 gevraagde noten in om zonder MIDI te kunnen testen)
+      document.getElementById('demoSolveBtn').addEventListener('click', () => {
+        if (!state.currentChallenge || state.challengeSolved) return;
+        state.activeMidiNotes.clear();
+        state.currentChallenge.lh.midis.forEach(m => state.activeMidiNotes.add(m));
+        state.currentChallenge.rh.midis.forEach(m => state.activeMidiNotes.add(m));
+        evaluateMidiInput();
+      });
+
+      // Overslaan (+15s straf in timed mode)
+      document.getElementById('skipPenaltyBtn').addEventListener('click', () => {
+        if (state.view !== 'game' || state.challengeSolved) return;
+        if (state.gameMode !== 'free') {
+          state.penaltyMs += 15000;
+          if (state.stopwatchRunning) {
+            const now = performance.now();
+            state.elapsedMs = (now - state.runStartTimeMs) + state.penaltyMs;
+            document.getElementById('liveStopwatchDisplay').textContent = formatTimeMs(state.elapsedMs);
+          }
+          showPenaltyToast('+15s straftijd (Overgeslagen)');
+        }
+        state.streak = 0;
+        document.getElementById('streakCounter').textContent = '0';
+        handleChordCompleted(true);
+      });
+
+      // Volgend akkoord (Vrij Oefenen)
+      document.getElementById('nextChordBtn').addEventListener('click', () => {
+        if (state.timerRunning) {
+          state.currentBeat = 1;
+          renderBeatDots();
+        }
+        generateNewChallenge(false);
+      });
+
+      // Spatiebalk shortcut in Vrij Oefenen
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && state.view === 'game' && state.gameMode === 'free' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
+          e.preventDefault();
+          generateNewChallenge(false);
+        }
+      });
+
+      // Beluister akkoord
+      document.getElementById('playChordBtn').addEventListener('click', () => {
+        playCurrentVoicing();
+      });
+
+      // Toon Oplossing (+10s straftijd in timed modes, eenmalig per akkoord)
+      document.getElementById('revealBtn').addEventListener('click', () => {
+        if (state.revealed || state.challengeSolved) return;
+        state.revealed = true;
+        state.solutionUsedForCurrentChord = true;
+
+        if (state.gameMode !== 'free') {
+          state.penaltyMs += 10000;
+          state.currentChordPenaltyMs += 10000;
+          if (state.stopwatchRunning) {
+            const now = performance.now();
+            state.elapsedMs = (now - state.runStartTimeMs) + state.penaltyMs;
+            document.getElementById('liveStopwatchDisplay').textContent = formatTimeMs(state.elapsedMs);
+          }
+          showPenaltyToast('+10s straftijd');
+        }
+
+        renderChallenge();
+        evaluateMidiInput();
+      });
+
+      // Oefenmodus knop bovenin schakelt ook de huidige weergave indien gewenst
+      const practiceBtn = document.getElementById('practiceModeBtn');
+      practiceBtn.addEventListener('click', () => {
+        if (!state.revealed) {
+          document.getElementById('revealBtn').click();
+        }
+      });
+
+      // Filters paneel tonen/verbergen tijdens spelen
+      document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
+        const panel = document.getElementById('settingsPanel');
+        panel.classList.toggle('hidden');
+      });
+
+      // Moeilijkheid Keuzevakken (Stap 1)
+      const diffCheckboxes = [
+        { id: 'cbDiffMajor', key: 'diffMajor' },
+        { id: 'cbDiffMinor', key: 'diffMinor' },
+        { id: 'cbDiffDiminished', key: 'diffDiminished' },
+        { id: 'cbDiffAugmented', key: 'diffAugmented' },
+        { id: 'cbDiffSevenths', key: 'diffSevenths' },
+        { id: 'cbDiffExtensions', key: 'diffExtensions' }
+      ];
+
+      function syncDifficultyFromDOM(changedCheckbox = null) {
+        const maj = document.getElementById('cbDiffMajor').checked;
+        const min = document.getElementById('cbDiffMinor').checked;
+        const dim = document.getElementById('cbDiffDiminished').checked;
+        const aug = document.getElementById('cbDiffAugmented').checked;
+        const warnEl = document.getElementById('filterWarning');
+
+        // Zorg dat er altijd minimaal 1 basisfamilie actief blijft
+        if (!maj && !min && !dim && !aug) {
+          if (changedCheckbox) changedCheckbox.checked = true;
+          else document.getElementById('cbDiffMajor').checked = true;
+          warnEl.classList.remove('hidden');
+        } else {
+          warnEl.classList.add('hidden');
+        }
+
+        state.diffMajor = document.getElementById('cbDiffMajor').checked;
+        state.diffMinor = document.getElementById('cbDiffMinor').checked;
+        state.diffDiminished = document.getElementById('cbDiffDiminished').checked;
+        state.diffAugmented = document.getElementById('cbDiffAugmented').checked;
+        state.diffSevenths = document.getElementById('cbDiffSevenths').checked;
+        state.diffExtensions = document.getElementById('cbDiffExtensions').checked;
+
+        computeActiveChordTypes();
+        if (state.view === 'game') {
+          generateNewChallenge(false);
+        }
+      }
+
+      diffCheckboxes.forEach(({ id }) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('change', (e) => syncDifficultyFromDOM(e.target));
+        }
+      });
+
+      // Behoud simpele drieklanken in de mix
+      document.getElementById('includeTriadsWhenExtendedCb').addEventListener('change', (e) => {
+        state.includeTriadsWhenExtended = e.target.checked;
+        computeActiveChordTypes();
+        if (state.view === 'game') generateNewChallenge(false);
+      });
+
+      // Vink alles aan (Volledige Mix)
+      document.getElementById('selectAllDiffBtn').addEventListener('click', () => {
+        diffCheckboxes.forEach(({ id }) => {
+          document.getElementById(id).checked = true;
+        });
+        document.getElementById('includeTriadsWhenExtendedCb').checked = true;
+        state.includeTriadsWhenExtended = true;
+        syncDifficultyFromDOM();
+      });
+
+      // Basis Reset
+      document.getElementById('resetBasicDiffBtn').addEventListener('click', () => {
+        document.getElementById('cbDiffMajor').checked = true;
+        document.getElementById('cbDiffMinor').checked = true;
+        document.getElementById('cbDiffDiminished').checked = false;
+        document.getElementById('cbDiffAugmented').checked = false;
+        document.getElementById('cbDiffSevenths').checked = true;
+        document.getElementById('cbDiffExtensions').checked = false;
+        syncDifficultyFromDOM();
+      });
+
+      // Toonsoorten & Hand-regel
+      document.querySelectorAll('input[name="keySet"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.keySet = e.target.value;
+          if (state.view === 'game') generateNewChallenge(false);
+        });
+      });
+
+      document.querySelectorAll('input[name="handRule"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.handRule = e.target.value;
+          if (state.view === 'game') generateNewChallenge(false);
+        });
+      });
+
+      // Metronoom controls (Vrij Oefenen)
+      document.getElementById('timerToggleBtn').addEventListener('click', () => {
+        if (state.timerRunning) stopTimer();
+        else startTimer();
+      });
+
+      document.getElementById('bpmSlider').addEventListener('input', (e) => {
+        state.bpm = parseInt(e.target.value, 10);
+        document.getElementById('bpmValue').textContent = state.bpm;
+        if (state.timerRunning) startTimer();
+      });
+
+      document.querySelectorAll('.beats-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.beatsPerChord = parseInt(btn.dataset.beats, 10);
+          document.querySelectorAll('.beats-btn').forEach(b => {
+            b.className = 'beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
+          });
+          btn.className = 'beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 transition';
+          renderBeatDots();
+        });
+      });
+
+      document.getElementById('clickToggleBtn').addEventListener('click', (e) => {
+        state.clickSound = !state.clickSound;
+        const btn = e.currentTarget;
+        btn.querySelector('span:last-child').textContent = `Klik: ${state.clickSound ? 'Aan' : 'Uit'}`;
+        btn.classList.toggle('border-amber-500/40', state.clickSound);
+        btn.classList.toggle('text-amber-300', state.clickSound);
+        btn.classList.toggle('border-slate-700', !state.clickSound);
+        btn.classList.toggle('text-slate-400', !state.clickSound);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      buildPianoKeyboard();
+      renderBeatDots();
+      renderStartScreenHighscores();
+      initEvents();
+      // Bereid het eerste voorbeeld (Cm7 met LH Root en RH 2e Inversie) alvast voor
+      generateNewChallenge(true);
+
+      // Probeer MIDI automatisch te koppelen als de browser dat toestaat
+      if (navigator.requestMIDIAccess) {
+        connectMidiPiano();
+      } else {
+        document.getElementById('midiUnsupportedBanner').classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
