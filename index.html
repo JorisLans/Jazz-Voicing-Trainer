@@ -39,7 +39,7 @@
       min-height: 100vh;
     }
 
-    /* Pianoklavier styling */
+    /* Pianoklavier styling - compact zodat alles op 1 scherm past zonder uitzoomen */
     .piano-wrapper {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -47,13 +47,13 @@
     .piano-container {
       position: relative;
       display: flex;
-      height: 165px;
-      min-width: 680px;
+      height: 128px;
+      min-width: 640px;
       user-select: none;
     }
     @media (min-width: 768px) {
       .piano-container {
-        height: 195px;
+        height: 146px;
         min-width: 100%;
       }
     }
@@ -135,6 +135,100 @@
       pointer-events: none;
     }
 
+    /* ===================================================================== */
+    /* MOBIELE OPTIMALISATIE (LAAT DESKTOP > 768PX 100% ONGEWIJZIGD)         */
+    /* ===================================================================== */
+    body.game-active #topSetupHeader,
+    body.game-active #midiUnsupportedBanner {
+      display: none !important;
+    }
+
+    body.game-active {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+    }
+
+    body.game-active .app-shell {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 0.35rem;
+      padding-bottom: 0.35rem;
+      gap: 0.25rem;
+    }
+
+    body.game-active #gameView {
+      flex: 1;
+      max-height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      margin-top: 0 !important;
+    }
+
+    body.game-active #gameView > * {
+      margin-top: 0 !important;
+    }
+
+    @media (max-width: 768px) {
+      body.game-active .app-shell {
+        padding: 0.25rem 0.35rem;
+        gap: 0.2rem;
+      }
+      body.game-active #gameView {
+        padding: 0.4rem 0.5rem;
+        border-radius: 0.9rem;
+        gap: 0.25rem;
+      }
+      /* Pas alle 4 octaven op de breedte van het gsm-scherm aan */
+      body.game-active .piano-container {
+        min-width: 100%;
+        height: 78px;
+      }
+      body.game-active .white-key {
+        padding-bottom: 2px;
+      }
+      body.game-active .key-label {
+        font-size: 7px !important;
+      }
+      body.game-active .midi-dot {
+        width: 5px;
+        height: 5px;
+        margin-bottom: 1px;
+      }
+    }
+
+    /* Extra compacte modus wanneer de gsm horizontaal (landscape) op de piano staat */
+    @media (max-height: 520px) {
+      body.game-active .app-shell {
+        padding: 0.2rem 0.4rem;
+        gap: 0.15rem;
+      }
+      body.game-active #gameView {
+        padding: 0.3rem 0.45rem;
+        gap: 0.2rem;
+      }
+      body.game-active #chordSymbol {
+        font-size: 1.85rem !important;
+      }
+      body.game-active #lhCard,
+      body.game-active #rhCard {
+        padding: 0.25rem 0.5rem !important;
+      }
+      body.game-active #lhInversionName,
+      body.game-active #rhInversionName {
+        font-size: 0.95rem !important;
+        margin: 0.05rem 0 !important;
+      }
+      body.game-active .piano-container {
+        min-width: 100%;
+        height: 60px;
+      }
+    }
+
     @keyframes popIn {
       0% { opacity: 0; transform: translateY(6px) scale(0.98); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -162,402 +256,281 @@
 </head>
 <body class="antialiased selection:bg-amber-500/30 selection:text-amber-200">
 
-  <div class="max-w-6xl mx-auto px-4 py-5 md:py-7 space-y-5">
+  <div class="app-shell max-w-6xl mx-auto px-3 sm:px-4 py-2.5 md:py-3 space-y-2.5">
 
-    <!-- Top Header -->
-    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-extrabold text-lg">
+    <!-- Compacte Top & MIDI Verbindingsbalk (Alleen zichtbaar op Startscherm & Eindscherm) -->
+    <header id="topSetupHeader" class="bg-club-900/95 border border-slate-800 rounded-2xl px-3.5 py-2.5 shadow-lg flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-500/20 text-slate-950 font-extrabold text-sm md:text-base">
           ♪
         </div>
-        <div>
-          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white">
-            Jazz Inversie Studio
-            <span class="text-xs font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 align-middle ml-1">MIDI Time Attack</span>
-          </h1>
-          <p class="text-xs md:text-sm text-slate-400">Speel 2-handige jazz-omkeringen zo snel mogelijk en verbreek je topscore</p>
-        </div>
+        <h1 class="text-sm sm:text-base md:text-lg font-extrabold tracking-tight text-white">
+          Jazz Inversie Studio
+        </h1>
       </div>
 
-      <!-- Navigatie & Acties rechtsboven -->
-      <div class="flex flex-wrap items-center gap-2">
-        <button id="backToStartBtn" type="button"
-          class="hidden items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
-          <span>🏠</span>
-          <span>Startscherm</span>
-        </button>
-        <button id="practiceModeBtn" type="button"
-          class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold border transition-all bg-club-900 border-slate-700 text-slate-300 hover:border-amber-500/50">
-          <span id="practiceIcon">👁️</span>
-          <span id="practiceBtnLabel">Verberg toetsen (Blind)</span>
-        </button>
-        <button id="toggleSettingsBtn" type="button"
-          class="hidden items-center gap-2 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
-          <span>⚙️</span>
-          <span>Filters</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Web MIDI Verbindingsbalk (altijd zichtbaar op elk scherm) -->
-    <section class="bg-club-900/95 border border-slate-800 rounded-2xl p-3.5 md:p-4 shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-      <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+      <!-- MIDI Controls Midden -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
         <button id="connectMidiBtn" type="button"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all active:scale-95">
+          class="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-[11px] sm:text-xs shadow-sm transition-all active:scale-95">
           <span>🎹</span>
           <span id="connectMidiBtnText">Verbind MIDI Piano</span>
         </button>
 
-        <!-- Status Badge -->
-        <div id="midiStatusBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-club-950 border border-slate-700/80 text-xs font-medium text-slate-300">
-          <span id="midiStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
-          <span id="midiStatusText">Niet verbonden (of klik toetsen met muis)</span>
+        <div id="midiStatusBadge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-club-950 border border-slate-700/80 text-[11px] sm:text-xs font-medium text-slate-300 max-w-[165px] sm:max-w-none truncate">
+          <span id="midiStatusDot" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
+          <span id="midiStatusText" class="truncate">Geen MIDI (Muis actief)</span>
         </div>
 
-        <!-- MIDI Apparaat Selector -->
-        <select id="midiDeviceSelect" class="hidden bg-club-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500">
-          <option value="all">Alle MIDI-apparaten</option>
+        <select id="midiDeviceSelect" class="hidden bg-club-950 border border-slate-700 rounded-xl px-2 py-1 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500">
+          <option value="all">Alle MIDI</option>
         </select>
 
-        <!-- Reset vastgelopen noten -->
-        <button id="resetMidiNotesBtn" type="button" title="Wis alle ingedrukte MIDI- of muistoetsen"
-          class="px-3 py-1.5 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-xs font-semibold text-slate-300 transition">
-          Reset toetsen
+        <button id="resetMidiNotesBtn" type="button" title="Wis vastgelopen noten"
+          class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-[11px] sm:text-xs font-semibold text-slate-300 transition">
+          Reset
         </button>
       </div>
 
-      <!-- Rechts: Streak & Auto-volgend -->
-      <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-2.5 lg:pt-0 border-slate-800/80">
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-          <input id="clickToggleModeCheckbox" type="checkbox" checked class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
-          <span class="text-xs font-medium text-slate-300" title="Klik op het klavier om toetsen ingedrukt te houden zonder MIDI-piano">Muis-klik houdt toets vast</span>
+      <!-- Rechts: Auto-volgend, Muis-toggle & Startscherm knop -->
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
+        <label class="hidden md:flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-300 font-medium">
+          <input id="autoNextCheckbox" type="checkbox" checked class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
+          <span>Auto-volgend bij juist</span>
         </label>
 
-        <div class="flex items-center gap-2 bg-club-950 px-3.5 py-1.5 rounded-xl border border-slate-800">
-          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Streak</span>
-          <span id="streakCounter" class="font-mono text-base font-extrabold text-emerald-400">0</span>
-          <span class="text-xs text-slate-500">/</span>
-          <span id="totalSolvedCounter" class="font-mono text-xs font-bold text-slate-300">0 juist</span>
-        </div>
-      </div>
-    </section>
+        <label class="hidden sm:flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-400 font-medium">
+          <input id="clickToggleModeCheckbox" type="checkbox" checked class="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer">
+          <span>Muis-klik</span>
+        </label>
 
-    <!-- Browser ondersteuning waarschuwing (indien geen Web MIDI) -->
-    <div id="midiUnsupportedBanner" class="hidden bg-amber-950/50 border border-amber-500/40 rounded-2xl p-3.5 text-xs md:text-sm text-amber-200 flex items-start gap-3">
-      <span class="text-lg">⚠️</span>
-      <div>
-        <strong class="font-bold text-amber-300 block mb-0.5">Web MIDI wordt niet ondersteund in deze browser</strong>
-        Open deze pagina in <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong> of <strong>Brave</strong> om je digitale USB-piano direct te koppelen. Geen MIDI-kabel bij de hand? Je kunt de gevraagde toetsen ook gewoon met je muis aanklikken op het klavier onderaan!
+        <button id="practiceModeBtn" type="button" class="hidden"></button>
+
+        <button id="toggleSettingsBtn" type="button"
+          class="hidden items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
+          <span>⚙️</span>
+          <span class="hidden sm:inline">Filters</span>
+        </button>
+
+        <button id="backToStartBtn" type="button"
+          class="hidden items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
+          <span>🏠</span>
+          <span class="hidden sm:inline">Startscherm</span>
+        </button>
       </div>
+    </header>
+
+    <!-- Verborgen tellers voor compatibiliteit + MIDI waarschuwing -->
+    <div id="midiUnsupportedBanner" class="hidden bg-amber-950/50 border border-amber-500/40 rounded-xl p-2.5 text-xs text-amber-200 flex items-center gap-2">
+      <span>⚠️</span>
+      <span>Gebruik Chrome of Edge voor USB-MIDI, of klik de toetsen op het klavier aan.</span>
     </div>
 
     <!-- =================================================================== -->
     <!-- SCHERM 1: STARTSCHERM (STAP 1: MOEILIJKHEID -> STAP 2: SPELMODUS)   -->
     <!-- =================================================================== -->
-    <section id="startScreenView" class="bg-club-900/95 border border-slate-800 rounded-3xl p-5 md:p-8 shadow-2xl space-y-8">
-      <div class="text-center max-w-2xl mx-auto space-y-2">
-        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
-          Volledig aanpasbare jazz-training
-        </span>
-        <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Stel je Oefensessie Samen
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-400">
-          Kies eerst bij <strong>Stap 1</strong> je moeilijkheidsniveau met de keuzevakken en start daarna bij <strong>Stap 2</strong> een potje van 10, 20 of 50 akkoorden!
-        </p>
-      </div>
-
+    <section id="startScreenView" class="bg-club-900/95 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-2xl space-y-5">
       <!-- STAP 1: KIES JE MOEILIJKHEIDSNIVEAU (KEUZEVAKKEN) -->
-      <div id="settingsPanel" class="bg-club-950/90 border border-slate-800 rounded-2xl p-5 md:p-6 space-y-5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3.5">
+      <div id="settingsPanel" class="bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">1</span>
-            <div>
-              <h3 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 1: Kies je Moeilijkheidsniveau</h3>
-              <p class="text-xs text-slate-400">Vink aan welke akkoordfamilies en extensies er gevraagd mogen worden</p>
-            </div>
+            <span class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">1</span>
+            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 1: Moeilijkheidsniveau</h2>
           </div>
-          <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <div class="flex flex-wrap items-center gap-2">
             <button id="selectAllDiffBtn" type="button"
-              class="px-3 py-1.5 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-xs font-semibold text-amber-300 transition">
+              class="px-3 py-1 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-xs font-semibold text-amber-300 transition">
               ✨ Vink alles aan (Volledige Mix)
             </button>
             <button id="resetBasicDiffBtn" type="button"
-              class="px-3 py-1.5 rounded-xl bg-club-900 hover:bg-club-800 border border-slate-700 text-xs font-semibold text-slate-300 transition">
-              Basis Reset
+              class="px-3 py-1 rounded-xl bg-club-900 hover:bg-club-800 border border-slate-700 text-xs font-semibold text-slate-300 transition">
+              Basis (Maj/Min/7)
             </button>
           </div>
         </div>
 
-        <!-- 6 Grote Moeilijkheids-Keuzevakken (4 Basis Families + 2 Uitbreidingen) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          <!-- Checkbox 1: Major -->
-          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Basis Familie</span>
-                <input id="cbDiffMajor" type="checkbox" checked class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
-              </div>
-              <div class="text-base font-extrabold text-white">Major (Groot)</div>
-              <p class="text-xs text-slate-400 mt-1">Grote drieklanken zoals <span class="font-mono text-slate-200">C</span>, <span class="font-mono text-slate-200">F</span>, <span class="font-mono text-slate-200">Bb</span> (3 noten/hand) en basis voor <span class="font-mono text-slate-200">maj7</span>, <span class="font-mono text-slate-200">7</span>, <span class="font-mono text-slate-200">maj9</span>, <span class="font-mono text-slate-200">13</span>.</p>
+        <!-- 6 Keuzevakken -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono font-bold uppercase text-amber-300">Basis</span>
+              <input id="cbDiffMajor" type="checkbox" checked class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-amber-300/90">
-              Formule: 1 – 3 – 5
-            </div>
+            <div class="text-sm font-extrabold text-white">Major</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">C, F, Bb</div>
           </label>
 
-          <!-- Checkbox 2: Minor -->
-          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Basis Familie</span>
-                <input id="cbDiffMinor" type="checkbox" checked class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
-              </div>
-              <div class="text-base font-extrabold text-white">Minor (Klein)</div>
-              <p class="text-xs text-slate-400 mt-1">Kleine drieklanken zoals <span class="font-mono text-slate-200">Cm</span>, <span class="font-mono text-slate-200">Dm</span>, <span class="font-mono text-slate-200">Gm</span> (3 noten/hand) en basis voor <span class="font-mono text-slate-200">m7</span>, <span class="font-mono text-slate-200">m9</span>, <span class="font-mono text-slate-200">m11</span>, <span class="font-mono text-slate-200">m13</span>.</p>
+          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono font-bold uppercase text-cyan-300">Basis</span>
+              <input id="cbDiffMinor" type="checkbox" checked class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-cyan-300/90">
-              Formule: 1 – b3 – 5
-            </div>
+            <div class="text-sm font-extrabold text-white">Minor</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">Cm, Dm, Gm</div>
           </label>
 
-          <!-- Checkbox 3: Diminished -->
-          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">Basis Familie</span>
-                <input id="cbDiffDiminished" type="checkbox" class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
-              </div>
-              <div class="text-base font-extrabold text-white">Diminished (Verminderd)</div>
-              <p class="text-xs text-slate-400 mt-1">Verminderde drieklanken (<span class="font-mono text-slate-200">dim</span> / <span class="font-mono text-slate-200">°</span>) en met 7ths/extensions ook <span class="font-mono text-slate-200">dim7</span>, <span class="font-mono text-slate-200">m7b5</span> (<span class="font-mono text-slate-200">ø7</span>), <span class="font-mono text-slate-200">dim(maj7)</span> en <span class="font-mono text-slate-200">m9b5</span>.</p>
+          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono font-bold uppercase text-rose-300">Basis</span>
+              <input id="cbDiffDiminished" type="checkbox" class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-rose-300/90">
-              Formule: 1 – b3 – b5 (– bb7 / b7)
-            </div>
+            <div class="text-sm font-extrabold text-white">Diminished</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">dim, dim7, m7b5</div>
           </label>
 
-          <!-- Checkbox 4: Augmented -->
-          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-orange-500/15 text-orange-300 border border-orange-500/30">Basis Familie</span>
-                <input id="cbDiffAugmented" type="checkbox" class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
-              </div>
-              <div class="text-base font-extrabold text-white">Augmented (Overmatig)</div>
-              <p class="text-xs text-slate-400 mt-1">Overmatige drieklanken (<span class="font-mono text-slate-200">aug</span> / <span class="font-mono text-slate-200">+</span>) en met 7ths/extensions ook <span class="font-mono text-slate-200">7#5</span>, <span class="font-mono text-slate-200">maj7#5</span> en <span class="font-mono text-slate-200">9#5</span>.</p>
+          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono font-bold uppercase text-orange-300">Basis</span>
+              <input id="cbDiffAugmented" type="checkbox" class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-orange-300/90">
-              Formule: 1 – 3 – #5 (– b7 / 7)
-            </div>
+            <div class="text-sm font-extrabold text-white">Augmented</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">aug, 7#5, maj7#5</div>
           </label>
 
-          <!-- Checkbox 5: Sevenths -->
-          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Uitbreiding (Modifier)</span>
-                <input id="cbDiffSevenths" type="checkbox" checked class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
-              </div>
-              <div class="text-base font-extrabold text-white">Sevenths (7ths)</div>
-              <p class="text-xs text-slate-400 mt-1">Voegt vierklanken toe aan je gekozen families (<span class="font-mono text-slate-200">maj7</span>, <span class="font-mono text-slate-200">7</span>, <span class="font-mono text-slate-200">m7</span>, <span class="font-mono text-slate-200">dim7</span>, <span class="font-mono text-slate-200">m7b5</span>, <span class="font-mono text-slate-200">7#5</span>, <span class="font-mono text-slate-200">maj7#5</span>).</p>
+          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono font-bold uppercase text-emerald-300">+ 4 Noten</span>
+              <input id="cbDiffSevenths" type="checkbox" checked class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-emerald-300/90">
-              4 noten / hand (Grond t/m 3e)
-            </div>
+            <div class="text-sm font-extrabold text-white">Sevenths</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">maj7, 7, m7</div>
           </label>
 
-          <!-- Checkbox 6: Further Extensions -->
-          <label class="diff-card group relative flex flex-col justify-between p-4 rounded-2xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-mono font-bold uppercase px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">Jazz Pro (Modifier)</span>
-                <input id="cbDiffExtensions" type="checkbox" class="diff-cb w-5 h-5 accent-amber-500 rounded cursor-pointer">
-              </div>
-              <div class="text-base font-extrabold text-white">Further Extensions</div>
-              <p class="text-xs text-slate-400 mt-1">Voegt <span class="font-mono text-slate-200">9ths</span>, <span class="font-mono text-slate-200">11ths</span> en <span class="font-mono text-slate-200">13ths</span> toe aan je gekozen families (bijv. <span class="font-mono text-slate-200">Cmaj9</span>, <span class="font-mono text-slate-200">Bbmaj13</span>, <span class="font-mono text-slate-200">Cm11</span>, <span class="font-mono text-slate-200">C9#5</span>, <span class="font-mono text-slate-200">Cm9b5</span>).</p>
+          <div class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none" onclick="if(event.target.tagName!=='INPUT'){const cb=this.querySelector('input');cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono font-bold uppercase text-purple-300">+ Jazz</span>
+              <input id="cbDiffExtensions" type="checkbox" class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
             </div>
-            <div class="mt-3 pt-2 border-t border-slate-800/80 text-[11px] font-mono text-purple-300/90">
-              4-noot jazz-voicing / hand
-            </div>
-          </label>
+            <div class="text-sm font-extrabold text-white">Further Extensions</div>
+            <div class="text-[11px] font-mono text-slate-400 mt-0.5">9ths, 11ths, 13ths</div>
+          </div>
         </div>
 
-        <!-- Waarschuwing als alle basis-families uitgevinkt dreigen te worden -->
         <p id="filterWarning" class="hidden text-xs font-semibold text-rose-400">
-          ⚠️ Laat minimaal één basisfamilie (Major, Minor, Diminished of Augmented) aangevinkt staan zodat er akkoorden gegenereerd kunnen worden.
+          ⚠️ Laat minimaal één basisfamilie (Major, Minor, Diminished of Augmented) aangevinkt.
         </p>
 
-        <!-- Live Pool Preview Balk + Mix-instelling -->
-        <div class="bg-club-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Actieve Akkoorden-Pool:</span>
-              <span id="poolCountBadge" class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono text-xs font-bold">6 types</span>
+        <!-- Actieve Pool + 12 Toonsoort Toggles -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-1">
+          <div class="bg-club-900/90 border border-slate-800 rounded-xl p-3 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Actieve Pool:</span>
+                <span id="poolCountBadge" class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono text-xs font-bold">5 types</span>
+              </div>
+              <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                <input id="includeTriadsWhenExtendedCb" type="checkbox" checked class="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer">
+                <span class="text-[11px] text-slate-300">Inclusief drieklanken</span>
+              </label>
             </div>
-            <div id="activePoolPreview" class="font-mono text-xs sm:text-sm text-emerald-300 font-semibold flex flex-wrap gap-1.5">
-              <!-- Wordt dynamisch gevuld via JS -->
-            </div>
+            <div id="activePoolPreview" class="font-mono text-xs text-emerald-300 font-semibold flex flex-wrap gap-1"></div>
           </div>
 
-          <label class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-club-950 border border-slate-800 cursor-pointer shrink-0 select-none">
-            <input id="includeTriadsWhenExtendedCb" type="checkbox" checked class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            <span class="text-xs text-slate-300 font-medium">
-              Behoud ook simpele drieklanken in de mix <span class="text-slate-500">(bijv. <strong class="text-slate-300">C</strong> én <strong class="text-slate-300">Bbmaj13</strong>)</span>
-            </span>
-          </label>
-        </div>
-
-        <!-- Extra Voorkeuren: Toonsoorten & Hand-regel -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
-          <!-- Toonsoorten -->
-          <div>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Toonsoorten</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
-                <input type="radio" name="keySet" value="all" checked class="w-4 h-4 accent-amber-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-medium text-slate-200">Alle 12 toonsoorten</div>
-                  <div class="text-[11px] text-slate-400">Inclusief Db, F#, Ab, A, E, B</div>
-                </div>
-              </label>
-              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
-                <input type="radio" name="keySet" value="basic" class="w-4 h-4 accent-amber-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-medium text-slate-200">6 Basis toonsoorten</div>
-                  <div class="text-[11px] text-slate-400">C, F, Bb, Eb, G, D</div>
-                </div>
-              </label>
+          <!-- 12 Individuele Toonsoort Knoppen -->
+          <div class="bg-club-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Toonsoorten (12):</span>
+              <div class="flex items-center gap-1.5">
+                <button id="allRootsBtn" type="button" class="text-[11px] px-2 py-0.5 rounded bg-club-800 hover:bg-club-700 text-amber-300 font-semibold border border-slate-700">Alle 12</button>
+                <button id="basicRootsBtn" type="button" class="text-[11px] px-2 py-0.5 rounded bg-club-800 hover:bg-club-700 text-slate-300 font-semibold border border-slate-700">Basis 6</button>
+              </div>
             </div>
-          </div>
-
-          <!-- Hand-regel -->
-          <div>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Omkeringen per hand</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
-                <input type="radio" name="handRule" value="random" checked class="w-4 h-4 accent-amber-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-medium text-slate-200">Alle combinaties (LH ≠ RH)</div>
-                  <div class="text-[11px] text-slate-400">Elke hand een andere omkering</div>
-                </div>
-              </label>
-              <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-club-800/70 border border-slate-700/80 cursor-pointer hover:border-amber-500/40 transition">
-                <input type="radio" name="handRule" value="zones" class="w-4 h-4 accent-amber-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-medium text-slate-200">Vaste zones per hand</div>
-                  <div class="text-[11px] text-slate-400">LH: lage omk. &bull; RH: hoge omk.</div>
-                </div>
-              </label>
+            <div id="rootToggleGrid" class="grid grid-cols-6 sm:grid-cols-12 gap-1">
+              <!-- Dynamisch gevuld met C, Db, D, Eb, E, F, F#, G, Ab, A, Bb, B -->
             </div>
           </div>
         </div>
       </div>
 
       <!-- STAP 2: KIES HET AANTAL AKKOORDEN & START -->
-      <div class="space-y-4">
+      <div class="space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">2</span>
-            <div>
-              <h3 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 2: Kies je Spelmodus (10, 20 of 50 Akkoorden)</h3>
-              <p class="text-xs text-slate-400">De stopwatch start zodra het eerste akkoord verschijnt</p>
-            </div>
+            <span class="w-6 h-6 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">2</span>
+            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 2: Kies Spelmodus</h2>
           </div>
           <button id="clearHighscoresBtn" type="button" class="text-xs text-slate-500 hover:text-rose-400 transition">
             Wis topscores
           </button>
         </div>
 
-        <!-- 4 Modus Kaarten: 10, 20, 50 Akkoorden + Vrij Oefenen -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- 10 Akkoorden Sprint -->
-          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-amber-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <!-- 10 Akkoorden -->
+          <div class="rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-amber-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
             <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-bold">SPRINT</span>
-                <span class="text-2xl">⚡</span>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-[11px] font-bold">SPRINT</span>
+                <span class="text-lg">⚡</span>
               </div>
-              <h3 class="text-xl font-extrabold text-white">10 Akkoorden</h3>
-              <p class="text-xs text-slate-400 mt-1">Korte, explosieve sessie om je reactiesnelheid te testen.</p>
-
-              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore (10)</div>
-                <div id="bestScore10" class="font-mono text-lg font-extrabold text-emerald-400 mt-0.5">Nog geen tijd</div>
+              <h3 class="text-lg font-extrabold text-white">10 Akkoorden</h3>
+              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore</div>
+                <div id="bestScore10" class="font-mono text-base font-extrabold text-emerald-400">Nog geen tijd</div>
                 <div id="bestAvg10" class="font-mono text-[11px] text-slate-500">—</div>
               </div>
             </div>
-
             <button type="button" data-start-mode="10"
-              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm shadow-md shadow-amber-500/20 transition active:scale-95">
+              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md transition active:scale-95">
               Start 10 Akkoorden →
             </button>
           </div>
 
-          <!-- 20 Akkoorden Run -->
-          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-cyan-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+          <!-- 20 Akkoorden -->
+          <div class="rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-cyan-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
             <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold">STANDAARD RUN</span>
-                <span class="text-2xl">🔥</span>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] font-bold">RUN</span>
+                <span class="text-lg">🔥</span>
               </div>
-              <h3 class="text-xl font-extrabold text-white">20 Akkoorden</h3>
-              <p class="text-xs text-slate-400 mt-1">De ideale balans tussen snelheid en concentratie.</p>
-
-              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore (20)</div>
-                <div id="bestScore20" class="font-mono text-lg font-extrabold text-emerald-400 mt-0.5">Nog geen tijd</div>
+              <h3 class="text-lg font-extrabold text-white">20 Akkoorden</h3>
+              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore</div>
+                <div id="bestScore20" class="font-mono text-base font-extrabold text-emerald-400">Nog geen tijd</div>
                 <div id="bestAvg20" class="font-mono text-[11px] text-slate-500">—</div>
               </div>
             </div>
-
             <button type="button" data-start-mode="20"
-              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-extrabold text-sm shadow-md shadow-cyan-500/20 transition active:scale-95">
+              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md transition active:scale-95">
               Start 20 Akkoorden →
             </button>
           </div>
 
-          <!-- 50 Akkoorden Marathon -->
-          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-purple-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+          <!-- 50 Akkoorden -->
+          <div class="rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-purple-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
             <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 font-mono text-xs font-bold">MARATHON</span>
-                <span class="text-2xl">👑</span>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-mono text-[11px] font-bold">MARATHON</span>
+                <span class="text-lg">👑</span>
               </div>
-              <h3 class="text-xl font-extrabold text-white">50 Akkoorden</h3>
-              <p class="text-xs text-slate-400 mt-1">Ultieme jazz-workout voor onverslaanbaar spiergeheugen.</p>
-
-              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore (50)</div>
-                <div id="bestScore50" class="font-mono text-lg font-extrabold text-emerald-400 mt-0.5">Nog geen tijd</div>
+              <h3 class="text-lg font-extrabold text-white">50 Akkoorden</h3>
+              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore</div>
+                <div id="bestScore50" class="font-mono text-base font-extrabold text-emerald-400">Nog geen tijd</div>
                 <div id="bestAvg50" class="font-mono text-[11px] text-slate-500">—</div>
               </div>
             </div>
-
             <button type="button" data-start-mode="50"
-              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-300 hover:to-indigo-400 text-slate-950 font-extrabold text-sm shadow-md shadow-purple-500/20 transition active:scale-95">
+              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-300 hover:to-indigo-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md transition active:scale-95">
               Start 50 Akkoorden →
             </button>
           </div>
 
-          <!-- Vrij Oefenen (Eindeloos + Metronoom) -->
-          <div class="group relative rounded-2xl bg-gradient-to-b from-club-800/80 to-club-900 border border-slate-700/80 hover:border-emerald-500/70 p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5 shadow-lg">
+          <!-- Vrij Oefenen -->
+          <div class="rounded-2xl bg-gradient-to-b from-club-800/80 to-club-900 border border-slate-700/80 hover:border-emerald-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
             <div>
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-bold">STUDIO MODUS</span>
-                <span class="text-2xl">🎷</span>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-bold">STUDIO</span>
+                <span class="text-lg">🎷</span>
               </div>
-              <h3 class="text-xl font-extrabold text-white">Vrij Oefenen</h3>
-              <p class="text-xs text-slate-400 mt-1">Eindeloos oefenen zonder tijdsdruk, inclusief BPM-metronoom.</p>
-
-              <div class="mt-4 p-3 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">🎯 Functies</div>
-                <div class="text-xs font-semibold text-slate-300 mt-1">Metronoom &bull; Rhodes Audio &bull; Eigen tempo</div>
+              <h3 class="text-lg font-extrabold text-white">Vrij Oefenen</h3>
+              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
+                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Zonder klok</div>
+                <div class="text-xs font-semibold text-slate-300 mt-1">Eigen tempo &bull; Audio</div>
               </div>
             </div>
-
             <button type="button" data-start-mode="free"
-              class="start-mode-btn mt-5 w-full py-3 rounded-xl bg-club-700 hover:bg-slate-700 border border-slate-600 text-white font-bold text-sm transition active:scale-95">
-              Open Vrij Oefenen →
+              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-club-700 hover:bg-slate-700 border border-slate-600 text-white font-bold text-xs sm:text-sm transition active:scale-95">
+              Vrij Oefenen →
             </button>
           </div>
         </div>
@@ -565,229 +538,173 @@
     </section>
 
     <!-- =================================================================== -->
-    <!-- SCHERM 2: ACTIEF SPELSCHERM (TIMED RUN OF VRIJ OEFENEN)             -->
+    <!-- SCHERM 2: ULTRA-STRAK SPELSCHERM (PAST OP 1 SCHERM ZONDER VOLZINNEN) -->
     <!-- =================================================================== -->
-    <main id="gameView" class="hidden bg-club-900/95 border border-slate-800 rounded-3xl p-5 md:p-7 shadow-2xl space-y-6 transition-all">
+    <main id="gameView" class="hidden bg-club-900/95 border border-slate-800 rounded-2xl p-2.5 sm:p-4 shadow-2xl space-y-2 transition-all">
 
-      <!-- Voortgang & Live Stopwatch Balk (Zichtbaar in 10/20/50 modus) -->
-      <div id="timedHudBar" class="bg-club-950/90 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
-          <div>
-            <div id="activeModeBadge" class="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold">10 AKKOORDEN SPRINT</div>
-            <div class="flex items-baseline gap-2 mt-0.5">
-              <span class="text-xs text-slate-400">Voortgang:</span>
-              <span id="chordProgressText" class="font-mono text-lg font-extrabold text-white">Akkoord 1 / 10</span>
+      <!-- Compacte Status- & Knoppenbalk Bovenin -->
+      <div class="bg-club-950/90 border border-slate-800 rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 flex flex-wrap items-center justify-between gap-1 sm:gap-2">
+        <!-- Links: Voortgang, Streak & Klok -->
+        <div class="flex items-center gap-1.5 sm:gap-3">
+          <div id="timedHudBar" class="flex items-center gap-1.5 sm:gap-2.5">
+            <span id="activeModeBadge" class="hidden"></span>
+            <span id="hudTargetRecord" class="hidden"></span>
+            <div class="flex items-center gap-1.5">
+              <span id="chordProgressText" class="font-mono text-xs sm:text-sm font-extrabold text-white">1 / 10</span>
+              <div class="w-8 sm:w-20 h-1.5 bg-club-800 rounded-full overflow-hidden border border-slate-700/80">
+                <div id="chordProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all duration-300" style="width: 10%"></div>
+              </div>
+            </div>
+
+            <div class="relative bg-club-900 border border-amber-500/40 rounded-lg px-2 py-0.5 flex items-center gap-1">
+              <span class="text-[10px] sm:text-xs">⏱️</span>
+              <span id="liveStopwatchDisplay" class="font-mono text-xs sm:text-lg font-extrabold text-white">00:00.0</span>
+              <span id="penaltyToast" class="hidden absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-mono text-[9px] font-extrabold shadow-lg border border-rose-300 animate-bounce">
+                +10s
+              </span>
             </div>
           </div>
-          <!-- Progress bar -->
-          <div class="w-28 sm:w-36 h-2.5 bg-club-800 rounded-full overflow-hidden border border-slate-700/80">
-            <div id="chordProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all duration-300" style="width: 10%"></div>
-          </div>
-          <button id="hudTargetRecordWrapper" type="button" class="hidden"></button>
-          <div class="text-right">
-            <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Te kloppen record</span>
-            <span id="hudTargetRecord" class="font-mono text-xs font-bold text-emerald-400">Nog geen record</span>
-          </div>
 
-          <div class="relative bg-club-900 border border-amber-500/40 rounded-xl px-4 py-2 text-right shadow-inner">
-            <span class="text-[10px] font-mono uppercase tracking-wider text-amber-300/80 block">Tijd</span>
-            <span id="liveStopwatchDisplay" class="font-mono text-2xl sm:text-3xl font-extrabold text-white tracking-tight">00:00.0</span>
-            <span id="penaltyToast" class="hidden absolute -top-3 -right-2 px-2 py-0.5 rounded-full bg-rose-600 text-white font-mono text-[11px] font-extrabold shadow-lg border border-rose-300 animate-bounce">
-              +10s straftijd
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bovenste rij: Huidig Akkoord + Actieknoppen -->
-      <div class="flex flex-col md:flex-row items-center justify-between gap-5 pb-5 border-b border-slate-800/80">
-        <div class="text-center md:text-left">
-          <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
-              Speel dit akkoord met twee handen
-            </span>
-            <span id="chordFormulaBadge" class="hidden items-center px-2.5 py-1 rounded-full bg-club-950 border border-slate-700 text-slate-300 font-mono text-xs font-bold">
-              Tonica – b3 – 5 – b7
-            </span>
-          </div>
-          <div id="chordDisplayContainer" class="animate-chord">
-            <h2 id="chordSymbol" class="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white font-mono">
-              Cm7
-            </h2>
-            <p id="chordFullName" class="text-sm md:text-base text-slate-400 mt-1">
-              C mineur 7
-            </p>
+          <div class="flex items-center gap-1 bg-club-900 px-1.5 sm:px-2 py-0.5 rounded-lg border border-slate-800">
+            <span class="text-[10px] sm:text-xs">🔥</span>
+            <span id="streakCounter" class="font-mono text-xs font-extrabold text-emerald-400">0</span>
+            <span id="totalSolvedCounter" class="hidden">0</span>
           </div>
         </div>
 
-        <!-- Actieknoppen -->
-        <div class="flex flex-wrap items-center justify-center gap-2.5 w-full md:w-auto">
+        <!-- Rechts: Compacte Actieknoppen -->
+        <div class="flex flex-wrap items-center gap-1">
           <button id="playChordBtn" type="button"
-            class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-100 font-semibold text-xs sm:text-sm transition-all active:scale-95">
+            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-100 font-semibold text-[11px] transition active:scale-95">
             <span>🔊</span>
-            <span>Beluister</span>
+            <span class="hidden md:inline">Beluister</span>
           </button>
 
           <button id="revealBtn" type="button"
-            class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-semibold text-xs sm:text-sm transition-all active:scale-95 disabled:opacity-45 disabled:pointer-events-none">
+            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-semibold text-[11px] transition active:scale-95 disabled:opacity-45 disabled:pointer-events-none">
             <span>💡</span>
-            <span id="revealBtnLabel">Toon Oplossing (+10s)</span>
-          </button>
-
-          <button id="demoSolveBtn" type="button" title="Simuleer de juiste toetsen op het klavier om te testen"
-            class="flex items-center justify-center gap-1.5 px-3.5 py-3 rounded-2xl bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-300 font-semibold text-xs sm:text-sm transition-all active:scale-95">
-            <span>🪄</span>
-            <span id="demoSolveBtnLabel">Test Juiste Noten</span>
+            <span id="revealBtnLabel">+10s</span>
           </button>
 
           <button id="skipPenaltyBtn" type="button"
-            class="flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-semibold text-xs sm:text-sm transition-all active:scale-95">
+            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-semibold text-[11px] transition active:scale-95">
             <span>⏭️</span>
-            <span id="skipBtnLabel">Overslaan (+15s)</span>
+            <span id="skipBtnLabel">+15s</span>
+          </button>
+
+          <button id="demoSolveBtn" type="button" title="Simuleer de juiste noten"
+            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-300 font-semibold text-[11px] transition active:scale-95">
+            <span>🪄</span>
+            <span id="demoSolveBtnLabel" class="hidden lg:inline">Test</span>
           </button>
 
           <button id="nextChordBtn" type="button"
-            class="hidden items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-95">
-            <span>Volgend Akkoord</span>
-            <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[11px] font-mono bg-slate-950/20 rounded text-slate-950">Spatie</kbd>
+            class="hidden items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-[11px] shadow transition active:scale-95">
+            <span>Volgende →</span>
+          </button>
+
+          <button id="stopGameBtn" type="button"
+            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-rose-950/70 border border-slate-700 hover:border-rose-500/40 text-slate-300 hover:text-rose-200 font-bold text-[11px] transition active:scale-95">
+            <span>⏹</span>
+            <span class="hidden sm:inline">Stop</span>
           </button>
         </div>
       </div>
 
-      <!-- Twee kaarten naast elkaar: Linkerhand (LH) en Rechterhand (RH) met individuele status -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <!-- Linkerhand Kaart -->
-        <div id="lhCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-950/40 via-club-800/80 to-club-800/50 border border-cyan-500/30 p-5 shadow-lg transition-all">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2.5">
-              <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></span>
-              <h3 id="lhCardHeader" class="text-sm font-bold uppercase tracking-wider text-cyan-300">Linkerhand (Laagste 4 noten)</h3>
+      <!-- BOVENAAN: ALLEEN HET AKKOORD GROOT IN HET MIDDEN (GEEN VOLZINNEN) -->
+      <div class="text-center py-0">
+        <div id="chordDisplayContainer" class="animate-chord inline-flex flex-col items-center">
+          <h2 id="chordSymbol" class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white font-mono leading-none">
+            Cm7
+          </h2>
+          <span id="chordFullName" class="hidden"></span>
+          <span id="chordFormulaBadge" class="hidden mt-0.5 px-2 py-0.5 rounded-full bg-club-950 border border-slate-700 text-slate-300 font-mono text-[10px] font-bold"></span>
+        </div>
+      </div>
+
+      <!-- DAARONDER: LINKS EN RECHTS DIRECT NAAST ELKAAR (OOK OP GSM: GRID-COLS-2) -->
+      <div class="grid grid-cols-2 gap-2 sm:gap-3">
+        <!-- Linkerhand -->
+        <div id="lhCard" class="rounded-xl bg-gradient-to-br from-cyan-950/40 via-club-800/80 to-club-800/50 border border-cyan-500/30 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 shadow-md flex flex-col justify-between">
+          <div class="flex items-center justify-between gap-1">
+            <div class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+              <span id="lhCardHeader" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-cyan-300">Links</span>
             </div>
-            <span id="lhStatusBadge" class="text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-2.5 py-1 rounded-lg border border-slate-700">
-              Wacht op noten...
+            <span id="lhStatusBadge" class="text-[10px] sm:text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-1.5 py-0.5 rounded border border-slate-700">
+              0/4
             </span>
           </div>
 
-          <div id="lhInversionName" class="text-2xl sm:text-3xl font-extrabold text-white mb-3">
-            Grondligging (Root)
+          <div id="lhInversionName" class="text-sm sm:text-xl md:text-2xl font-extrabold text-white my-0.5 sm:my-1 tracking-tight leading-tight">
+            Grondligging
           </div>
 
-          <div class="bg-club-950/70 rounded-xl p-3 border border-slate-800/90 flex items-center justify-between">
-            <span class="text-xs text-slate-400">Doel (laag → hoog):</span>
-            <div id="lhNotesDisplay" class="font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide">
-              ❓ Zoek zelf de juiste noten op het klavier
-            </div>
-          </div>
-
-          <div class="mt-2.5 flex items-center justify-between text-xs px-1">
-            <span class="text-slate-400">Nu ingedrukt (LH):</span>
-            <span id="playedLhNotes" class="font-mono font-bold text-slate-200">—</span>
+          <div class="flex items-center justify-between text-[10px] sm:text-xs border-t border-slate-800/80 pt-1 font-mono">
+            <span id="lhNotesDisplay" class="font-bold text-slate-500">• • • •</span>
+            <span id="playedLhNotes" class="font-bold text-cyan-200 truncate ml-1">—</span>
           </div>
         </div>
 
-        <!-- Rechterhand Kaart -->
-        <div id="rhCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-950/40 via-club-800/80 to-club-800/50 border border-amber-500/30 p-5 shadow-lg transition-all">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2.5">
-              <span class="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]"></span>
-              <h3 id="rhCardHeader" class="text-sm font-bold uppercase tracking-wider text-amber-300">Rechterhand (Hoogste 4 noten)</h3>
+        <!-- Rechterhand -->
+        <div id="rhCard" class="rounded-xl bg-gradient-to-br from-amber-950/40 via-club-800/80 to-club-800/50 border border-amber-500/30 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 shadow-md flex flex-col justify-between">
+          <div class="flex items-center justify-between gap-1">
+            <div class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+              <span id="rhCardHeader" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-amber-300">Rechts</span>
             </div>
-            <span id="rhStatusBadge" class="text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-2.5 py-1 rounded-lg border border-slate-700">
-              Wacht op noten...
+            <span id="rhStatusBadge" class="text-[10px] sm:text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-1.5 py-0.5 rounded border border-slate-700">
+              0/4
             </span>
           </div>
 
-          <div id="rhInversionName" class="text-2xl sm:text-3xl font-extrabold text-white mb-3">
-            2e Omkering
+          <div id="rhInversionName" class="text-sm sm:text-xl md:text-2xl font-extrabold text-white my-0.5 sm:my-1 tracking-tight leading-tight">
+            2e Inversie
           </div>
 
-          <div class="bg-club-950/70 rounded-xl p-3 border border-slate-800/90 flex items-center justify-between">
-            <span class="text-xs text-slate-400">Doel (laag → hoog):</span>
-            <div id="rhNotesDisplay" class="font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide">
-              ❓ Zoek zelf de juiste noten op het klavier
-            </div>
-          </div>
-
-          <div class="mt-2.5 flex items-center justify-between text-xs px-1">
-            <span class="text-slate-400">Nu ingedrukt (RH):</span>
-            <span id="playedRhNotes" class="font-mono font-bold text-slate-200">—</span>
+          <div class="flex items-center justify-between text-[10px] sm:text-xs border-t border-slate-800/80 pt-1 font-mono">
+            <span id="rhNotesDisplay" class="font-bold text-slate-500">• • • •</span>
+            <span id="playedRhNotes" class="font-bold text-amber-200 truncate ml-1">—</span>
           </div>
         </div>
       </div>
 
-      <!-- Algemene Live MIDI Feedback Banner -->
-      <div id="feedbackBanner" class="rounded-2xl p-4 border bg-club-950/90 border-slate-800 flex items-center justify-between gap-3 transition-all">
-        <div class="flex items-center gap-3">
-          <span id="feedbackIcon" class="text-2xl">🎹</span>
-          <div>
-            <p id="feedbackHeadline" class="text-sm md:text-base font-bold text-slate-200">
-              Speel de 8 gevraagde noten tegelijk op je MIDI-piano (of klik ze aan op het klavier)
-            </p>
-            <p id="feedbackSubtext" class="text-xs text-slate-400 mt-0.5">
-              De 4 laagste noten worden gecontroleerd voor je linkerhand, de 4 hoogste voor je rechterhand.
-            </p>
-          </div>
-        </div>
-        <span id="octaveProjectionHint" class="hidden text-[11px] font-mono text-emerald-400/90 bg-emerald-950/60 border border-emerald-500/20 px-2.5 py-1 rounded-lg shrink-0">
-          88-toetsen projectie actief
-        </span>
+      <!-- Verborgen feedback-elementen (zodat er geen lange zinnen staan, enkel directe kaartbadges) -->
+      <div id="feedbackBanner" class="hidden">
+        <span id="feedbackIcon"></span>
+        <p id="feedbackHeadline"></p>
+        <p id="feedbackSubtext"></p>
+        <span id="octaveProjectionHint"></span>
       </div>
 
-      <!-- Timer & Metronoom Balk (Alleen getoond in Vrij Oefenen) -->
-      <div id="freePlayMetronomeBar" class="hidden bg-club-950/80 border border-slate-800/90 rounded-2xl p-4 flex-col lg:flex-row items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 w-full lg:w-auto">
+      <!-- Metronoom Balk (Standaard verborgen zodat die geen schermruimte inneemt) -->
+      <div id="freePlayMetronomeBar" class="hidden bg-club-950/80 border border-slate-800/90 rounded-2xl px-3.5 py-2 items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2.5">
           <button id="timerToggleBtn" type="button"
-            class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 transition-all">
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
             <span id="timerBtnIcon">▶</span>
-            <span id="timerBtnText">Start Metronoom</span>
+            <span id="timerBtnText">Metronoom</span>
           </button>
-
-          <!-- BPM Instelling -->
-          <div class="flex items-center gap-2.5 bg-club-900 px-3.5 py-2 rounded-xl border border-slate-800">
-            <label for="bpmSlider" class="text-xs font-semibold text-slate-400">BPM</label>
-            <input id="bpmSlider" type="range" min="40" max="140" value="70" class="w-24 sm:w-28 accent-amber-500 cursor-pointer">
-            <span id="bpmValue" class="font-mono text-sm font-bold text-amber-400 w-8 text-right">70</span>
+          <div class="flex items-center gap-2 bg-club-900 px-2.5 py-1 rounded-xl border border-slate-800">
+            <label for="bpmSlider" class="text-[11px] font-semibold text-slate-400">BPM</label>
+            <input id="bpmSlider" type="range" min="40" max="140" value="70" class="w-20 accent-amber-500 cursor-pointer">
+            <span id="bpmValue" class="font-mono text-xs font-bold text-amber-400 w-6 text-right">70</span>
           </div>
-
-          <!-- Tellen per akkoord -->
-          <div class="flex items-center gap-1.5 bg-club-900 p-1 rounded-xl border border-slate-800">
-            <button type="button" data-beats="4" class="beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 transition">4 tellen</button>
-            <button type="button" data-beats="8" class="beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">8 tellen</button>
+          <div class="flex items-center gap-1 bg-club-900 p-0.5 rounded-xl border border-slate-800">
+            <button type="button" data-beats="4" class="beats-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950">4</button>
+            <button type="button" data-beats="8" class="beats-btn px-2 py-1 rounded-lg text-[11px] font-bold text-slate-400">8</button>
           </div>
-
-          <!-- Klik geluid -->
           <button id="clickToggleBtn" type="button"
-            class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-club-900 border border-amber-500/40 text-amber-300 transition">
-            <span>🔔</span>
-            <span>Klik: Aan</span>
+            class="px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-club-900 border border-amber-500/40 text-amber-300">
+            <span>🔔</span> <span>Klik: Aan</span>
           </button>
         </div>
-
-        <div id="beatDotsContainer" class="flex items-center gap-2"></div>
+        <div id="beatDotsContainer" class="flex items-center gap-1.5"></div>
       </div>
 
       <!-- Visueel Pianoklavier (4 octaven: C2 tot B5) -->
-      <div class="space-y-2.5 pt-1">
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-          <div class="flex flex-wrap items-center gap-4">
-            <span class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-sm bg-cyan-400 inline-block"></span> Doel Linkerhand
-            </span>
-            <span class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span> Doel Rechterhand
-            </span>
-            <span class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_#10b981]"></span> Ingedrukt (MIDI / Muis-klik)
-            </span>
-          </div>
-          <span class="text-slate-500">4 octaven (C2 – B5) &bull; Klik toetsen aan of speel op je MIDI-piano</span>
-        </div>
-
-        <div class="piano-wrapper rounded-2xl border border-slate-800 bg-club-950 p-2 shadow-inner">
-          <div id="pianoKeyboard" class="piano-container">
-            <!-- Toetsen worden gegenereerd via JS -->
-          </div>
-        </div>
+      <div class="piano-wrapper rounded-xl border border-slate-800 bg-club-950 p-1 shadow-inner">
+        <div id="pianoKeyboard" class="piano-container"></div>
       </div>
 
     </main>
@@ -1070,10 +987,10 @@
     };
 
     const INVERSION_NAMES = [
-      'Grondligging (Root)',
-      '1e Omkering',
-      '2e Omkering',
-      '3e Omkering'
+      'Grondligging',
+      '1e Inversie',
+      '2e Inversie',
+      '3e Inversie'
     ];
 
     const STORAGE_KEY_PREFIX = 'jazz_inversie_best_ms_';
@@ -1096,6 +1013,7 @@
       diffExtensions: false,
       includeTriadsWhenExtended: true,
       activeTypes: ['maj', 'min', 'maj7', '7', 'm7'],
+      enabledRoots: new Set(ROOTS.map(r => r.name)),
 
       keySet: 'all',          // 'all' | 'basic'
       handRule: 'random',     // 'random' | 'zones'
@@ -1126,6 +1044,7 @@
       midiConnected: false,
       activeMidiNotes: new Set(),
       mouseClickToggleMode: true,
+      autoNextOnCorrect: true,
       challengeSolved: false,
       autoNextTimeoutId: null,
       streak: 0,
@@ -1393,9 +1312,8 @@
     function generateNewChallenge(forceFirstExample = false) {
       computeActiveChordTypes();
 
-      const availableRoots = state.keySet === 'basic'
-        ? ROOTS.filter(r => r.basic)
-        : ROOTS;
+      const availableRoots = ROOTS.filter(r => state.enabledRoots.has(r.name));
+      const rootPool = availableRoots.length > 0 ? availableRoots : ROOTS;
 
       let rootObj, typeKey, lhInv, rhInv;
 
@@ -1403,9 +1321,9 @@
         rootObj = ROOTS[0]; // C
         typeKey = 'm7';
         lhInv = 0;          // Grondligging (C - Eb - G - Bb)
-        rhInv = 2;          // 2e Omkering  (G - Bb - C - Eb)
+        rhInv = 2;          // 2e Inversie  (G - Bb - C - Eb)
       } else {
-        rootObj = availableRoots[Math.floor(Math.random() * availableRoots.length)];
+        rootObj = rootPool[Math.floor(Math.random() * rootPool.length)];
         typeKey = state.activeTypes[Math.floor(Math.random() * state.activeTypes.length)];
         const chordDefTemp = CHORD_TYPES[typeKey];
         const numInversions = chordDefTemp.intervals.length; // 3 bij triads, 4 bij 7ths/extensions
@@ -1440,7 +1358,7 @@
       }
 
       const signature = `${rootObj.name}${chordDef.suffix}-${lhInv}-${rhInv}`;
-      if (!forceFirstExample && state.currentChallenge && state.currentChallenge.signature === signature && (availableRoots.length > 1 || state.activeTypes.length > 1)) {
+      if (!forceFirstExample && state.currentChallenge && state.currentChallenge.signature === signature && (rootPool.length > 1 || state.activeTypes.length > 1)) {
         return generateNewChallenge(false);
       }
 
@@ -1490,13 +1408,14 @@
     // =========================================================================
     function switchView(viewName) {
       state.view = viewName;
+      document.body.classList.toggle('game-active', viewName === 'game');
       const startEl = document.getElementById('startScreenView');
       const gameEl = document.getElementById('gameView');
       const resultsEl = document.getElementById('resultsView');
       const backBtn = document.getElementById('backToStartBtn');
       const filterBtn = document.getElementById('toggleSettingsBtn');
       const settingsPanel = document.getElementById('settingsPanel');
-      const step2Container = startEl.querySelector('.space-y-4');
+      const step2Container = startEl.querySelector('.space-y-3');
 
       startEl.classList.add('hidden');
       gameEl.classList.add('hidden');
@@ -1509,7 +1428,9 @@
         backBtn.classList.add('hidden');
         filterBtn.classList.add('hidden');
         // Plaats Stap 1 (settingsPanel) terug boven Stap 2 op het Startscherm
-        startEl.insertBefore(settingsPanel, step2Container);
+        if (step2Container) {
+          startEl.insertBefore(settingsPanel, step2Container);
+        }
         settingsPanel.classList.remove('hidden');
         renderStartScreenHighscores();
       } else if (viewName === 'game') {
@@ -1544,10 +1465,12 @@
       const skipBtn = document.getElementById('skipPenaltyBtn');
       const skipLabel = document.getElementById('skipBtnLabel');
 
+      // Houd de metronoombalk altijd verborgen op het speelscherm zodat alles compact op 1 scherm past
+      freeBar.classList.add('hidden');
+      freeBar.classList.remove('flex');
+
       if (mode === 'free') {
         timedHud.classList.add('hidden');
-        freeBar.classList.remove('hidden');
-        freeBar.classList.add('flex');
         nextBtn.classList.remove('hidden');
         nextBtn.classList.add('flex');
         skipBtn.classList.remove('hidden');
@@ -1556,24 +1479,10 @@
       } else {
         state.targetChordsCount = parseInt(mode, 10);
         timedHud.classList.remove('hidden');
-        freeBar.classList.add('hidden');
-        freeBar.classList.remove('flex');
         nextBtn.classList.add('hidden');
         nextBtn.classList.remove('flex');
         skipBtn.classList.remove('hidden');
-        skipLabel.textContent = 'Overslaan (+15s)';
-
-        const modeTitles = {
-          '10': '⚡ 10 AKKOORDEN SPRINT',
-          '20': '🔥 20 AKKOORDEN RUN',
-          '50': '👑 50 AKKOORDEN MARATHON'
-        };
-        document.getElementById('activeModeBadge').textContent = modeTitles[mode] || 'TIMED CHALLENGE';
-
-        const bestMs = getBestTimeMs(mode);
-        document.getElementById('hudTargetRecord').textContent = bestMs !== null
-          ? formatTimeDetailedMs(bestMs)
-          : 'Nog geen record';
+        skipLabel.textContent = '+15s';
 
         updateHudProgress();
         startStopwatch();
@@ -1587,7 +1496,7 @@
       if (state.gameMode === 'free') return;
       const idx = state.currentChordIndex;
       const total = state.targetChordsCount;
-      document.getElementById('chordProgressText').textContent = `Akkoord ${idx} / ${total}`;
+      document.getElementById('chordProgressText').textContent = `${idx} / ${total}`;
       const pct = Math.min(100, Math.round(((idx - 1) / total) * 100));
       document.getElementById('chordProgressBar').style.width = `${ Math.max(6, pct) }%`;
     }
@@ -1827,7 +1736,7 @@
       document.getElementById('chordFullName').textContent = ch.fullName;
 
       const formulaBadge = document.getElementById('chordFormulaBadge');
-      formulaBadge.textContent = `Formule: ${ch.formula}`;
+      formulaBadge.textContent = ch.formula;
       if (state.revealed) {
         formulaBadge.classList.remove('hidden');
         formulaBadge.classList.add('inline-flex');
@@ -1836,9 +1745,9 @@
         formulaBadge.classList.remove('inline-flex');
       }
 
-      document.getElementById('lhCardHeader').textContent = `Linkerhand (Laagste ${ch.notesPerHand} noten)`;
-      document.getElementById('rhCardHeader').textContent = `Rechterhand (Hoogste ${ch.notesPerHand} noten)`;
-      document.getElementById('demoSolveBtnLabel').textContent = `Test ${ch.totalExpectedNotes} Noten`;
+      document.getElementById('lhCardHeader').textContent = `Links (${ch.notesPerHand})`;
+      document.getElementById('rhCardHeader').textContent = `Rechts (${ch.notesPerHand})`;
+      document.getElementById('demoSolveBtnLabel').textContent = `Test Noten`;
 
       document.getElementById('lhInversionName').textContent = ch.lh.inversionName;
       document.getElementById('rhInversionName').textContent = ch.rh.inversionName;
@@ -1849,25 +1758,26 @@
       const revealBtnLabel = document.getElementById('revealBtnLabel');
 
       const isTimedMode = state.gameMode !== 'free';
+      const hiddenDots = Array(ch.notesPerHand).fill('•').join(' ');
 
       if (state.revealed) {
         lhNotesEl.textContent = ch.lh.noteNames.join(' – ');
         rhNotesEl.textContent = ch.rh.noteNames.join(' – ');
-        lhNotesEl.className = 'font-mono text-sm sm:text-base font-bold text-cyan-300 tracking-wide';
-        rhNotesEl.className = 'font-mono text-sm sm:text-base font-bold text-amber-300 tracking-wide';
+        lhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-cyan-300';
+        rhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-amber-300';
 
         revealBtn.disabled = true;
         revealBtnLabel.textContent = state.solutionUsedForCurrentChord
-          ? (isTimedMode ? 'Oplossing getoond (+10s)' : 'Oplossing getoond')
-          : 'Oplossing zichtbaar';
+          ? (isTimedMode ? '+10s' : 'Getoond')
+          : 'Zichtbaar';
       } else {
-        lhNotesEl.textContent = '❓ Zoek zelf de juiste noten op het klavier';
-        rhNotesEl.textContent = '❓ Zoek zelf de juiste noten op het klavier';
-        lhNotesEl.className = 'font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide';
-        rhNotesEl.className = 'font-mono text-xs sm:text-sm font-bold text-slate-400 tracking-wide';
+        lhNotesEl.textContent = hiddenDots;
+        rhNotesEl.textContent = hiddenDots;
+        lhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-slate-500 tracking-widest';
+        rhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-slate-500 tracking-widest';
 
         revealBtn.disabled = false;
-        revealBtnLabel.textContent = isTimedMode ? 'Toon Oplossing (+10s)' : 'Toon Oplossing';
+        revealBtnLabel.textContent = isTimedMode ? '+10s' : 'Oplossing';
       }
 
       updatePianoHighlights();
@@ -1982,7 +1892,7 @@
     function validateHandNotes(handMidis, expectedPCs, ch) {
       const n = ch.notesPerHand;
       if (handMidis.length < n) {
-        return { valid: false, statusText: `${handMidis.length}/${n} noten...`, state: 'waiting' };
+        return { valid: false, statusText: `${handMidis.length}/${n}`, state: 'waiting' };
       }
       const pcs = handMidis.map(m => m % 12);
       const spanSemitones = handMidis[n - 1] - handMidis[0];
@@ -1990,7 +1900,7 @@
       const isClosePosition = spanSemitones <= 14;
 
       if (matchesOrder && isClosePosition) {
-        return { valid: true, statusText: '✅ Juiste ligging!', state: 'ok' };
+        return { valid: true, statusText: '✅ Juist!', state: 'ok' };
       }
 
       const bassPc = pcs[0];
@@ -1998,11 +1908,11 @@
       if (invIdx !== -1 && !matchesOrder) {
         return {
           valid: false,
-          statusText: `❌ Speelt ${INVERSION_NAMES[invIdx].replace(' (Root)', '')}`,
+          statusText: `❌ ${INVERSION_NAMES[invIdx]}`,
           state: 'err'
         };
       }
-      return { valid: false, statusText: '❌ Verkeerde noten/volgorde', state: 'err' };
+      return { valid: false, statusText: '❌ Fout', state: 'err' };
     }
 
     function updateHandStatusCard(handPrefix, evalResult) {
@@ -2017,42 +1927,6 @@
       } else {
         badge.className += 'bg-club-950/80 border-slate-700 text-slate-300';
       }
-    }
-
-    function setFeedbackUI(type, headline, subtext) {
-      const banner = document.getElementById('feedbackBanner');
-      const iconEl = document.getElementById('feedbackIcon');
-      const headEl = document.getElementById('feedbackHeadline');
-      const subEl = document.getElementById('feedbackSubtext');
-
-      banner.classList.remove(
-        'bg-club-950/90', 'border-slate-800',
-        'bg-emerald-950/60', 'border-emerald-500/60',
-        'bg-rose-950/60', 'border-rose-500/60',
-        'bg-cyan-950/50', 'border-cyan-500/40',
-        'animate-shake'
-      );
-
-      if (type === 'success') {
-        banner.classList.add('bg-emerald-950/60', 'border-emerald-500/60');
-        iconEl.textContent = '✅';
-        headEl.className = 'text-sm md:text-base font-extrabold text-emerald-300';
-      } else if (type === 'error') {
-        banner.classList.add('bg-rose-950/60', 'border-rose-500/60', 'animate-shake');
-        iconEl.textContent = '❌';
-        headEl.className = 'text-sm md:text-base font-extrabold text-rose-300';
-      } else if (type === 'playing') {
-        banner.classList.add('bg-cyan-950/50', 'border-cyan-500/40');
-        iconEl.textContent = '🎶';
-        headEl.className = 'text-sm md:text-base font-bold text-cyan-200';
-      } else {
-        banner.classList.add('bg-club-950/90', 'border-slate-800');
-        iconEl.textContent = '🎹';
-        headEl.className = 'text-sm md:text-base font-bold text-slate-200';
-      }
-
-      headEl.textContent = headline;
-      subEl.textContent = subtext;
     }
 
     function evaluateMidiInput() {
@@ -2072,18 +1946,8 @@
       if (count === 0) {
         playedLhEl.textContent = '—';
         playedRhEl.textContent = '—';
-        updateHandStatusCard('lh', { statusText: `Wacht op ${nPerHand} noten...`, state: 'waiting' });
-        updateHandStatusCard('rh', { statusText: `Wacht op ${nPerHand} noten...`, state: 'waiting' });
-        if (!state.challengeSolved) {
-          const hintNotesText = state.revealed
-            ? `Speel ${ch.symbol}: Links (${ch.lh.noteNames.join('-')}) + Rechts (${ch.rh.noteNames.join('-')})`
-            : `Speel ${ch.symbol}: Links in ${ch.lh.inversionName} + Rechts in ${ch.rh.inversionName}`;
-          setFeedbackUI(
-            'idle',
-            hintNotesText,
-            `Houd alle ${totalReq} toetsen (${nPerHand} links + ${nPerHand} rechts) tegelijk ingedrukt op je MIDI-piano of klavier.`
-          );
-        }
+        updateHandStatusCard('lh', { statusText: `0/${nPerHand}`, state: 'waiting' });
+        updateHandStatusCard('rh', { statusText: `0/${nPerHand}`, state: 'waiting' });
         return;
       }
 
@@ -2091,10 +1955,10 @@
       const rhSlice = count > nPerHand ? sorted.slice(nPerHand, totalReq) : [];
 
       playedLhEl.textContent = lhSlice.length
-        ? lhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' – ')
+        ? lhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' ')
         : '—';
       playedRhEl.textContent = rhSlice.length
-        ? rhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' – ')
+        ? rhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' ')
         : '—';
 
       if (state.challengeSolved) return;
@@ -2105,38 +1969,13 @@
       updateHandStatusCard('lh', lhEval);
       updateHandStatusCard('rh', rhEval);
 
-      // Controleer op een toon die helemaal niet in de gevraagde voicing thuishoort
-      const wrongNoteMidi = sorted.find(m => !ch.expectedPitchClasses.includes(m % 12));
-      if (wrongNoteMidi !== undefined) {
-        const wrongName = ch.rootObj.notes[wrongNoteMidi % 12];
-        const subText = state.revealed
-          ? `Gevraagde noten: LH (${ch.lh.noteNames.join(' - ')}) en RH (${ch.rh.noteNames.join(' - ')})`
-          : `Zoek de juiste noten voor ${ch.symbol} of klik op '💡 Toon Oplossing' als je vastzit.`;
-        setFeedbackUI(
-          'error',
-          `Let op: ${wrongName} hoort niet in ${ch.symbol}`,
-          subText
-        );
-        return;
-      }
-
       if (count < totalReq) {
-        setFeedbackUI(
-          'playing',
-          `Aan het zoeken... (${count}/${totalReq} toetsen ingedrukt)`,
-          lhEval.valid
-            ? `Linkerhand (${ch.lh.inversionName}) klopt! Voeg nu je rechterhand (${ch.rh.inversionName}) toe.`
-            : `Speel ${nPerHand} noten links (${ch.lh.inversionName}) en ${nPerHand} noten rechts (${ch.rh.inversionName}).`
-        );
         return;
       }
 
       if (count > totalReq) {
-        setFeedbackUI(
-          'error',
-          `Te veel toetsen ingedrukt (${count}/${totalReq})`,
-          `Laat overtollige toetsen los zodat je precies ${nPerHand} noten per hand speelt.`
-        );
+        updateHandStatusCard('lh', { statusText: `${count}/${totalReq} noten`, state: 'err' });
+        updateHandStatusCard('rh', { statusText: 'Te veel toetsen', state: 'err' });
         return;
       }
 
@@ -2149,7 +1988,7 @@
         state.streak++;
         state.totalSolved++;
         document.getElementById('streakCounter').textContent = state.streak;
-        document.getElementById('totalSolvedCounter').textContent = `${state.totalSolved} juist`;
+        document.getElementById('totalSolvedCounter').textContent = `${state.totalSolved}`;
 
         if (!state.revealed) {
           state.revealed = true;
@@ -2163,49 +2002,21 @@
         void gameEl.offsetWidth;
         gameEl.classList.add('flash-green');
 
-        setFeedbackUI(
-          'success',
-          `Raak! ${ch.symbol} (${ch.lh.noteNames.join(' ')} + ${ch.rh.noteNames.join(' ')}) helemaal juist!`,
-          'Op naar het volgende akkoord...'
-        );
-
-        state.autoNextTimeoutId = setTimeout(() => {
-          handleChordCompleted(false);
-        }, 550);
+        if (state.autoNextOnCorrect || state.gameMode !== 'free') {
+          state.autoNextTimeoutId = setTimeout(() => {
+            handleChordCompleted(false);
+          }, 420);
+        }
         return;
       }
 
-      // Juist aantal noten ingedrukt, maar een van beide handen heeft de verkeerde omkering
+      // Juist aantal noten ingedrukt, maar een van beide handen heeft de verkeerde omkering of handen kruisen elkaar
+      if (!handsSeparated && lhEval.valid && rhEval.valid) {
+        updateHandStatusCard('lh', { statusText: '❌ Handen kruisen', state: 'err' });
+        updateHandStatusCard('rh', { statusText: '❌ Speel RH hoger', state: 'err' });
+      }
       state.streak = 0;
       document.getElementById('streakCounter').textContent = '0';
-
-      const detailHint = state.revealed
-        ? `Links moet zijn: ${ch.lh.noteNames.join(' – ')} • Rechts moet zijn: ${ch.rh.noteNames.join(' – ')}`
-        : `Controleer welke toon onderaan ligt bij ${ch.lh.inversionName} (links) en ${ch.rh.inversionName} (rechts), of gebruik '💡 Toon Oplossing'.`;
-
-      if (!lhEval.valid && !rhEval.valid) {
-        setFeedbackUI(
-          'error',
-          'Beide handen hebben nog niet de juiste omkering',
-          detailHint
-        );
-      } else if (!lhEval.valid) {
-        setFeedbackUI(
-          'error',
-          `Rechterhand is goed, maar Linkerhand speelt nog niet ${ch.lh.inversionName}`,
-          state.revealed
-            ? `Speel met links van laag naar hoog: ${ch.lh.noteNames.join(' – ')}`
-            : `Je rechterhand staat goed! Zoek nu met je linkerhand naar de ${ch.lh.inversionName}.`
-        );
-      } else {
-        setFeedbackUI(
-          'error',
-          `Linkerhand is goed, maar Rechterhand speelt nog niet ${ch.rh.inversionName}`,
-          state.revealed
-            ? `Speel met rechts van laag naar hoog: ${ch.rh.noteNames.join(' – ')}`
-            : `Je linkerhand staat goed! Zoek nu met je rechterhand naar de ${ch.rh.inversionName}.`
-        );
-      }
     }
 
     function handleMidiMessage(event) {
@@ -2359,7 +2170,64 @@
     // =========================================================================
     // 11. EVENT LISTENERS & INITIALISATIE
     // =========================================================================
+    function renderRootToggleButtons() {
+      const grid = document.getElementById('rootToggleGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      ROOTS.forEach(r => {
+        const active = state.enabledRoots.has(r.name);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = r.name;
+        btn.className = `py-1 rounded-lg font-mono text-xs font-bold border transition ${
+          active
+            ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
+            : 'bg-club-950 text-slate-500 border-slate-800 hover:text-slate-300'
+        }`;
+        btn.addEventListener('click', () => {
+          if (state.enabledRoots.has(r.name)) {
+            if (state.enabledRoots.size > 1) {
+              state.enabledRoots.delete(r.name);
+            }
+          } else {
+            state.enabledRoots.add(r.name);
+          }
+          renderRootToggleButtons();
+          if (state.view === 'game') generateNewChallenge(false);
+        });
+        grid.appendChild(btn);
+      });
+    }
+
     function initEvents() {
+      renderRootToggleButtons();
+
+      const allRootsBtn = document.getElementById('allRootsBtn');
+      if (allRootsBtn) {
+        allRootsBtn.addEventListener('click', () => {
+          state.enabledRoots = new Set(ROOTS.map(r => r.name));
+          renderRootToggleButtons();
+          if (state.view === 'game') generateNewChallenge(false);
+        });
+      }
+
+      const basicRootsBtn = document.getElementById('basicRootsBtn');
+      if (basicRootsBtn) {
+        basicRootsBtn.addEventListener('click', () => {
+          state.enabledRoots = new Set(ROOTS.filter(r => r.basic).map(r => r.name));
+          renderRootToggleButtons();
+          if (state.view === 'game') generateNewChallenge(false);
+        });
+      }
+
+      const autoNextCb = document.getElementById('autoNextCheckbox');
+      if (autoNextCb) {
+        autoNextCb.addEventListener('change', (e) => {
+          state.autoNextOnCorrect = e.target.checked;
+        });
+      }
+
       // Startscherm modus knoppen (10, 20, 50, Vrij Oefenen)
       document.querySelectorAll('.start-mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2372,6 +2240,12 @@
       document.getElementById('backToStartBtn').addEventListener('click', () => {
         switchView('start');
       });
+      const stopGameBtn = document.getElementById('stopGameBtn');
+      if (stopGameBtn) {
+        stopGameBtn.addEventListener('click', () => {
+          switchView('start');
+        });
+      }
       document.getElementById('resultsToStartBtn').addEventListener('click', () => {
         switchView('start');
       });
@@ -2623,6 +2497,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       buildPianoKeyboard();
       renderBeatDots();
+      computeActiveChordTypes();
       renderStartScreenHighscores();
       initEvents();
       // Bereid het eerste voorbeeld (Cm7 met LH Root en RH 2e Inversie) alvast voor
