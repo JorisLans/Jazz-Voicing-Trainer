@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="nl" class="dark">
 <head>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e293b">
-  <link rel="apple-touch-icon" href="icon-192.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jazz Piano Inversie Trainer</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -232,6 +232,41 @@
       }
     }
 
+    /* ===================================================================== */
+    /* DESKTOP SCHALING (>= 769PX): GROTE KNOPPEN & ROYALE BEDIENINGSBALK    */
+    /* ===================================================================== */
+    @media (min-width: 769px) {
+      body.game-active #gameView {
+        padding: 1.25rem 1.75rem;
+        gap: 0.75rem;
+      }
+      body.game-active #gameTopActionBar {
+        padding: 0.65rem 1rem;
+      }
+      body.game-active #gameActionButtons button {
+        padding: 0.5rem 0.95rem;
+        font-size: 0.875rem;
+        border-radius: 0.75rem;
+      }
+      body.game-active #chordProgressText {
+        font-size: 1rem;
+      }
+      body.game-active #liveStopwatchDisplay {
+        font-size: 1.35rem;
+      }
+      body.game-active #chordSymbol {
+        font-size: 4.25rem;
+      }
+      body.game-active #lhCard,
+      body.game-active #rhCard {
+        padding: 1rem 1.25rem;
+      }
+      body.game-active #lhInversionName,
+      body.game-active #rhInversionName {
+        font-size: 1.65rem;
+      }
+    }
+
     @keyframes popIn {
       0% { opacity: 0; transform: translateY(6px) scale(0.98); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -283,6 +318,11 @@
         <div id="midiStatusBadge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-club-950 border border-slate-700/80 text-[11px] sm:text-xs font-medium text-slate-300 max-w-[165px] sm:max-w-none truncate">
           <span id="midiStatusDot" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
           <span id="midiStatusText" class="truncate">Geen MIDI (Muis actief)</span>
+        </div>
+
+        <div id="wakeLockBadge" title="Scherm blijft wakker tijdens het spelen" class="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-club-950 border border-slate-800 text-[11px] font-medium text-slate-400">
+          <span id="wakeLockDot" class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+          <span id="wakeLockText">Slaapstand-blokkade</span>
         </div>
 
         <select id="midiDeviceSelect" class="hidden bg-club-950 border border-slate-700 rounded-xl px-2 py-1 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500">
@@ -546,7 +586,7 @@
     <main id="gameView" class="hidden bg-club-900/95 border border-slate-800 rounded-2xl p-2.5 sm:p-4 shadow-2xl space-y-2 transition-all">
 
       <!-- Compacte Status- & Knoppenbalk Bovenin -->
-      <div class="bg-club-950/90 border border-slate-800 rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 flex flex-wrap items-center justify-between gap-1 sm:gap-2">
+      <div id="gameTopActionBar" class="bg-club-950/90 border border-slate-800 rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 flex flex-wrap items-center justify-between gap-1 sm:gap-2">
         <!-- Links: Voortgang, Streak & Klok -->
         <div class="flex items-center gap-1.5 sm:gap-3">
           <div id="timedHudBar" class="flex items-center gap-1.5 sm:gap-2.5">
@@ -576,7 +616,7 @@
         </div>
 
         <!-- Rechts: Compacte Actieknoppen -->
-        <div class="flex flex-wrap items-center gap-1">
+        <div id="gameActionButtons" class="flex flex-wrap items-center gap-1 md:gap-2">
           <button id="playChordBtn" type="button"
             class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-100 font-semibold text-[11px] transition active:scale-95">
             <span>🔊</span>
@@ -586,19 +626,21 @@
           <button id="revealBtn" type="button"
             class="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-semibold text-[11px] transition active:scale-95 disabled:opacity-45 disabled:pointer-events-none">
             <span>💡</span>
+            <span class="hidden md:inline">Oplossing</span>
             <span id="revealBtnLabel">+10s</span>
           </button>
 
           <button id="skipPenaltyBtn" type="button"
             class="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-semibold text-[11px] transition active:scale-95">
             <span>⏭️</span>
+            <span class="hidden md:inline">Overslaan</span>
             <span id="skipBtnLabel">+15s</span>
           </button>
 
           <button id="demoSolveBtn" type="button" title="Simuleer de juiste noten"
             class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-300 font-semibold text-[11px] transition active:scale-95">
             <span>🪄</span>
-            <span id="demoSolveBtnLabel" class="hidden lg:inline">Test</span>
+            <span id="demoSolveBtnLabel" class="hidden lg:inline">Test Noten</span>
           </button>
 
           <button id="nextChordBtn" type="button"
@@ -1456,6 +1498,7 @@
     }
 
     function startGameSession(mode) {
+      requestWakeLock();
       state.gameMode = mode;
       state.chordSplits = [];
       state.penaltyMs = 0;
@@ -2512,12 +2555,78 @@
       } else {
         document.getElementById('midiUnsupportedBanner').classList.remove('hidden');
       }
+
+      // Probeer Screen Wake Lock direct aan te vragen bij laden
+      requestWakeLock();
     });
+
+    // =========================================================================
+    // 12. SCREEN WAKE LOCK API (HOUDT HET GSM-SCHERM WAKKER TIJDENS HET SPELEN)
+    // =========================================================================
+    let wakeLock = null;
+
+    function updateWakeLockUI(isActive) {
+      const dot = document.getElementById('wakeLockDot');
+      const text = document.getElementById('wakeLockText');
+      const badge = document.getElementById('wakeLockBadge');
+      if (!dot || !text || !badge) return;
+
+      if (isActive) {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]';
+        text.textContent = 'Scherm blijft aan';
+        badge.classList.add('border-emerald-500/40', 'text-emerald-300');
+        badge.classList.remove('border-slate-800', 'text-slate-400');
+      } else {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-600';
+        text.textContent = 'Slaapstand-blokkade';
+        badge.classList.remove('border-emerald-500/40', 'text-emerald-300');
+        badge.classList.add('border-slate-800', 'text-slate-400');
+      }
+    }
+
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          if (wakeLock && !wakeLock.released) return;
+          wakeLock = await navigator.wakeLock.request('screen');
+          updateWakeLockUI(true);
+          wakeLock.addEventListener('release', () => {
+            updateWakeLockUI(false);
+          });
+        } catch (err) {
+          console.warn('Wake Lock kon nog niet worden geactiveerd:', err.message);
+        }
+      }
+    }
+
+    // Activeer bij de eerste klik of aanraking op het scherm
+    document.addEventListener('click', () => {
+      if (!wakeLock || wakeLock.released) {
+        requestWakeLock();
+      }
+    });
+
+    document.addEventListener('touchstart', () => {
+      if (!wakeLock || wakeLock.released) {
+        requestWakeLock();
+      }
+    }, { passive: true });
+
+    // Vraag opnieuw aan wanneer je terugkeert naar het tabblad of de geïnstalleerde app
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    });
+
+    // =========================================================================
+    // 13. PROGRESSIVE WEB APP (SERVICE WORKER REGISTRATIE)
+    // =========================================================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
   </script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
 </body>
 </html>
