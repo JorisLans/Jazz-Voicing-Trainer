@@ -938,96 +938,149 @@
         intervals: [0, 4, 8, 11]
       },
 
-      // --- FURTHER EXTENSIONS (9ths, 11ths, 13ths als speelbare 4-noot jazz-voicing per hand) ---
+      // --- FURTHER EXTENSIONS (Slash-Chord modus: verplichte basnoot + vrije keuze uit geldige akkoordtonen incl. karakteristieke extensie) ---
       'maj9': {
         suffix: 'maj9',
         displaySuffix: 'maj9',
-        label: 'majeur 9 (voicing: 1-9-3-7)',
-        formula: '1 – 9 – 3 – 7 (zonder kwint)',
+        label: 'majeur 9 (slash-voicing met verplichte 9)',
+        formula: 'Toegestaan: 1, 3, 5, 7, 9 (9 verplicht)',
         family: 'major',
         tier: 'extension',
-        intervals: [0, 2, 4, 11]
+        intervals: [0, 2, 4, 11],
+        allowedIntervals: [0, 4, 7, 11, 2],
+        bassCandidateIntervals: [0, 4, 7, 11],
+        requiredExtensionInterval: 2,
+        requiredExtensionLabel: '9'
       },
       '9': {
         suffix: '9',
         displaySuffix: '9',
-        label: 'dominant 9 (voicing: 1-9-3-b7)',
-        formula: '1 – 9 – 3 – b7 (zonder kwint)',
+        label: 'dominant 9 (slash-voicing met verplichte 9)',
+        formula: 'Toegestaan: 1, 3, 5, b7, 9 (9 verplicht)',
         family: 'major',
         tier: 'extension',
-        intervals: [0, 2, 4, 10]
+        intervals: [0, 2, 4, 10],
+        allowedIntervals: [0, 4, 7, 10, 2],
+        bassCandidateIntervals: [0, 4, 7, 10],
+        requiredExtensionInterval: 2,
+        requiredExtensionLabel: '9'
+      },
+      '11': {
+        suffix: '11',
+        displaySuffix: '11',
+        label: 'dominant 11 (slash-voicing met verplichte 11)',
+        formula: 'Toegestaan: 1, 3, 5, b7, 9, 11 (11 verplicht)',
+        family: 'major',
+        tier: 'extension',
+        intervals: [0, 5, 7, 10],
+        allowedIntervals: [0, 4, 7, 10, 2, 5],
+        bassCandidateIntervals: [0, 4, 7, 10],
+        requiredExtensionInterval: 5,
+        requiredExtensionLabel: '11'
       },
       'maj13': {
         suffix: 'maj13',
         displaySuffix: 'maj13',
-        label: 'majeur 13 (voicing: 1-3-13-7)',
-        formula: '1 – 3 – 13 – 7 (zonder kwint)',
+        label: 'majeur 13 (slash-voicing met verplichte 13, zonder 11)',
+        formula: 'Toegestaan: 1, 3, 5, 7, 9, 13 (13 verplicht)',
         family: 'major',
         tier: 'extension',
-        intervals: [0, 4, 9, 11]
+        intervals: [0, 4, 9, 11],
+        allowedIntervals: [0, 4, 7, 11, 2, 9],
+        bassCandidateIntervals: [0, 4, 7, 11],
+        requiredExtensionInterval: 9,
+        requiredExtensionLabel: '13'
       },
       '13': {
         suffix: '13',
         displaySuffix: '13',
-        label: 'dominant 13 (voicing: 1-3-13-b7)',
-        formula: '1 – 3 – 13 – b7 (zonder kwint)',
+        label: 'dominant 13 (slash-voicing met verplichte 13, zonder 11)',
+        formula: 'Toegestaan: 1, 3, 5, b7, 9, 13 (13 verplicht)',
         family: 'major',
         tier: 'extension',
-        intervals: [0, 4, 9, 10]
+        intervals: [0, 4, 9, 10],
+        allowedIntervals: [0, 4, 7, 10, 2, 9],
+        bassCandidateIntervals: [0, 4, 7, 10],
+        requiredExtensionInterval: 9,
+        requiredExtensionLabel: '13'
       },
       'm9': {
         suffix: 'm9',
         displaySuffix: 'm9',
-        label: 'mineur 9 (voicing: 1-9-b3-b7)',
-        formula: '1 – 9 – b3 – b7 (zonder kwint)',
+        label: 'mineur 9 (slash-voicing met verplichte 9)',
+        formula: 'Toegestaan: 1, b3, 5, b7, 9 (9 verplicht)',
         family: 'minor',
         tier: 'extension',
-        intervals: [0, 2, 3, 10]
+        intervals: [0, 2, 3, 10],
+        allowedIntervals: [0, 3, 7, 10, 2],
+        bassCandidateIntervals: [0, 3, 7, 10],
+        requiredExtensionInterval: 2,
+        requiredExtensionLabel: '9'
       },
       'm11': {
         suffix: 'm11',
         displaySuffix: 'm11',
-        label: 'mineur 11 (voicing: 1-b3-11-b7)',
-        formula: '1 – b3 – 11 – b7 (zonder kwint)',
+        label: 'mineur 11 (slash-voicing met verplichte 11)',
+        formula: 'Toegestaan: 1, b3, 5, b7, 9, 11 (11 verplicht)',
         family: 'minor',
         tier: 'extension',
-        intervals: [0, 3, 5, 10]
+        intervals: [0, 3, 5, 10],
+        allowedIntervals: [0, 3, 7, 10, 2, 5],
+        bassCandidateIntervals: [0, 3, 7, 10],
+        requiredExtensionInterval: 5,
+        requiredExtensionLabel: '11'
       },
       'm13': {
         suffix: 'm13',
         displaySuffix: 'm13',
-        label: 'mineur 13 (voicing: 1-b3-13-b7)',
-        formula: '1 – b3 – 13 – b7 (zonder kwint)',
+        label: 'mineur 13 (slash-voicing met verplichte 13)',
+        formula: 'Toegestaan: 1, b3, 5, b7, 9, 11, 13 (13 verplicht)',
         family: 'minor',
         tier: 'extension',
-        intervals: [0, 3, 9, 10]
+        intervals: [0, 3, 9, 10],
+        allowedIntervals: [0, 3, 7, 10, 2, 5, 9],
+        bassCandidateIntervals: [0, 3, 7, 10],
+        requiredExtensionInterval: 9,
+        requiredExtensionLabel: '13'
       },
       'dim(maj7)': {
         suffix: 'dim(maj7)',
         displaySuffix: 'dim(maj7)',
-        label: 'verminderd majeur 7 (voicing: 1-b3-b5-7)',
-        formula: '1 – b3 – b5 – 7',
+        label: 'verminderd majeur 7 (slash-voicing met verplichte 7)',
+        formula: 'Toegestaan: 1, b3, b5, bb7, 7 (7 verplicht)',
         family: 'diminished',
         tier: 'extension',
-        intervals: [0, 3, 6, 11]
+        intervals: [0, 3, 6, 11],
+        allowedIntervals: [0, 3, 6, 9, 11],
+        bassCandidateIntervals: [0, 3, 6, 11],
+        requiredExtensionInterval: 11,
+        requiredExtensionLabel: 'maj7'
       },
       'm9b5': {
         suffix: 'm9b5',
         displaySuffix: 'm9b5',
-        label: 'halfverminderd 9 (voicing: 1-9-b5-b7)',
-        formula: '1 – 9 – b5 – b7 (zonder b3)',
+        label: 'halfverminderd 9 (slash-voicing met verplichte 9)',
+        formula: 'Toegestaan: 1, b3, b5, b7, 9 (9 verplicht)',
         family: 'diminished',
         tier: 'extension',
-        intervals: [0, 2, 6, 10]
+        intervals: [0, 2, 6, 10],
+        allowedIntervals: [0, 3, 6, 10, 2],
+        bassCandidateIntervals: [0, 3, 6, 10],
+        requiredExtensionInterval: 2,
+        requiredExtensionLabel: '9'
       },
       '9#5': {
         suffix: '9#5',
         displaySuffix: '9#5',
-        label: 'overmatig dominant 9 (voicing: 1-9-3-#5)',
-        formula: '1 – 9 – 3 – #5 (met verhoogde kwint)',
+        label: 'overmatig dominant 9 (slash-voicing met verplichte 9)',
+        formula: 'Toegestaan: 1, 3, #5, b7, 9 (9 verplicht)',
         family: 'augmented',
         tier: 'extension',
-        intervals: [0, 2, 4, 8]
+        intervals: [0, 2, 4, 8],
+        allowedIntervals: [0, 4, 8, 10, 2],
+        bassCandidateIntervals: [0, 4, 8, 10],
+        requiredExtensionInterval: 2,
+        requiredExtensionLabel: '9'
       }
     };
 
@@ -1349,6 +1402,59 @@
       return {
         inversionIndex,
         inversionName: INVERSION_NAMES[inversionIndex],
+        bassPc: midis[0] % 12,
+        bassNoteName: noteNames[0],
+        midis,
+        noteNames
+      };
+    }
+
+    // Bouwt een muzikale 4-noots aanbevolen slash-voicing voor Further Extensions (startend op de gevraagde slash-basnoot + karakteristieke extensie + guide tones)
+    function buildSlashExtensionVoicing(rootObj, chordDef, bassInterval, inversionIndex, targetMinMidi, chordSymbol) {
+      const reqExt = chordDef.requiredExtensionInterval;
+      const allowed = chordDef.allowedIntervals || chordDef.intervals;
+
+      // Prioriteer: 1) Gevraagde basnoot, 2) Verplichte extensietoon (9/11/13), 3) Guide tones (terts & septiem), 4) Overige akkoordtonen
+      const priorityPool = [
+        reqExt,
+        ...chordDef.intervals,
+        ...allowed
+      ];
+
+      const chosenIntervals = [bassInterval];
+      for (const iv of priorityPool) {
+        if (chosenIntervals.length >= 4) break;
+        if (!chosenIntervals.includes(iv)) {
+          chosenIntervals.push(iv);
+        }
+      }
+
+      // Stapel de 4 gekozen tonen in stijgende volgorde binnen één handbereik vanaf de slash-basnoot
+      const ascendingOffsets = [0];
+      const upperOffsets = chosenIntervals
+        .slice(1)
+        .map(iv => (iv - bassInterval + 12) % 12)
+        .sort((a, b) => a - b);
+
+      upperOffsets.forEach(off => ascendingOffsets.push(off));
+
+      let baseMidi = 36 + rootObj.midiBase + bassInterval;
+      while (baseMidi < targetMinMidi) {
+        baseMidi += 12;
+      }
+      while (baseMidi > targetMinMidi + 11) {
+        baseMidi -= 12;
+      }
+
+      const midis = ascendingOffsets.map(off => baseMidi + off);
+      const noteNames = midis.map(m => rootObj.notes[m % 12]);
+      const bassNoteName = rootObj.notes[(rootObj.midiBase + bassInterval) % 12];
+
+      return {
+        inversionIndex,
+        inversionName: `${chordSymbol} / ${bassNoteName}`,
+        bassPc: (rootObj.midiBase + bassInterval) % 12,
+        bassNoteName,
         midis,
         noteNames
       };
@@ -1371,7 +1477,9 @@
         rootObj = rootPool[Math.floor(Math.random() * rootPool.length)];
         typeKey = state.activeTypes[Math.floor(Math.random() * state.activeTypes.length)];
         const chordDefTemp = CHORD_TYPES[typeKey];
-        const numInversions = chordDefTemp.intervals.length; // 3 bij triads, 4 bij 7ths/extensions
+        const numInversions = chordDefTemp.tier === 'extension'
+          ? (chordDefTemp.bassCandidateIntervals ? chordDefTemp.bassCandidateIntervals.length : 4)
+          : chordDefTemp.intervals.length; // 3 bij triads, 4 bij 7ths/extensions
 
         if (state.handRule === 'zones') {
           if (numInversions === 3) {
@@ -1390,11 +1498,26 @@
       }
 
       const chordDef = CHORD_TYPES[typeKey];
-      const notesPerHand = chordDef.intervals.length;
+      const isSlashExtension = chordDef.tier === 'extension';
+      const notesPerHand = isSlashExtension ? 4 : chordDef.intervals.length;
 
-      // Bouw exacte MIDI-noten voor LH en RH
-      const lh = buildInversionVoicing(rootObj, chordDef.intervals, lhInv, 41);
-      let rh = buildInversionVoicing(rootObj, chordDef.intervals, rhInv, 58);
+      // Gebruik een extra duidelijk symbool: bijv. "C major" of "Cm" of "Bb13"
+      const displaySymbol = chordDef.suffix === ''
+        ? `${rootObj.name} major`
+        : `${rootObj.name}${chordDef.suffix}`;
+
+      let lh, rh;
+      if (isSlashExtension) {
+        const bassCandidates = chordDef.bassCandidateIntervals || [0, 4, 7, 10];
+        const lhBassInterval = bassCandidates[lhInv % bassCandidates.length];
+        const rhBassInterval = bassCandidates[rhInv % bassCandidates.length];
+        lh = buildSlashExtensionVoicing(rootObj, chordDef, lhBassInterval, lhInv, 41, displaySymbol);
+        rh = buildSlashExtensionVoicing(rootObj, chordDef, rhBassInterval, rhInv, 58, displaySymbol);
+      } else {
+        // Bouw exacte MIDI-noten voor LH en RH (Triads & Sevenths)
+        lh = buildInversionVoicing(rootObj, chordDef.intervals, lhInv, 41);
+        rh = buildInversionVoicing(rootObj, chordDef.intervals, rhInv, 58);
+      }
 
       // Zorg dat rechterhand altijd hoger ligt dan de hoogste noot van de linkerhand
       const highestLh = lh.midis[lh.midis.length - 1];
@@ -1408,13 +1531,18 @@
       }
 
       const expectedPitchClasses = chordDef.intervals.map(i => (rootObj.midiBase + i) % 12);
+      const allowedPitchClasses = isSlashExtension
+        ? (chordDef.allowedIntervals || chordDef.intervals).map(i => (rootObj.midiBase + i) % 12)
+        : expectedPitchClasses;
+      const requiredExtensionPc = isSlashExtension && chordDef.requiredExtensionInterval !== undefined
+        ? (rootObj.midiBase + chordDef.requiredExtensionInterval) % 12
+        : null;
+      const requiredExtensionNoteName = requiredExtensionPc !== null
+        ? rootObj.notes[requiredExtensionPc]
+        : null;
+
       const lhExpectedPCs = lh.midis.map(m => m % 12);
       const rhExpectedPCs = rh.midis.map(m => m % 12);
-
-      // Gebruik een extra duidelijk symbool: bijv. "C major" of "Cm" of "Bbmaj13"
-      const displaySymbol = chordDef.suffix === ''
-        ? `${rootObj.name} major`
-        : `${rootObj.name}${chordDef.suffix}`;
 
       if (state.autoNextTimeoutId) {
         clearTimeout(state.autoNextTimeoutId);
@@ -1432,12 +1560,16 @@
         signature,
         rootObj,
         chordDef,
+        isSlashExtension,
         notesPerHand,
         totalExpectedNotes: notesPerHand * 2,
         symbol: displaySymbol,
         fullName: `${rootObj.name} ${chordDef.label}`,
         formula: chordDef.formula,
         expectedPitchClasses,
+        allowedPitchClasses,
+        requiredExtensionPc,
+        requiredExtensionNoteName,
         lhExpectedPCs,
         rhExpectedPCs,
         lh,
@@ -1934,14 +2066,71 @@
       return true;
     }
 
-    // Controleert of een hand (3 noten bij drieklank of 4 noten bij 7th/extension) exact de gevraagde stijgende volgorde speelt
-    function validateHandNotes(handMidis, expectedPCs, ch) {
+    // Hybride validatie per hand:
+    // - Triads & Sevenths: Strikte inversie-volgorde (3 of 4 noten in close position).
+    // - Further Extensions (9, 11, 13): Slash-chord validatie (laagste noot = gevraagde slash-basnoot, 4 unieke toegestane akkoordtonen, en de karakteristieke extensietoon is verplicht aanwezig).
+    function validateHandNotes(handMidis, expectedPCs, ch, handObj) {
       const n = ch.notesPerHand;
       if (handMidis.length < n) {
         return { valid: false, statusText: `${handMidis.length}/${n}`, state: 'waiting' };
       }
       const pcs = handMidis.map(m => m % 12);
       const spanSemitones = handMidis[n - 1] - handMidis[0];
+
+      // 1. HYBRIDE SLASH-CHORD VALIDATIE VOOR FURTHER EXTENSIONS (9, 11, 13)
+      if (ch.isSlashExtension && handObj) {
+        const bassPc = pcs[0];
+        if (bassPc !== handObj.bassPc) {
+          const playedBassName = formatMidiNoteName(handMidis[0], ch.rootObj);
+          return {
+            valid: false,
+            statusText: `❌ Bas ≠ ${handObj.bassNoteName} (${playedBassName})`,
+            state: 'err'
+          };
+        }
+
+        // Controleer of alle 4 gespeelde noten binnen het toegestane akkoord-palet vallen (bijv. geen avoid note 11 op 13/maj13)
+        const invalidPc = pcs.find(pc => !ch.allowedPitchClasses.includes(pc));
+        if (invalidPc !== undefined) {
+          const badName = ch.rootObj.notes[invalidPc];
+          return {
+            valid: false,
+            statusText: `❌ ${badName} hoort niet`,
+            state: 'err'
+          };
+        }
+
+        // Controleer dat de 4 noten in de hand 4 verschillende pitch classes zijn
+        const uniquePcs = new Set(pcs);
+        if (uniquePcs.size < n) {
+          return {
+            valid: false,
+            statusText: '❌ Dubbele noot',
+            state: 'err'
+          };
+        }
+
+        // Controleer of de karakteristieke extensietoon (9, 11 of 13) daadwerkelijk gespeeld wordt
+        if (ch.requiredExtensionPc !== null && !uniquePcs.has(ch.requiredExtensionPc)) {
+          return {
+            valid: false,
+            statusText: `❌ Mis ${ch.chordDef.requiredExtensionLabel} (${ch.requiredExtensionNoteName})`,
+            state: 'err'
+          };
+        }
+
+        if (spanSemitones > 16) {
+          return {
+            valid: false,
+            statusText: '❌ Te wijd (>10e)',
+            state: 'err'
+          };
+        }
+
+        return { valid: true, statusText: '✅ Juist!', state: 'ok' };
+      }
+
+      // 2. KLASSIEKE STRIKTE INVERSIE-VALIDATIE VOOR DRIEKLANKEN & SEVENTHS
       const matchesOrder = arraysEqual(pcs, expectedPCs);
       const isClosePosition = spanSemitones <= 14;
 
@@ -2009,9 +2198,9 @@
 
       if (state.challengeSolved) return;
 
-      // Controleer LH en RH
-      const lhEval = validateHandNotes(lhSlice, ch.lhExpectedPCs, ch);
-      const rhEval = validateHandNotes(rhSlice, ch.rhExpectedPCs, ch);
+      // Controleer LH en RH (hybride: strikte inversie bij Triads/7ths, slash-voicing bij Further Extensions)
+      const lhEval = validateHandNotes(lhSlice, ch.lhExpectedPCs, ch, ch.lh);
+      const rhEval = validateHandNotes(rhSlice, ch.rhExpectedPCs, ch, ch.rh);
       updateHandStatusCard('lh', lhEval);
       updateHandStatusCard('rh', rhEval);
 
