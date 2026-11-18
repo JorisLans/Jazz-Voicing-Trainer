@@ -261,7 +261,6 @@ window.updatePoolSummary = function () {
   }
 };
 
-// Hulpfunctie om één willekeurige volgende opgave uit jouw pool te trekken (voor Sprints & Vrij Spel)
 window.generateNextRandomUserQuestion = function () {
   const selectedDefs = window.getSelectedChordDefinitions();
   const rootsArr = Array.from(window.activeRoots);
@@ -368,8 +367,19 @@ window.splitPressedNotesDynamically = function (sortedMidis, handSize) {
 };
 
 // ============================================================================
-// 7. SPELMODI STARTEN (Daily, Archief, Blinde ii-V-I, 10, 20, 50, Vrij Spel & Herkansing)
+// 7. SPELMODI STARTEN (Met compacte smartphone Fullscreen modus)
 // ============================================================================
+window.setCompactGameViewport = function (isActive) {
+  const headerEl = document.getElementById('appHeader');
+  if (isActive) {
+    document.body.classList.add('in-game-mode');
+    if (headerEl) headerEl.classList.add('hidden');
+  } else {
+    document.body.classList.remove('in-game-mode');
+    if (headerEl) headerEl.classList.remove('hidden');
+  }
+};
+
 window.startGame = function (mode, customArchiveDate = null) {
   window.ensureAudioContext();
   window.requestWakeLock();
@@ -444,7 +454,8 @@ window.startGame = function (mode, customArchiveDate = null) {
     window.currentQuestions = questions;
   }
 
-  // Wissel naar het speelscherm
+  // Wissel naar het compacte 100dvh speelscherm
+  window.setCompactGameViewport(true);
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('endScreen').classList.add('hidden');
   document.getElementById('gameScreen').classList.remove('hidden');
@@ -488,6 +499,7 @@ window.returnToMenu = function () {
   window.cancelHoldTimer();
   window.pressedMidis.clear();
 
+  window.setCompactGameViewport(false);
   document.getElementById('gameScreen').classList.add('hidden');
   document.getElementById('endScreen').classList.add('hidden');
   document.getElementById('startScreen').classList.remove('hidden');
@@ -502,23 +514,23 @@ window.updateGameModeBadge = function () {
   if (!badge) return;
 
   if (window.currentGameMode === 'daily') {
-    badge.textContent = `🔥 Daily (${window.currentDailyDateStr})`;
-    badge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30';
+    badge.textContent = `🔥 Daily`;
+    badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30';
   } else if (window.currentGameMode === 'daily_archive') {
-    badge.textContent = `🕹️ Archief Daily (${window.currentDailyDateStr})`;
-    badge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+    badge.textContent = `🕹️ Archief`;
+    badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
   } else if (window.currentGameMode === 'iiVI') {
-    badge.textContent = '🎷 Blinde ii – V – I';
-    badge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30';
+    badge.textContent = '🎷 ii–V–I';
+    badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30';
   } else if (window.currentGameMode === 'retry') {
-    badge.textContent = '🎯 Focus Herkansing';
-    badge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30';
+    badge.textContent = '🎯 Herkansing';
+    badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30';
   } else if (window.currentGameMode === 'free') {
     badge.textContent = '♾️ Vrij Spel';
-    badge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/30';
+    badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/30';
   } else {
-    badge.textContent = `⚡ Sprint (${window.currentGameMode} Akkoorden)`;
-    badge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+    badge.textContent = `⚡ Sprint (${window.currentGameMode})`;
+    badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
   }
 };
 
@@ -541,7 +553,6 @@ window.loadCurrentQuestionUI = function () {
     el.classList.remove('hint-lh', 'hint-rh');
   });
 
-  // Teller bijwerken (bij Vrij Spel telt hij oneindig op: #1, #2, #3...)
   const counterEl = document.getElementById('progressCounter');
   if (counterEl) {
     if (window.currentGameMode === 'free') {
@@ -563,43 +574,43 @@ window.loadCurrentQuestionUI = function () {
   // MODUS A: BLINDE ii - V - I
   if (q.isBlindIIVI) {
     if (catTag) {
-      catTag.textContent = `🎹 Toonsoort: ${q.keyCenterName} • Trap ${q.romanStepIndex} van 3`;
+      catTag.textContent = `🎹 Toonsoort: ${q.keyCenterName} • Trap ${q.romanStepIndex}/3`;
       catTag.className =
-        'text-xs font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full bg-purple-500/25 text-purple-200 border border-purple-400/40';
+        'text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/25 text-purple-200 border border-purple-400/40';
     }
     if (titleEl) titleEl.textContent = q.romanLabel;
     if (subEl) {
-      subEl.textContent = `Bedenk zelf welk akkoord de ${q.romanLabel.split(' ')[0]} is in ${q.keyCenterName} (${q.handSize} noten per hand)`;
+      subEl.textContent = `Speel de ${q.romanLabel.split(' ')[0]} in ${q.keyCenterName} (${q.handSize} noten/hand)`;
     }
 
     if (lhTarget) lhTarget.textContent = 'Vrije Inversie';
-    if (lhHint) lhHint.textContent = `Elke geldige ligging van dit ${q.handSize}-noots akkoord telt`;
+    if (lhHint) lhHint.textContent = `Alle liggingen (${q.handSize} noten)`;
     if (rhTarget) rhTarget.textContent = 'Vrije Inversie';
-    if (rhHint) rhHint.textContent = `Elke geldige ligging van dit ${q.handSize}-noots akkoord telt`;
+    if (rhHint) rhHint.textContent = `Alle liggingen (${q.handSize} noten)`;
   }
   // MODUS B: HYBRIDE SLASH-CHORDS (Further Extensions 9, 11, 13)
   else if (q.mode === 'slash') {
     if (catTag) {
-      catTag.textContent = `Slash-Voicing • ${q.chordDef.name} (Verplicht: ${q.requiredLabel} = ${q.requiredNoteName})`;
+      catTag.textContent = `Slash • ${q.chordDef.name} (Bevat ${q.requiredLabel}: ${q.requiredNoteName})`;
       catTag.className =
-        'text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        'text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30';
     }
     if (titleEl) titleEl.textContent = q.symbol;
     if (subEl) {
-      subEl.textContent = `Speel 4 verschillende akkoordtonen per hand (inclusief de ${q.requiredLabel}: ${q.requiredNoteName}) met de gevraagde basnoot onderop`;
+      subEl.textContent = `4 akkoordtonen per hand (incl. ${q.requiredNoteName}) met gevraagde bas onderop`;
     }
 
     if (lhTarget) lhTarget.textContent = q.lhSlashLabel;
-    if (lhHint) lhHint.textContent = `Laagste noot Links = ${q.lhBassName} (+ bevat ${q.requiredNoteName})`;
+    if (lhHint) lhHint.textContent = `Bas = ${q.lhBassName} (+ ${q.requiredNoteName})`;
     if (rhTarget) rhTarget.textContent = q.rhSlashLabel;
-    if (rhHint) rhHint.textContent = `Laagste noot Rechts = ${q.rhBassName} (+ bevat ${q.requiredNoteName})`;
+    if (rhHint) rhHint.textContent = `Bas = ${q.rhBassName} (+ ${q.requiredNoteName})`;
   }
   // MODUS C: KLASSIEKE INVERSIES (Drieklanken & Sevenths)
   else {
     if (catTag) {
-      catTag.textContent = `${q.chordDef.name} • ${q.handSize} noten per hand`;
+      catTag.textContent = `${q.chordDef.name} • ${q.handSize} noten/hand`;
       catTag.className =
-        'text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700';
+        'text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700';
     }
     if (titleEl) titleEl.textContent = q.symbol;
     const allNoteNames = q.allowedPcs.map((pc) => window.pcToNoteName(pc, q.rootPc)).join(' – ');
@@ -623,7 +634,7 @@ window.onActiveNotesChanged = function () {
   const sortedMidis = Array.from(window.pressedMidis).sort((a, b) => a - b);
   const countLabel = document.getElementById('pressedCountLabel');
   if (countLabel) {
-    countLabel.textContent = `${sortedMidis.length} ${sortedMidis.length === 1 ? 'toets' : 'toetsen'} actief`;
+    countLabel.textContent = `${sortedMidis.length} actief`;
   }
 
   const gameHidden = document.getElementById('gameScreen')?.classList.contains('hidden');
@@ -663,33 +674,33 @@ window.updateHandCardFeedback = function (prefix, handMidis, validationResult, r
   if (notesEl) {
     notesEl.textContent =
       handMidis.length > 0
-        ? `Ingedrukt: ${handMidis.map((m) => window.midiToNoteName(m, rootPc)).join(' – ')}`
+        ? `${handMidis.map((m) => window.midiToNoteName(m, rootPc)).join('–')}`
         : 'Ingedrukt: —';
   }
 
   if (badge) {
     badge.textContent = validationResult.statusText;
     if (validationResult.tone === 'success') {
-      badge.className = 'text-xs font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/40';
+      badge.className = 'text-[9px] sm:text-xs font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 truncate max-w-full';
     } else if (validationResult.tone === 'error') {
-      badge.className = 'text-xs font-bold px-2 py-0.5 rounded-md bg-rose-500/25 text-rose-300 border border-rose-500/40';
+      badge.className = 'text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-rose-500/25 text-rose-300 border border-rose-500/40 truncate max-w-full';
     } else if (validationResult.tone === 'pending') {
-      badge.className = 'text-xs font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-200 border border-amber-500/30';
+      badge.className = 'text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-500/30 truncate max-w-full';
     } else {
-      badge.className = 'text-xs font-bold px-2 py-0.5 rounded-md bg-slate-900/90 text-slate-300 border border-slate-700';
+      badge.className = 'text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700 truncate max-w-full';
     }
   }
 
   if (card) {
     const isLeft = prefix === 'lh';
     if (validationResult.tone === 'success') {
-      card.className = 'rounded-xl p-3 bg-emerald-950/40 border-2 border-emerald-400/70 transition shadow-md';
+      card.className = 'rounded-xl p-2 sm:p-3 bg-emerald-950/40 border-2 border-emerald-400/70 transition shadow-md flex flex-col justify-between';
     } else if (validationResult.tone === 'error') {
-      card.className = 'rounded-xl p-3 bg-rose-950/35 border border-rose-500/50 transition';
+      card.className = 'rounded-xl p-2 sm:p-3 bg-rose-950/35 border border-rose-500/50 transition flex flex-col justify-between';
     } else {
       card.className = isLeft
-        ? 'rounded-xl p-3 bg-blue-950/35 border border-blue-500/30 transition'
-        : 'rounded-xl p-3 bg-purple-950/35 border border-purple-500/30 transition';
+        ? 'rounded-xl p-2 sm:p-3 bg-blue-950/35 border border-blue-500/30 transition flex flex-col justify-between'
+        : 'rounded-xl p-2 sm:p-3 bg-purple-950/35 border border-purple-500/30 transition flex flex-col justify-between';
     }
   }
 };
@@ -785,7 +796,6 @@ window.handleChordCompleted = function () {
     window.pressedMidis.clear();
     window.currentQuestionIndex++;
 
-    // In Vrij Spel genereren we eindeloos een nieuw akkoord zodra je huidige klaar is
     if (window.currentGameMode === 'free') {
       window.currentQuestions.push(window.generateNextRandomUserQuestion());
       window.isTransitioningChord = false;
@@ -812,8 +822,8 @@ window.showCurrentSolution = function () {
   const lhMidis = window.buildHandSolutionMidis(q, false);
   const rhMidis = window.buildHandSolutionMidis(q, true);
 
-  const lhNames = lhMidis.map((m) => window.midiToNoteName(m, q.rootPc)).join(' – ');
-  const rhNames = rhMidis.map((m) => window.midiToNoteName(m, q.rootPc)).join(' – ');
+  const lhNames = lhMidis.map((m) => window.midiToNoteName(m, q.rootPc)).join('–');
+  const rhNames = rhMidis.map((m) => window.midiToNoteName(m, q.rootPc)).join('–');
 
   document.querySelectorAll('#pianoKeyboard [data-midi]').forEach((el) => {
     const m = Number(el.dataset.midi);
@@ -831,8 +841,7 @@ window.showCurrentSolution = function () {
   if (solBox) {
     solBox.classList.remove('hidden');
     solBox.innerHTML = `
-      <div><strong>💡 Voorbeeldgreep (${q.symbol}):</strong></div>
-      <div class="mt-0.5"><span class="text-blue-300">🤚 Links:</span> ${lhNames} &nbsp;|&nbsp; <span class="text-purple-300">✋ Rechts:</span> ${rhNames}</div>
+      <div><strong>💡 ${q.symbol}:</strong> <span class="text-blue-300">L:</span> ${lhNames} | <span class="text-purple-300">R:</span> ${rhNames}</div>
     `;
   }
 };
@@ -882,6 +891,7 @@ window.finishGameSession = function () {
   const completedCount = Math.max(1, window.sessionChordLogs.length);
   const avgTimeMs = totalTimeMs / completedCount;
 
+  window.setCompactGameViewport(false);
   document.getElementById('gameScreen').classList.add('hidden');
   document.getElementById('endScreen').classList.remove('hidden');
 
