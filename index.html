@@ -77,7 +77,7 @@
       }
     }
 
-    /* Adaptieve Landschap-modus op smartphone: Akkoorden compact BOVEN, Klavier breed ONDER */
+    /* Adaptieve Landschap-modus op smartphone: [Links] - [Akkoord] - [Rechts] BOVEN, Klavier ONDER */
     @media (orientation: landscape) and (max-height: 540px) {
       body.in-game-mode {
         padding: 0.25rem 0.5rem;
@@ -99,43 +99,51 @@
 
       #chordPromptCard {
         flex: 0 0 auto !important;
-        padding: 0.35rem 0.65rem !important;
+        padding: 0.35rem 0.6rem !important;
       }
 
       #holdProgressContainer {
         margin-bottom: 0.25rem !important;
       }
 
+      /* 3-koloms symmetrie: Links | Akkoord (midden) | Rechts */
       #chordMainRow {
-        flex-direction: row !important;
+        display: grid !important;
+        grid-template-columns: 1fr auto 1fr !important;
         align-items: center !important;
-        justify-content: space-between !important;
-        gap: 0.6rem !important;
-      }
-
-      #chordTitleBlock {
-        text-align: left !important;
-        min-width: 120px;
-        flex: 0.9 1 auto;
-      }
-
-      #chordCategoryTagWrap {
-        justify-content: flex-start !important;
-      }
-
-      #targetChordTitle {
-        font-size: 1.5rem !important;
-        line-height: 1.1 !important;
+        gap: 0.5rem !important;
       }
 
       #handCardsGrid {
-        flex: 1.6 1 0%;
-        margin: 0 !important;
-        gap: 0.4rem !important;
+        display: contents !important;
       }
 
-      #lhCard, #rhCard {
+      #lhCard {
+        order: 1 !important;
         padding: 0.3rem 0.5rem !important;
+        text-align: left !important;
+      }
+
+      #chordTitleBlock {
+        order: 2 !important;
+        text-align: center !important;
+        min-width: 110px;
+        padding: 0 0.4rem;
+      }
+
+      #chordCategoryTagWrap {
+        justify-content: center !important;
+      }
+
+      #rhCard {
+        order: 3 !important;
+        padding: 0.3rem 0.5rem !important;
+        text-align: left !important;
+      }
+
+      #targetChordTitle {
+        font-size: 1.65rem !important;
+        line-height: 1.1 !important;
       }
 
       #lhTargetLabel, #rhTargetLabel {
@@ -782,7 +790,7 @@
           <div id="holdProgressBar" class="h-full w-0 bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-75"></div>
         </div>
 
-        <!-- In portret: verticaal. In landschap: Titel links, Handkaarten rechts op 1 compacte rij -->
+        <!-- In portret: verticaal. In landschap: [Links] | [Akkoord] | [Rechts] -->
         <div id="chordMainRow" class="flex flex-col justify-center flex-1 min-h-0">
           <div id="chordTitleBlock" class="shrink-0">
             <div id="chordCategoryTagWrap" class="flex items-center justify-center gap-1.5 mb-0.5">
