@@ -2,21 +2,16 @@
 // APP.JS — Game Engine, Web MIDI, Dynamische Hand-Split, 150ms Hold & Vrij Spel
 // ============================================================================
 
-// Actieve grondtonen (standaard alle 12 aan)
 window.activeRoots = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-
-// Huidige ingedrukte MIDI-noten (zowel via fysieke MIDI-piano als schermklavier)
 window.pressedMidis = new Set();
 
-// Spelstatus
 window.currentQuestions = [];
 window.currentQuestionIndex = 0;
-window.currentGameMode = null; // 'daily', 'daily_archive', 'iiVI', 'retry', 'free', 10, 20, 50
+window.currentGameMode = null;
 window.currentDailyDateStr = null;
 window.lastRegularGameMode = 10;
 window.lastFreePlaySignature = '';
 
-// Timers & 150ms Hold-validatie
 window.gameStartTime = 0;
 window.chordStartTime = 0;
 window.timerIntervalId = null;
@@ -26,11 +21,8 @@ window.HOLD_DURATION_MS = 150;
 window.holdStartTime = null;
 window.holdRafId = null;
 
-// Statistische logging per akkoord voor de "3 Traagste Akkoorden" analyse
 window.sessionChordLogs = [];
 window.slowestRetryQueue = [];
-
-// Screen Wake Lock
 window.wakeLockSentinel = null;
 
 // ============================================================================
@@ -39,7 +31,7 @@ window.wakeLockSentinel = null;
 window.addEventListener('DOMContentLoaded', () => {
   window.renderRootFilterChips();
   window.updatePoolSummary();
-  window.buildVirtualPiano(36, 84); // C2 (36) t/m C6 (84)
+  window.buildVirtualPiano(36, 84);
   window.syncPlayerNameUI();
   window.refreshDailyCardUI();
   window.refreshAllLocalPRBadges();
@@ -54,8 +46,21 @@ window.registerServiceWorker = function () {
   }
 };
 
+window.centerVirtualPiano = function () {
+  const wrapper = document.getElementById('pianoWrapper');
+  if (!wrapper) return;
+  const maxScroll = Math.max(0, wrapper.scrollWidth - wrapper.clientWidth);
+  wrapper.scrollLeft = Math.round(maxScroll * 0.35);
+};
+
+window.addEventListener('resize', () => {
+  if (!document.getElementById('gameScreen')?.classList.contains('hidden')) {
+    requestAnimationFrame(() => window.centerVirtualPiano());
+  }
+});
+
 // ============================================================================
-// 2. SCREEN WAKE LOCK (Houdt scherm van telefoon/tablet aan tijdens spelen)
+// 2. SCREEN WAKE LOCK
 // ============================================================================
 window.requestWakeLock = async function () {
   const badge = document.getElementById('wakeLockBadge');
@@ -66,9 +71,7 @@ window.requestWakeLock = async function () {
     window.wakeLockSentinel = await navigator.wakeLock.request('screen');
     if (badge) badge.classList.remove('hidden');
     if (text) text.textContent = 'Scherm Actief';
-  } catch (e) {
-    // Stil negeren als batterijbesparing Wake Lock weigert
-  }
+  } catch (e) {}
 };
 
 document.addEventListener('visibilitychange', () => {
@@ -87,9 +90,28 @@ window.initMIDI = async function (manualClick = false) {
   const txt = document.getElementById('midiStatusText');
 
   if (!navigator.requestMIDIAccess) {
-    if (txt) txt.textContent = 'Geen Web MIDI (Gebruik Schermklavier)';
+    if (txt) txt.textContent = 'Geen Web MIDI (Schermklavier)';
     if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-400';
     return;
+  }
+
+  // Bij automatisch opstarten: check eerst of rechten al verleend zijn
+  if (!manualClick && navigator.permissions && navigator.permissions.query) {
+    try {
+      const perm = await navigator.permissions.query({ name: 'midi', sysex: false });
+      if (perm.state === 'prompt') {
+        if (txt) txt.textContent = 'Tik om MIDI te verbinden';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        return;
+      }
+      if (perm.state === 'denied') {
+        if (txt) txt.textContent = 'MIDI Geblokkeerd (Check Chrome)';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-400';
+        return;
+      }
+    } catch (e) {
+      // Sommige browsers ondersteunen permissions.query('midi') niet; ga gewoon door
+    }
   }
 
   try {
@@ -97,10 +119,11 @@ window.initMIDI = async function (manualClick = false) {
     window.bindMidiInputs();
     window.midiAccess.onstatechange = () => window.bindMidiInputs();
   } catch (err) {
-    if (txt) txt.textContent = 'MIDI Geweigerd';
+    console.error('MIDI fout:', err);
+    if (txt) txt.textContent = `MIDI Fout (${err.name || 'Geweigerd'})`;
     if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-400';
     if (manualClick) {
-      alert('Geef in je browser toestemming voor MIDI-apparaten en controleer je USB-kabel.');
+      alert(`MIDI kon niet verbinden (${err.name}: ${err.message}). Controleer in Chrome -> Site-instellingen -> MIDI-apparaten of jouw site op Toestaan staat.`);
     }
   }
 };
@@ -280,7 +303,7 @@ window.generateNextRandomUserQuestion = function () {
 };
 
 // ============================================================================
-// 5. VIRTUEEL KLAVIER (Zonder vaste C4-split!)
+// 5. VIRTUEEL KLAVIER
 // ============================================================================
 window.buildVirtualPiano = function (startMidi = 36, endMidi = 84) {
   const container = document.getElementById('pianoKeyboard');
@@ -347,7 +370,7 @@ window.clearScreenKeys = function () {
 };
 
 // ============================================================================
-// 6. DYNAMISCHE HAND-SPLIT (Laagste N noten = Links, Hoogste N = Rechts)
+// 6. DYNAMISCHE HAND-SPLIT
 // ============================================================================
 window.splitPressedNotesDynamically = function (sortedMidis, handSize) {
   const total = sortedMidis.length;
@@ -367,13 +390,14 @@ window.splitPressedNotesDynamically = function (sortedMidis, handSize) {
 };
 
 // ============================================================================
-// 7. SPELMODI STARTEN (Met compacte smartphone Fullscreen modus)
+// 7. SPELMODI STARTEN
 // ============================================================================
 window.setCompactGameViewport = function (isActive) {
   const headerEl = document.getElementById('appHeader');
   if (isActive) {
     document.body.classList.add('in-game-mode');
     if (headerEl) headerEl.classList.add('hidden');
+    requestAnimationFrame(() => window.centerVirtualPiano());
   } else {
     document.body.classList.remove('in-game-mode');
     if (headerEl) headerEl.classList.remove('hidden');
@@ -393,7 +417,6 @@ window.startGame = function (mode, customArchiveDate = null) {
   const finishFreeBtn = document.getElementById('finishFreePlayBtn');
   if (finishFreeBtn) finishFreeBtn.classList.add('hidden');
 
-  // 1. Officiële Daily Challenge van vandaag
   if (mode === 'daily') {
     if (window.hasPlayedDailyToday()) {
       alert('Je hebt de officiële Daily Challenge van vandaag al gespeeld! Bekijk het klassement of oefen een eerdere dag via het archief.');
@@ -404,28 +427,20 @@ window.startGame = function (mode, customArchiveDate = null) {
     window.currentDailyDateStr = todayStr;
     window.currentQuestions = window.generateDailyQuestions(todayStr);
     window.markDailyPlayedToday();
-  }
-  // 2. Gemiste Daily uit het archief oefenen (buiten mededinging)
-  else if (mode === 'daily_archive' && customArchiveDate) {
+  } else if (mode === 'daily_archive' && customArchiveDate) {
     window.currentGameMode = 'daily_archive';
     window.currentDailyDateStr = customArchiveDate;
     window.currentQuestions = window.generateDailyQuestions(customArchiveDate);
-  }
-  // 3. Blinde ii-V-I Progressie (12 akkoorden: 4 toonsoorten x 3 trappen)
-  else if (mode === 'iiVI') {
+  } else if (mode === 'iiVI') {
     window.currentGameMode = 'iiVI';
     window.lastRegularGameMode = 'iiVI';
     const useSevenths = document.getElementById('cat_sevenths')?.checked ?? true;
     const rootsArr = Array.from(window.activeRoots);
     window.currentQuestions = window.generateIIVIQuestions(rootsArr, useSevenths);
-  }
-  // 4. Focus-herkansing van jouw 3 traagste akkoorden (6 opgaven)
-  else if (mode === 'retry' && window.slowestRetryQueue.length > 0) {
+  } else if (mode === 'retry' && window.slowestRetryQueue.length > 0) {
     window.currentGameMode = 'retry';
     window.currentQuestions = [...window.slowestRetryQueue];
-  }
-  // 5. Vrij Spel (Eindeloos / Zen Modus)
-  else if (mode === 'free') {
+  } else if (mode === 'free') {
     const selectedDefs = window.getSelectedChordDefinitions();
     if (selectedDefs.length === 0) {
       alert('Vink in Stap 1 minimaal één akkoordcategorie aan om Vrij Spel te starten!');
@@ -435,9 +450,7 @@ window.startGame = function (mode, customArchiveDate = null) {
     window.lastRegularGameMode = 'free';
     window.currentQuestions = [window.generateNextRandomUserQuestion()];
     if (finishFreeBtn) finishFreeBtn.classList.remove('hidden');
-  }
-  // 6. Reguliere Sprints (10, 20 of 50 akkoorden op eigen niveau)
-  else {
+  } else {
     const count = Number(mode) || 10;
     const selectedDefs = window.getSelectedChordDefinitions();
     if (selectedDefs.length === 0) {
@@ -454,11 +467,10 @@ window.startGame = function (mode, customArchiveDate = null) {
     window.currentQuestions = questions;
   }
 
-  // Wissel naar het compacte 100dvh speelscherm
-  window.setCompactGameViewport(true);
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('endScreen').classList.add('hidden');
   document.getElementById('gameScreen').classList.remove('hidden');
+  window.setCompactGameViewport(true);
 
   window.updateGameModeBadge();
   window.loadCurrentQuestionUI();
@@ -514,10 +526,10 @@ window.updateGameModeBadge = function () {
   if (!badge) return;
 
   if (window.currentGameMode === 'daily') {
-    badge.textContent = `🔥 Daily`;
+    badge.textContent = '🔥 Daily';
     badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30';
   } else if (window.currentGameMode === 'daily_archive') {
-    badge.textContent = `🕹️ Archief`;
+    badge.textContent = '🕹️ Archief';
     badge.className = 'hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
   } else if (window.currentGameMode === 'iiVI') {
     badge.textContent = '🎷 ii–V–I';
@@ -535,7 +547,7 @@ window.updateGameModeBadge = function () {
 };
 
 // ============================================================================
-// 8. HUIDIGE OPGAVE TONEN OP HET SPEELSCHERM
+// 8. HUIDIGE OPGAVE TONEN (Minimalistisch & Zonder Noten-Spoilers)
 // ============================================================================
 window.loadCurrentQuestionUI = function () {
   const q = window.currentQuestions[window.currentQuestionIndex];
@@ -564,64 +576,36 @@ window.loadCurrentQuestionUI = function () {
 
   const catTag = document.getElementById('chordCategoryTag');
   const titleEl = document.getElementById('targetChordTitle');
-  const subEl = document.getElementById('targetChordSubtitle');
-
   const lhTarget = document.getElementById('lhTargetLabel');
-  const lhHint = document.getElementById('lhSubHint');
   const rhTarget = document.getElementById('rhTargetLabel');
-  const rhHint = document.getElementById('rhSubHint');
 
-  // MODUS A: BLINDE ii - V - I
   if (q.isBlindIIVI) {
     if (catTag) {
-      catTag.textContent = `🎹 Toonsoort: ${q.keyCenterName} • Trap ${q.romanStepIndex}/3`;
+      catTag.textContent = `${q.keyCenterName} • Trap ${q.romanStepIndex}/3`;
       catTag.className =
         'text-[10px] sm:text-xs font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/25 text-purple-200 border border-purple-400/40';
     }
     if (titleEl) titleEl.textContent = q.romanLabel;
-    if (subEl) {
-      subEl.textContent = `Speel de ${q.romanLabel.split(' ')[0]} in ${q.keyCenterName} (${q.handSize} noten/hand)`;
-    }
-
     if (lhTarget) lhTarget.textContent = 'Vrije Inversie';
-    if (lhHint) lhHint.textContent = `Alle liggingen (${q.handSize} noten)`;
     if (rhTarget) rhTarget.textContent = 'Vrije Inversie';
-    if (rhHint) rhHint.textContent = `Alle liggingen (${q.handSize} noten)`;
-  }
-  // MODUS B: HYBRIDE SLASH-CHORDS (Further Extensions 9, 11, 13)
-  else if (q.mode === 'slash') {
+  } else if (q.mode === 'slash') {
     if (catTag) {
-      catTag.textContent = `Slash • ${q.chordDef.name} (Bevat ${q.requiredLabel}: ${q.requiredNoteName})`;
+      catTag.textContent = `Slash • ${q.chordDef.name}`;
       catTag.className =
         'text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30';
     }
     if (titleEl) titleEl.textContent = q.symbol;
-    if (subEl) {
-      subEl.textContent = `4 akkoordtonen per hand (incl. ${q.requiredNoteName}) met gevraagde bas onderop`;
-    }
-
     if (lhTarget) lhTarget.textContent = q.lhSlashLabel;
-    if (lhHint) lhHint.textContent = `Bas = ${q.lhBassName} (+ ${q.requiredNoteName})`;
     if (rhTarget) rhTarget.textContent = q.rhSlashLabel;
-    if (rhHint) rhHint.textContent = `Bas = ${q.rhBassName} (+ ${q.requiredNoteName})`;
-  }
-  // MODUS C: KLASSIEKE INVERSIES (Drieklanken & Sevenths)
-  else {
+  } else {
     if (catTag) {
-      catTag.textContent = `${q.chordDef.name} • ${q.handSize} noten/hand`;
+      catTag.textContent = q.chordDef.name;
       catTag.className =
         'text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700';
     }
     if (titleEl) titleEl.textContent = q.symbol;
-    const allNoteNames = q.allowedPcs.map((pc) => window.pcToNoteName(pc, q.rootPc)).join(' – ');
-    if (subEl) {
-      subEl.textContent = `Akkoordtonen: ${allNoteNames}`;
-    }
-
     if (lhTarget) lhTarget.textContent = q.lhInvLabel;
-    if (lhHint) lhHint.textContent = q.lhDegreeHint;
     if (rhTarget) rhTarget.textContent = q.rhInvLabel;
-    if (rhHint) rhHint.textContent = q.rhDegreeHint;
   }
 
   window.onActiveNotesChanged();
@@ -675,7 +659,7 @@ window.updateHandCardFeedback = function (prefix, handMidis, validationResult, r
     notesEl.textContent =
       handMidis.length > 0
         ? `${handMidis.map((m) => window.midiToNoteName(m, rootPc)).join('–')}`
-        : 'Ingedrukt: —';
+        : '—';
   }
 
   if (badge) {
@@ -723,7 +707,6 @@ window.updateVirtualPianoHighlights = function (lhMidis, rhMidis, bothCorrect = 
   });
 };
 
-// 150ms Hold-Timer implementatie
 window.startHoldTimerIfNeeded = function () {
   if (window.holdStartTime !== null || window.isTransitioningChord) return;
 
@@ -762,7 +745,7 @@ window.cancelHoldTimer = function () {
 };
 
 // ============================================================================
-// 10. AKKOORD GOEDGEKEURD -> LOG TIJD & DOOR NAAR VOLGENDE (INCL. VRIJ SPEL)
+// 10. AKKOORD GOEDGEKEURD
 // ============================================================================
 window.handleChordCompleted = function () {
   if (window.isTransitioningChord) return;
@@ -813,7 +796,7 @@ window.handleChordCompleted = function () {
 };
 
 // ============================================================================
-// 11. HULPKNOPPEN TIJDENS HET SPELEN (Oplossing, Beluister & Test Greep)
+// 11. HULPKNOPPEN
 // ============================================================================
 window.showCurrentSolution = function () {
   const q = window.currentQuestions[window.currentQuestionIndex];
@@ -868,7 +851,7 @@ window.simulateCorrectChord = function () {
 };
 
 // ============================================================================
-// 12. LIVE TIMERS & EINDSCHERM (Inclusief 3 Traagste Akkoorden & Daily Post)
+// 12. LIVE TIMERS & EINDSCHERM
 // ============================================================================
 window.updateLiveTimers = function () {
   const now = performance.now();
@@ -906,7 +889,6 @@ window.finishGameSession = function () {
 
   window.syncPlayerNameUI();
 
-  // A. Officiële Daily Challenge voltooid
   if (window.currentGameMode === 'daily') {
     const dateStr = window.currentDailyDateStr || window.getTodayDateString();
     window.saveLocalDailyResult(dateStr, totalTimeMs);
@@ -925,9 +907,7 @@ window.finishGameSession = function () {
       window.pendingDailySubmission = { dateStr, timeMs: totalTimeMs, avgMs: avgTimeMs };
       window.loadDailyLeaderboardForDate(dateStr, 'endDailyLeaderboardList');
     }
-  }
-  // B. Archief Daily geoefend
-  else if (window.currentGameMode === 'daily_archive') {
+  } else if (window.currentGameMode === 'daily_archive') {
     const dateStr = window.currentDailyDateStr;
     window.prepareDailyShareText(dateStr, totalTimeMs, avgTimeMs, true);
 
@@ -938,9 +918,7 @@ window.finishGameSession = function () {
     if (endPlayerSection) endPlayerSection.classList.add('hidden');
 
     window.loadDailyLeaderboardForDate(dateStr, 'endDailyLeaderboardList');
-  }
-  // C. Vrij Spel, Sprints of Focus-Herkansing
-  else {
+  } else {
     if (shareDailyBtn) shareDailyBtn.classList.add('hidden');
     if (endDailyBoard) endDailyBoard.classList.add('hidden');
     if (endPlayerSection) endPlayerSection.classList.add('hidden');
