@@ -28,7 +28,7 @@
       overflow-x: hidden;
     }
 
-    /* Wanneer het speelscherm actief is op mobiel: vergrendel op exact 1 schermhoogte */
+    /* Wanneer het speelscherm actief is: vergrendel op exact 1 schermhoogte */
     body.in-game-mode {
       height: 100dvh;
       max-height: 100dvh;
@@ -74,6 +74,79 @@
       .piano-keys {
         height: 116px;
         min-width: 680px;
+      }
+    }
+
+    /* Adaptieve Landschap-modus op lage schermen (zoals smartphone in landschap) */
+    @media (orientation: landscape) and (max-height: 540px) {
+      body.in-game-mode {
+        padding: 0.35rem 0.5rem;
+      }
+
+      #gameScreen {
+        max-width: 100%;
+        gap: 0.35rem;
+      }
+
+      #gamePlayBody {
+        flex-direction: row !important;
+        align-items: stretch !important;
+        gap: 0.45rem !important;
+      }
+
+      #chordPromptCard {
+        flex: 1.15 1 0%;
+        padding: 0.45rem 0.65rem !important;
+      }
+
+      #targetChordTitle {
+        font-size: 1.35rem !important;
+        line-height: 1.15 !important;
+      }
+
+      #targetChordSubtitle {
+        font-size: 0.68rem !important;
+      }
+
+      #handCardsGrid {
+        margin-top: 0.35rem !important;
+        margin-bottom: 0.35rem !important;
+        gap: 0.35rem !important;
+      }
+
+      #lhCard, #rhCard {
+        padding: 0.35rem 0.5rem !important;
+      }
+
+      #lhTargetLabel, #rhTargetLabel {
+        font-size: 0.72rem !important;
+      }
+
+      #lhSubHint, #rhSubHint, #lhPlayedNotes, #rhPlayedNotes {
+        font-size: 0.62rem !important;
+      }
+
+      #keyboardPanel {
+        flex: 0.95 1 0%;
+        width: auto;
+        max-width: 52%;
+        padding: 0.4rem 0.55rem !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .piano-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+      }
+
+      .piano-keys {
+        height: 100%;
+        min-height: 78px;
+        max-height: 150px;
+        min-width: 480px;
       }
     }
 
@@ -324,7 +397,6 @@
 
       <!-- 6 Akkoordcategorieën Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-        <!-- Major Triads -->
         <label class="flex items-start gap-2 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
           <input id="cat_major" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
           <div class="leading-tight">
@@ -333,7 +405,6 @@
           </div>
         </label>
 
-        <!-- Minor Triads -->
         <label class="flex items-start gap-2 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
           <input id="cat_minor" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
           <div class="leading-tight">
@@ -342,7 +413,6 @@
           </div>
         </label>
 
-        <!-- Diminished Triads -->
         <label class="flex items-start gap-2 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
           <input id="cat_dim" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
           <div class="leading-tight">
@@ -351,7 +421,6 @@
           </div>
         </label>
 
-        <!-- Augmented Triads -->
         <label class="flex items-start gap-2 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
           <input id="cat_aug" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
           <div class="leading-tight">
@@ -360,7 +429,6 @@
           </div>
         </label>
 
-        <!-- Sevenths -->
         <label class="flex items-start gap-2 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
           <input id="cat_sevenths" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
           <div class="leading-tight">
@@ -369,7 +437,6 @@
           </div>
         </label>
 
-        <!-- Further Extensions (Slash-Chord Hybride Modus) -->
         <label class="flex items-start gap-2 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-amber-500/40 transition border border-amber-500/20">
           <input id="cat_extensions" type="checkbox" onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-amber-500 rounded" />
           <div class="leading-tight">
@@ -427,7 +494,6 @@
 
       <!-- Rij 1: Daily Challenge & Blinde ii-V-I Progressie -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-2.5">
-        <!-- DAILY CHALLENGE KAART -->
         <div class="rounded-2xl p-3.5 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-slate-900 border border-amber-500/40 flex flex-col justify-between gap-2.5">
           <div>
             <div class="flex items-center justify-between gap-2">
@@ -459,7 +525,6 @@
           </div>
         </div>
 
-        <!-- BLINDE ii-V-I PROGRESSIE KAART -->
         <div class="rounded-2xl p-3.5 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-slate-900 border border-purple-500/40 flex flex-col justify-between gap-2.5">
           <div>
             <div class="flex items-center justify-between gap-2">
@@ -493,7 +558,6 @@
 
       <!-- Rij 2: Vrije Sprints (10, 20, 50 Akkoorden + Vrij Spel op eigen niveau) -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <!-- 10 Akkoorden Sprint -->
         <button
           type="button"
           onclick="window.startGame(10)"
@@ -513,7 +577,6 @@
           </div>
         </button>
 
-        <!-- 20 Akkoorden Sprint -->
         <button
           type="button"
           onclick="window.startGame(20)"
@@ -533,7 +596,6 @@
           </div>
         </button>
 
-        <!-- 50 Akkoorden Marathon -->
         <button
           type="button"
           onclick="window.startGame(50)"
@@ -553,7 +615,6 @@
           </div>
         </button>
 
-        <!-- Vrij Spel (Eindeloos / Zen Modus) -->
         <button
           type="button"
           onclick="window.startGame('free')"
@@ -590,7 +651,6 @@
           </p>
         </div>
 
-        <!-- Datum-Archief Navigatie -->
         <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-xl p-1">
           <button
             type="button"
@@ -621,7 +681,6 @@
         </div>
       </div>
 
-      <!-- Knop om een gemiste Daily uit het archief als oefening te spelen -->
       <div id="archivePracticeBar" class="hidden mb-2.5 p-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-between gap-2">
         <span id="archivePracticeText" class="text-xs text-indigo-200 font-medium">
           Wil je de 10 akkoorden van deze eerdere datum oefenen?
@@ -635,7 +694,6 @@
         </button>
       </div>
 
-      <!-- Tabel / Lijst met Daily Scores -->
       <div id="dailyLeaderboardList" class="flex flex-col gap-1.5 min-h-[120px]">
         <div class="text-xs text-slate-400 py-6 text-center">
           Scores laden uit Firebase...
@@ -645,11 +703,11 @@
   </main>
 
   <!-- ========================================================= -->
-  <!-- SCHERM 2: HET SPEELSCHERM (Compact, past 100% op 1 gsm-scherm) -->
+  <!-- SCHERM 2: HET SPEELSCHERM (Adaptief voor Portret & Landschap) -->
   <!-- ========================================================= -->
   <main id="gameScreen" class="hidden w-full max-w-5xl flex-1 flex flex-col justify-between gap-1.5 sm:gap-2.5 overflow-hidden">
 
-    <!-- Bovenbalk: Stopknop / Afrondknop, Voortgang, Modus-badge & Live Timer -->
+    <!-- Bovenbalk -->
     <div class="glass-card rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 flex items-center justify-between gap-1.5 shrink-0">
       <div class="flex items-center gap-1.5">
         <button
@@ -668,18 +726,16 @@
         >
           🏁 Afronden
         </button>
-        <span id="gameModeBadge" class="hidden xs:inline-block sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 truncate max-w-[130px] sm:max-w-none">
+        <span id="gameModeBadge" class="hidden sm:inline-block text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 truncate max-w-[130px] sm:max-w-none">
           Sprint
         </span>
       </div>
 
-      <!-- Voortgang Teller -->
       <div class="flex items-center gap-1">
         <span class="text-[10px] sm:text-xs text-slate-400 font-medium hidden sm:inline">Opgave</span>
         <span id="progressCounter" class="text-xs sm:text-base font-extrabold mono text-white">1 / 10</span>
       </div>
 
-      <!-- Live Tijd & Laatste Split -->
       <div class="flex items-center gap-1.5">
         <span id="currentChordTimer" class="hidden md:inline-block text-xs mono text-slate-400">
           Huidig: 0.0s
@@ -690,127 +746,126 @@
       </div>
     </div>
 
-    <!-- CENTRALE AKKOORD OPDRACHT KAART -->
-    <div class="glass-card rounded-xl sm:rounded-2xl p-2.5 sm:p-4 text-center relative overflow-hidden shadow-xl flex-1 flex flex-col justify-between min-h-0">
-      <!-- Subtiele 150ms Hold Progress Bar bovenin de kaart -->
-      <div id="holdProgressContainer" class="w-full h-1 sm:h-1.5 bg-slate-800/90 rounded-full overflow-hidden mb-1.5 sm:mb-2.5 opacity-0 shrink-0">
-        <div id="holdProgressBar" class="h-full w-0 bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-75"></div>
-      </div>
+    <!-- Adaptieve Speelruimte (Verticaal in portret, Horizontaal in landschap op laag scherm) -->
+    <div id="gamePlayBody" class="flex-1 flex flex-col justify-between gap-1.5 sm:gap-2.5 min-h-0">
 
-      <!-- Akkoord Titel Sectie -->
-      <div class="shrink-0">
-        <div class="flex items-center justify-center gap-1.5 mb-0.5">
-          <span id="chordCategoryTag" class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700 truncate max-w-full">
-            Seventh Chord
-          </span>
+      <!-- CENTRALE AKKOORD OPDRACHT KAART -->
+      <div id="chordPromptCard" class="glass-card rounded-xl sm:rounded-2xl p-2.5 sm:p-4 text-center relative overflow-hidden shadow-xl flex-1 flex flex-col justify-between min-h-0">
+        <div id="holdProgressContainer" class="w-full h-1 sm:h-1.5 bg-slate-800/90 rounded-full overflow-hidden mb-1.5 sm:mb-2.5 opacity-0 shrink-0">
+          <div id="holdProgressBar" class="h-full w-0 bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-75"></div>
         </div>
 
-        <h2 id="targetChordTitle" class="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
-          Cmaj7
-        </h2>
+        <div class="shrink-0">
+          <div class="flex items-center justify-center gap-1.5 mb-0.5">
+            <span id="chordCategoryTag" class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700 truncate max-w-full">
+              Seventh Chord
+            </span>
+          </div>
 
-        <p id="targetChordSubtitle" class="text-[11px] sm:text-sm text-slate-300 font-medium line-clamp-1 mt-0.5">
-          Speel met beide handen de gevraagde ligging
-        </p>
-      </div>
+          <h2 id="targetChordTitle" class="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+            Cmaj7
+          </h2>
 
-      <!-- TWEE HAND-KAARTEN (ALTIJD NAAST ELKAAR: grid-cols-2, ook op smartphone!) -->
-      <div class="grid grid-cols-2 gap-1.5 sm:gap-2.5 my-1.5 sm:my-3 text-left">
-        <!-- Linkerhand Kaart -->
-        <div id="lhCard" class="rounded-xl p-2 sm:p-3 bg-blue-950/35 border border-blue-500/30 transition flex flex-col justify-between">
-          <div>
-            <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
-              <span class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-blue-300">
-                🤚 Links
-              </span>
-              <span id="lhStatusBadge" class="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700 truncate max-w-full">
-                Wacht...
-              </span>
+          <p id="targetChordSubtitle" class="text-[11px] sm:text-sm text-slate-300 font-medium line-clamp-1 mt-0.5">
+            Speel met beide handen de gevraagde ligging
+          </p>
+        </div>
+
+        <!-- TWEE HAND-KAARTEN -->
+        <div id="handCardsGrid" class="grid grid-cols-2 gap-1.5 sm:gap-2.5 my-1.5 sm:my-3 text-left">
+          <div id="lhCard" class="rounded-xl p-2 sm:p-3 bg-blue-950/35 border border-blue-500/30 transition flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
+                <span class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-blue-300">
+                  🤚 Links
+                </span>
+                <span id="lhStatusBadge" class="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700 truncate max-w-full">
+                  Wacht...
+                </span>
+              </div>
+              <div id="lhTargetLabel" class="text-xs sm:text-lg font-extrabold text-white mono leading-snug">
+                1e Inversie
+              </div>
+              <div id="lhSubHint" class="text-[10px] sm:text-xs text-blue-200/80 mt-0.5 leading-tight line-clamp-2">
+                3e (Terts) onderop
+              </div>
             </div>
-            <div id="lhTargetLabel" class="text-xs sm:text-lg font-extrabold text-white mono leading-snug">
-              1e Inversie
-            </div>
-            <div id="lhSubHint" class="text-[10px] sm:text-xs text-blue-200/80 mt-0.5 leading-tight line-clamp-2">
-              3e (Terts) onderop
+            <div id="lhPlayedNotes" class="text-[10px] sm:text-[11px] mono text-slate-400 mt-1 truncate">
+              Ingedrukt: —
             </div>
           </div>
-          <div id="lhPlayedNotes" class="text-[10px] sm:text-[11px] mono text-slate-400 mt-1 truncate">
-            Ingedrukt: —
+
+          <div id="rhCard" class="rounded-xl p-2 sm:p-3 bg-purple-950/35 border border-purple-500/30 transition flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
+                <span class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-purple-300">
+                  ✋ Rechts
+                </span>
+                <span id="rhStatusBadge" class="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700 truncate max-w-full">
+                  Wacht...
+                </span>
+              </div>
+              <div id="rhTargetLabel" class="text-xs sm:text-lg font-extrabold text-white mono leading-snug">
+                2e Inversie
+              </div>
+              <div id="rhSubHint" class="text-[10px] sm:text-xs text-purple-200/80 mt-0.5 leading-tight line-clamp-2">
+                5e (Kwint) onderop
+              </div>
+            </div>
+            <div id="rhPlayedNotes" class="text-[10px] sm:text-[11px] mono text-slate-400 mt-1 truncate">
+              Ingedrukt: —
+            </div>
           </div>
         </div>
 
-        <!-- Rechterhand Kaart -->
-        <div id="rhCard" class="rounded-xl p-2 sm:p-3 bg-purple-950/35 border border-purple-500/30 transition flex flex-col justify-between">
-          <div>
-            <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
-              <span class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-purple-300">
-                ✋ Rechts
-              </span>
-              <span id="rhStatusBadge" class="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded bg-slate-900/90 text-slate-300 border border-slate-700 truncate max-w-full">
-                Wacht...
-              </span>
-            </div>
-            <div id="rhTargetLabel" class="text-xs sm:text-lg font-extrabold text-white mono leading-snug">
-              2e Inversie
-            </div>
-            <div id="rhSubHint" class="text-[10px] sm:text-xs text-purple-200/80 mt-0.5 leading-tight line-clamp-2">
-              5e (Kwint) onderop
-            </div>
+        <!-- Hulpmiddelen Balk -->
+        <div class="shrink-0">
+          <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-1.5 sm:pt-2.5 border-t border-slate-800/80">
+            <button
+              type="button"
+              onclick="window.showCurrentSolution()"
+              class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition"
+            >
+              💡 Oplossing
+            </button>
+            <button
+              type="button"
+              onclick="window.playCurrentChordAudio()"
+              class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition"
+            >
+              🔊 Luister
+            </button>
+            <button
+              type="button"
+              onclick="window.simulateCorrectChord()"
+              class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition"
+              title="Simuleer de juiste greep (handig om zonder MIDI-piano te testen)"
+            >
+              🎹 Test Greep
+            </button>
+            <button
+              type="button"
+              onclick="window.clearScreenKeys()"
+              class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+            >
+              🧹 Wis
+            </button>
           </div>
-          <div id="rhPlayedNotes" class="text-[10px] sm:text-[11px] mono text-slate-400 mt-1 truncate">
-            Ingedrukt: —
+
+          <div id="solutionRevealBox" class="hidden mt-1.5 p-1.5 sm:p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-xs text-amber-200 mono">
           </div>
         </div>
       </div>
 
-      <!-- Hulpmiddelen Balk: Oplossing Tonen, Beluister, Test/Simuleer & Wis Toetsen -->
-      <div class="shrink-0">
-        <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-1.5 sm:pt-2.5 border-t border-slate-800/80">
-          <button
-            type="button"
-            onclick="window.showCurrentSolution()"
-            class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition"
-          >
-            💡 Oplossing
-          </button>
-          <button
-            type="button"
-            onclick="window.playCurrentChordAudio()"
-            class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition"
-          >
-            🔊 Luister
-          </button>
-          <button
-            type="button"
-            onclick="window.simulateCorrectChord()"
-            class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition"
-            title="Simuleer de juiste greep (handig om zonder MIDI-piano te testen)"
-          >
-            🎹 Test Greep
-          </button>
-          <button
-            type="button"
-            onclick="window.clearScreenKeys()"
-            class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
-          >
-            🧹 Wis
-          </button>
+      <!-- VIRTUEEL KLAVIER -->
+      <div id="keyboardPanel" class="glass-card rounded-xl sm:rounded-2xl p-1.5 sm:p-3 shadow-lg shrink-0">
+        <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 mb-1 px-1">
+          <span class="truncate">💡 Laagste 3/4 = <strong class="text-blue-400">Links</strong> • Hoogste 3/4 = <strong class="text-purple-400">Rechts</strong></span>
+          <span id="pressedCountLabel" class="mono font-bold text-slate-300 shrink-0 ml-2">0 actief</span>
         </div>
-
-        <!-- Uitklapbare Oplossingsbalk -->
-        <div id="solutionRevealBox" class="hidden mt-1.5 p-1.5 sm:p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] sm:text-xs text-amber-200 mono">
-        </div>
-      </div>
-    </div>
-
-    <!-- VIRTUEEL KLAVIER (C2 t/m C6 - zonder vaste C4 split, puur links/rechts op volgorde) -->
-    <div class="glass-card rounded-xl sm:rounded-2xl p-1.5 sm:p-3 shadow-lg shrink-0">
-      <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 mb-1 px-1">
-        <span class="truncate">💡 Laagste 3/4 = <strong class="text-blue-400">Links</strong> • Hoogste 3/4 = <strong class="text-purple-400">Rechts</strong></span>
-        <span id="pressedCountLabel" class="mono font-bold text-slate-300 shrink-0 ml-2">0 actief</span>
-      </div>
-      <div class="piano-wrapper">
-        <div id="pianoKeyboard" class="piano-keys">
+        <div id="pianoWrapper" class="piano-wrapper">
+          <div id="pianoKeyboard" class="piano-keys">
+          </div>
         </div>
       </div>
     </div>
@@ -829,7 +884,6 @@
         Knap gespeeld! 🎹
       </h2>
 
-      <!-- Eindtijd & Gemiddelde per akkoord -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-4 max-w-xl mx-auto">
         <div class="p-3 rounded-2xl glass-subtle">
           <div class="text-[11px] text-slate-400 font-semibold">Totale Tijd</div>
@@ -845,7 +899,6 @@
         </div>
       </div>
 
-      <!-- Spelersnaam bevestiging op eindscherm (alleen relevant voor Daily Leaderboard) -->
       <div id="endPlayerSection" class="max-w-md mx-auto mb-4">
         <div id="endPlayerInputWrap" class="flex items-center justify-center gap-2 bg-slate-900/90 border border-slate-700 rounded-xl p-2">
           <span class="text-xs text-slate-300">Naam voor klassement:</span>
@@ -880,7 +933,6 @@
         </div>
       </div>
 
-      <!-- FOUTEN-ANALYSE: JOUW 3 TRAAGSTE AKKOORDEN VAN DEZE RONDE -->
       <div id="slowestChordsSection" class="max-w-xl mx-auto mb-4 p-3.5 rounded-2xl bg-slate-900/85 border border-slate-700/80 text-left">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
           <div>
@@ -904,7 +956,6 @@
         </div>
       </div>
 
-      <!-- Actieknoppen onderaan Eindscherm -->
       <div class="flex flex-wrap items-center justify-center gap-2.5">
         <button
           id="shareDailyBtn"
@@ -932,7 +983,6 @@
       </div>
     </section>
 
-    <!-- Alleen zichtbaar na een Daily Challenge: Live Daily Stand -->
     <section id="endDailyLeaderboardSection" class="hidden glass-card rounded-2xl p-4 shadow-lg">
       <h3 class="text-sm font-extrabold text-white mb-2">
         🏆 Stand van deze Daily Challenge
