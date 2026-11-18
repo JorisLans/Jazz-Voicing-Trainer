@@ -2,7 +2,7 @@
 // SW.JS — Service Worker voor Jazz Inversie Studio (4-Bestanden Architectuur)
 // ============================================================================
 
-const CACHE_NAME = 'jazz-studio-v11';
+const CACHE_NAME = 'jazz-studio-v12';
 
 const URLS_TO_CACHE = [
   './',
