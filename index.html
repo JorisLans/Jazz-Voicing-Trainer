@@ -72,7 +72,7 @@
       position: relative;
       z-index: 1;
       display: flex;
-       flex-direction: column;
+      flex-direction: column;
       justify-content: flex-end;
       align-items: center;
       padding-bottom: 6px;
@@ -129,7 +129,7 @@
       border-color: #047857 !important;
     }
 
-    /* Oplossings-highlights (Goud/Amber) */
+    /* Oplossings-highlights */
     .white-key.hint-lh {
       box-shadow: inset 0 -8px 0 #38bdf8;
       background: #e0f2fe;
@@ -165,12 +165,10 @@
       color: #ffffff;
     }
 
-    /* Hold Progress Bar Animatie */
     #holdProgressContainer {
       transition: opacity 0.12s ease;
     }
 
-    /* Checkbox & knop-states */
     .chip-active {
       background: rgba(59, 130, 246, 0.22);
       border-color: #3b82f6;
@@ -203,7 +201,6 @@
     <div class="flex flex-wrap items-center gap-2">
       <!-- Spelersnaam Container (Startscherm) -->
       <div class="flex items-center">
-        <!-- Invoerveld (alleen zichtbaar als er nog geen naam is of bij bewerken) -->
         <div id="playerInputWrap" class="flex items-center gap-1 bg-slate-900/90 border border-slate-700 rounded-xl px-2 py-1">
           <span class="text-xs">👤</span>
           <input
@@ -223,7 +220,6 @@
           </button>
         </div>
 
-        <!-- Compacte Badge (zichtbaar zodra naam is opgeslagen) -->
         <button
           id="playerBadgeWrap"
           type="button"
@@ -370,7 +366,7 @@
         </label>
       </div>
 
-      <!-- Toonsoorten / Grondtonen Filter (Uitklapbaar of compact) -->
+      <!-- Toonsoorten / Grondtonen Filter -->
       <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-slate-300">Actieve Grondtonen:</span>
@@ -483,8 +479,8 @@
         </div>
       </div>
 
-      <!-- Rij 2: Vrije Sprints (10, 20, 50 Akkoorden op eigen niveau) -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <!-- Rij 2: Vrije Sprints (10, 20, 50 Akkoorden + Vrij Spel op eigen niveau) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         <!-- 10 Akkoorden Sprint -->
         <button
           type="button"
@@ -500,7 +496,7 @@
               10 Akkoorden
             </div>
             <div class="text-[11px] text-slate-400">
-              Gebruikt jouw eigen selectie uit Stap 1
+              Gebruikt jouw selectie uit Stap 1
             </div>
           </div>
         </button>
@@ -541,6 +537,26 @@
             </div>
             <div class="text-[11px] text-slate-400">
               Ultieme uithoudingstest op jouw niveau
+            </div>
+          </div>
+        </button>
+
+        <!-- Vrij Spel (Eindeloos / Zen Modus) -->
+        <button
+          type="button"
+          onclick="window.startGame('free')"
+          class="group text-left p-3.5 rounded-2xl glass-subtle hover:bg-slate-800/80 hover:border-sky-500/50 transition flex flex-col justify-between gap-2 border border-sky-500/25"
+        >
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs font-extrabold text-sky-300">♾️ Eindeloos</span>
+            <span class="text-[11px] mono font-bold text-sky-400/80">Zonder limiet</span>
+          </div>
+          <div>
+            <div class="text-base font-extrabold text-white group-hover:text-sky-200 transition">
+              Vrij Spel
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Oefen non-stop en stop wanneer jij wilt
             </div>
           </div>
         </button>
@@ -621,7 +637,7 @@
   <!-- ========================================================= -->
   <main id="gameScreen" class="hidden w-full max-w-5xl flex flex-col gap-2.5">
 
-    <!-- Bovenbalk: Stopknop, Voortgang, Modus-badge & Live Timer -->
+    <!-- Bovenbalk: Stopknop / Afrondknop, Voortgang, Modus-badge & Live Timer -->
     <div class="glass-card rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2">
         <button
@@ -629,7 +645,16 @@
           onclick="window.returnToMenu()"
           class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
         >
-          ✕ Stop
+          ✕ Menu
+        </button>
+        <button
+          id="finishFreePlayBtn"
+          type="button"
+          onclick="window.finishFreePlaySession()"
+          class="hidden px-2.5 py-1 rounded-xl text-xs font-extrabold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition"
+          title="Rond Vrij Spel af en bekijk je statistieken en 3 traagste akkoorden"
+        >
+          🏁 Afronden &amp; Analyse
         </button>
         <span id="gameModeBadge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
           Sprint
@@ -660,14 +685,14 @@
         <div id="holdProgressBar" class="h-full w-0 bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-75"></div>
       </div>
 
-      <!-- Context-vaantje (Bijv. Toonsoort bij ii-V-I of Slash-Chord modus) -->
+      <!-- Context-vaantje -->
       <div class="flex items-center justify-center gap-2 mb-1">
         <span id="chordCategoryTag" class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700">
           Seventh Chord
         </span>
       </div>
 
-      <!-- Grote Hoofdtitel (Bijv. "Cmaj7" of bij ii-V-I: "ii — Mineur 7 (m7)") -->
+      <!-- Grote Hoofdtitel -->
       <h2 id="targetChordTitle" class="text-2xl sm:text-4xl font-black tracking-tight text-white my-0.5">
         Cmaj7
       </h2>
@@ -722,7 +747,7 @@
         </div>
       </div>
 
-      <!-- Hulpmiddelen Balk: Oplossing Tonen, Beluister, Test/Simuleer & Sla Over -->
+      <!-- Hulpmiddelen Balk: Oplossing Tonen, Beluister, Test/Simuleer & Wis Toetsen -->
       <div class="flex flex-wrap items-center justify-center gap-2 mt-3 pt-2.5 border-t border-slate-800/80">
         <button
           type="button"
@@ -757,7 +782,6 @@
 
       <!-- Uitklapbare Oplossingsbalk -->
       <div id="solutionRevealBox" class="hidden mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 mono">
-        <!-- Wordt ingevuld zodra je op Oplossing klikt -->
       </div>
     </div>
 
@@ -769,7 +793,6 @@
       </div>
       <div class="piano-wrapper">
         <div id="pianoKeyboard" class="piano-keys">
-          <!-- Wordt dynamisch opgebouwd door app.js -->
         </div>
       </div>
     </div>
@@ -860,7 +883,6 @@
           </button>
         </div>
         <div id="slowestChordsList" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
-          <!-- Wordt dynamisch gevuld -->
         </div>
       </div>
 
