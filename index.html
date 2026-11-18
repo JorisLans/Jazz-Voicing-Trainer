@@ -1,3458 +1,909 @@
 <!DOCTYPE html>
-<html lang="nl" class="dark">
+<html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jazz Piano Inversie Trainer</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e293b">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Jazz Inversie Studio</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            club: {
-              950: '#080b12',
-              900: '#0f1420',
-              800: '#171f30',
-              700: '#232e45',
-            }
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    body {
-      background-color: #080b12;
-      background-image:
-        radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.08), transparent 40%),
-        radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.08), transparent 40%);
-      color: #f1f5f9;
-      min-height: 100vh;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
 
-    /* Pianoklavier styling - compact zodat alles op 1 scherm past zonder uitzoomen */
-    .piano-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .piano-container {
-      position: relative;
-      display: flex;
-      height: 128px;
-      min-width: 640px;
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
-    @media (min-width: 768px) {
-      .piano-container {
-        height: 146px;
-        min-width: 100%;
-      }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 55%, #020617 100%);
+      color: #f8fafc;
+      min-height: 100dvh;
+      overflow-x: hidden;
     }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .glass-subtle {
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    /* Virtueel Piano Klavier */
+    .piano-wrapper {
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: #475569 #0f172a;
+    }
+
+    .piano-keys {
+      position: relative;
+      display: flex;
+      height: 118px;
+      min-width: 680px;
+      margin: 0 auto;
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+    }
+
     .white-key {
       flex: 1;
-      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 92%, #cbd5e1 100%);
-      border: 1px solid #334155;
+      background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
+      border: 1px solid #94a3b8;
       border-top: none;
       border-radius: 0 0 6px 6px;
       position: relative;
       z-index: 1;
       display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      padding-bottom: 8px;
-      cursor: pointer;
-      transition: background 0.12s ease, transform 0.08s ease;
-    }
-    .white-key:active {
-      transform: translateY(2px);
-    }
-    .white-key.lh-active {
-      background: linear-gradient(180deg, #67e8f9 0%, #06b6d4 85%, #0891b2 100%);
-      box-shadow: inset 0 -4px 10px rgba(8, 145, 178, 0.5), 0 0 14px rgba(6, 182, 212, 0.45);
-    }
-    .white-key.rh-active {
-      background: linear-gradient(180deg, #fde68a 0%, #f59e0b 85%, #d97706 100%);
-      box-shadow: inset 0 -4px 10px rgba(180, 83, 9, 0.5), 0 0 14px rgba(245, 158, 11, 0.45);
-    }
-    .black-key {
-      position: absolute;
-      top: 0;
-      width: 2.2%;
-      height: 60%;
-      background: linear-gradient(180deg, #1e293b 0%, #090d16 88%, #020617 100%);
-      border: 1px solid #020617;
-      border-top: none;
-      border-radius: 0 0 5px 5px;
-      z-index: 2;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
+       flex-direction: column;
       justify-content: flex-end;
       align-items: center;
       padding-bottom: 6px;
       cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-      transition: background 0.12s ease, transform 0.08s ease;
-    }
-    .black-key:active {
-      transform: translateX(-50%) translateY(2px);
-    }
-    .black-key.lh-active {
-      background: linear-gradient(180deg, #22d3ee 0%, #0284c7 90%, #0369a1 100%);
-      box-shadow: 0 0 14px rgba(34, 211, 238, 0.65);
-    }
-    .black-key.rh-active {
-      background: linear-gradient(180deg, #fbbf24 0%, #d97706 90%, #b45309 100%);
-      box-shadow: 0 0 14px rgba(251, 191, 36, 0.65);
+      transition: background 0.08s ease, transform 0.05s ease;
     }
 
-    /* Live MIDI / Klik ingedrukte toets visualisatie */
-    .white-key.midi-pressed {
-      box-shadow: inset 0 0 0 3px #10b981, 0 0 18px rgba(16, 185, 129, 0.75) !important;
-      transform: translateY(2px);
+    .white-key:active {
+      transform: translateY(1px);
     }
-    .black-key.midi-pressed {
-      box-shadow: inset 0 0 0 2.5px #10b981, 0 0 18px rgba(16, 185, 129, 0.85) !important;
-      transform: translateX(-50%) translateY(2px);
+
+    .black-key {
+      position: absolute;
+      top: 0;
+      width: 3.1%;
+      height: 62%;
+      background: linear-gradient(to bottom, #1e293b 0%, #090d16 100%);
+      border: 1px solid #020617;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 5px;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.55);
+      transition: background 0.08s ease, transform 0.05s ease;
     }
-    .midi-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 9999px;
-      background-color: #10b981;
-      box-shadow: 0 0 8px #10b981;
-      margin-bottom: 3px;
+
+    /* Actieve aanslag-kleuren (Links = Blauw, Rechts = Paars, Goed = Groen) */
+    .white-key.active-lh {
+      background: linear-gradient(to bottom, #60a5fa 0%, #2563eb 100%) !important;
+      border-color: #1d4ed8 !important;
+    }
+    .black-key.active-lh {
+      background: linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%) !important;
+      border-color: #60a5fa !important;
+    }
+
+    .white-key.active-rh {
+      background: linear-gradient(to bottom, #c084fc 0%, #7e22ce 100%) !important;
+      border-color: #6b21a8 !important;
+    }
+    .black-key.active-rh {
+      background: linear-gradient(to bottom, #a855f7 0%, #6b21a8 100%) !important;
+      border-color: #c084fc !important;
+    }
+
+    .white-key.active-correct,
+    .black-key.active-correct {
+      background: linear-gradient(to bottom, #34d399 0%, #059669 100%) !important;
+      border-color: #047857 !important;
+    }
+
+    /* Oplossings-highlights (Goud/Amber) */
+    .white-key.hint-lh {
+      box-shadow: inset 0 -8px 0 #38bdf8;
+      background: #e0f2fe;
+    }
+    .black-key.hint-lh {
+      box-shadow: inset 0 -6px 0 #38bdf8;
+      background: #0284c7;
+    }
+    .white-key.hint-rh {
+      box-shadow: inset 0 -8px 0 #e879f9;
+      background: #fae8ff;
+    }
+    .black-key.hint-rh {
+      box-shadow: inset 0 -6px 0 #e879f9;
+      background: #a21caf;
+    }
+
+    .key-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #475569;
       pointer-events: none;
     }
 
-    /* ===================================================================== */
-    /* MOBIELE OPTIMALISATIE (LAAT DESKTOP > 768PX 100% ONGEWIJZIGD)         */
-    /* ===================================================================== */
-    body.game-active #topSetupHeader,
-    body.game-active #midiUnsupportedBanner {
-      display: none !important;
+    .black-key .key-label {
+      color: #cbd5e1;
+      font-size: 8px;
     }
 
-    body.game-active {
-      height: 100dvh;
-      max-height: 100dvh;
-      overflow: hidden;
+    .white-key.active-lh .key-label,
+    .white-key.active-rh .key-label,
+    .white-key.active-correct .key-label {
+      color: #ffffff;
     }
 
-    body.game-active .app-shell {
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-top: 0.35rem;
-      padding-bottom: 0.35rem;
-      gap: 0.25rem;
+    /* Hold Progress Bar Animatie */
+    #holdProgressContainer {
+      transition: opacity 0.12s ease;
     }
 
-    body.game-active #gameView {
-      flex: 1;
-      max-height: 100%;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      margin-top: 0 !important;
+    /* Checkbox & knop-states */
+    .chip-active {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: #3b82f6;
+      color: #eff6ff;
     }
-
-    body.game-active #gameView > * {
-      margin-top: 0 !important;
-    }
-
-    @media (max-width: 768px) {
-      body.game-active .app-shell {
-        padding: 0.25rem 0.35rem;
-        gap: 0.2rem;
-      }
-      body.game-active #gameView {
-        padding: 0.4rem 0.5rem;
-        border-radius: 0.9rem;
-        gap: 0.25rem;
-      }
-      /* Pas alle 4 octaven op de breedte van het gsm-scherm aan */
-      body.game-active .piano-container {
-        min-width: 100%;
-        height: 78px;
-      }
-      body.game-active .white-key {
-        padding-bottom: 2px;
-      }
-      body.game-active .key-label {
-        font-size: 7px !important;
-      }
-      body.game-active .midi-dot {
-        width: 5px;
-        height: 5px;
-        margin-bottom: 1px;
-      }
-    }
-
-    /* Extra compacte modus wanneer de gsm horizontaal (landscape) op de piano staat */
-    @media (max-height: 520px) {
-      body.game-active .app-shell {
-        padding: 0.2rem 0.4rem;
-        gap: 0.15rem;
-      }
-      body.game-active #gameView {
-        padding: 0.3rem 0.45rem;
-        gap: 0.2rem;
-      }
-      body.game-active #chordSymbol {
-        font-size: 1.85rem !important;
-      }
-      body.game-active #lhCard,
-      body.game-active #rhCard {
-        padding: 0.25rem 0.5rem !important;
-      }
-      body.game-active #lhInversionName,
-      body.game-active #rhInversionName {
-        font-size: 0.95rem !important;
-        margin: 0.05rem 0 !important;
-      }
-      body.game-active .piano-container {
-        min-width: 100%;
-        height: 60px;
-      }
-    }
-
-    /* ===================================================================== */
-    /* DESKTOP SCHALING (>= 769PX): GROTE KNOPPEN & ROYALE BEDIENINGSBALK    */
-    /* ===================================================================== */
-    @media (min-width: 769px) {
-      body.game-active #gameView {
-        padding: 1.25rem 1.75rem;
-        gap: 0.75rem;
-      }
-      body.game-active #gameTopActionBar {
-        padding: 0.65rem 1rem;
-      }
-      body.game-active #gameActionButtons button {
-        padding: 0.5rem 0.95rem;
-        font-size: 0.875rem;
-        border-radius: 0.75rem;
-      }
-      body.game-active #chordProgressText {
-        font-size: 1rem;
-      }
-      body.game-active #liveStopwatchDisplay {
-        font-size: 1.35rem;
-      }
-      body.game-active #chordSymbol {
-        font-size: 4.25rem;
-      }
-      body.game-active #lhCard,
-      body.game-active #rhCard {
-        padding: 1rem 1.25rem;
-      }
-      body.game-active #lhInversionName,
-      body.game-active #rhInversionName {
-        font-size: 1.65rem;
-      }
-    }
-
-    @keyframes popIn {
-      0% { opacity: 0; transform: translateY(6px) scale(0.98); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .animate-chord {
-      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @keyframes shakeError {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-5px); }
-      40%, 80% { transform: translateX(5px); }
-    }
-    .animate-shake {
-      animation: shakeError 0.35s ease-in-out;
-    }
-    @keyframes flashSuccess {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      50% { box-shadow: 0 0 35px 8px rgba(16, 185, 129, 0.45); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
-    .flash-green {
-      animation: flashSuccess 0.65s ease-out;
+    .chip-inactive {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: rgba(148, 163, 184, 0.2);
+      color: #94a3b8;
     }
   </style>
 </head>
-<body class="antialiased selection:bg-amber-500/30 selection:text-amber-200">
+<body class="p-2 sm:p-4 flex flex-col items-center">
 
-  <div class="app-shell max-w-6xl mx-auto px-3 sm:px-4 py-2.5 md:py-3 space-y-2.5">
-
-    <!-- Compacte Top & MIDI Verbindingsbalk (Alleen zichtbaar op Startscherm & Eindscherm) -->
-    <header id="topSetupHeader" class="bg-club-900/95 border border-slate-800 rounded-2xl px-3.5 py-2.5 shadow-lg flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <div class="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-500/20 text-slate-950 font-extrabold text-sm md:text-base">
-          ♪
-        </div>
-        <h1 class="text-sm sm:text-base md:text-lg font-extrabold tracking-tight text-white">
+  <!-- TOP HEADER: Titel, MIDI-status, Wake Lock & Spelersnaam Badge -->
+  <header class="w-full max-w-5xl glass-card rounded-2xl px-3.5 py-2.5 mb-3 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-lg shadow-md">
+        🎹
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">
           Jazz Inversie Studio
         </h1>
+        <p class="text-[11px] text-slate-400">Two-Hand Voicings • Slash &amp; Inversie Trainer</p>
       </div>
-
-      <!-- MIDI Controls Midden -->
-      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-        <button id="connectMidiBtn" type="button"
-          class="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-[11px] sm:text-xs shadow-sm transition-all active:scale-95">
-          <span>🎹</span>
-          <span id="connectMidiBtnText">Verbind MIDI Piano</span>
-        </button>
-
-        <div id="midiStatusBadge" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-club-950 border border-slate-700/80 text-[11px] sm:text-xs font-medium text-slate-300 max-w-[165px] sm:max-w-none truncate">
-          <span id="midiStatusDot" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
-          <span id="midiStatusText" class="truncate">Geen MIDI (Muis actief)</span>
-        </div>
-
-        <div id="wakeLockBadge" title="Scherm blijft wakker tijdens het spelen" class="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-club-950 border border-slate-800 text-[11px] font-medium text-slate-400">
-          <span id="wakeLockDot" class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
-          <span id="wakeLockText">Slaapstand-blokkade</span>
-        </div>
-
-        <select id="midiDeviceSelect" class="hidden bg-club-950 border border-slate-700 rounded-xl px-2 py-1 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500">
-          <option value="all">Alle MIDI</option>
-        </select>
-
-        <button id="resetMidiNotesBtn" type="button" title="Wis vastgelopen noten"
-          class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-[11px] sm:text-xs font-semibold text-slate-300 transition">
-          Reset
-        </button>
-      </div>
-
-      <!-- Rechts: Auto-volgend, Muis-toggle & Startscherm knop -->
-      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
-        <label class="hidden md:flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-300 font-medium">
-          <input id="autoNextCheckbox" type="checkbox" checked class="w-3.5 h-3.5 accent-emerald-500 rounded cursor-pointer">
-          <span>Auto-volgend bij juist</span>
-        </label>
-
-        <label class="hidden sm:flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-400 font-medium">
-          <input id="clickToggleModeCheckbox" type="checkbox" checked class="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer">
-          <span>Muis-klik</span>
-        </label>
-
-        <button id="practiceModeBtn" type="button" class="hidden"></button>
-
-        <button id="toggleSettingsBtn" type="button"
-          class="hidden items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
-          <span>⚙️</span>
-          <span class="hidden sm:inline">Filters</span>
-        </button>
-
-        <button id="backToStartBtn" type="button"
-          class="hidden items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition-all">
-          <span>🏠</span>
-          <span class="hidden sm:inline">Startscherm</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Verborgen tellers voor compatibiliteit + MIDI waarschuwing -->
-    <div id="midiUnsupportedBanner" class="hidden bg-amber-950/50 border border-amber-500/40 rounded-xl p-2.5 text-xs text-amber-200 flex items-center gap-2">
-      <span>⚠️</span>
-      <span>Gebruik Chrome of Edge voor USB-MIDI, of klik de toetsen op het klavier aan.</span>
     </div>
 
-    <!-- =================================================================== -->
-    <!-- SCHERM 1: STARTSCHERM (STAP 1: MOEILIJKHEID -> STAP 2: SPELMODUS)   -->
-    <!-- =================================================================== -->
-    <section id="startScreenView" class="bg-club-900/95 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-2xl space-y-5">
-      <!-- STAP 1: KIES JE MOEILIJKHEIDSNIVEAU (KEUZEVAKKEN) -->
-      <div id="settingsPanel" class="bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-          <div class="flex items-center gap-2.5">
-            <span class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">1</span>
-            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 1: Moeilijkheidsniveau</h2>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button id="selectAllDiffBtn" type="button"
-              class="px-3 py-1 rounded-xl bg-club-800 hover:bg-club-700 border border-slate-700 text-xs font-semibold text-amber-300 transition">
-              ✨ Vink alles aan (Volledige Mix)
-            </button>
-            <button id="resetBasicDiffBtn" type="button"
-              class="px-3 py-1 rounded-xl bg-club-900 hover:bg-club-800 border border-slate-700 text-xs font-semibold text-slate-300 transition">
-              Basis (Maj/Min/7)
-            </button>
-          </div>
+    <!-- Rechts: Speler Badge/Input + MIDI Status + WakeLock -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Spelersnaam Container (Startscherm) -->
+      <div class="flex items-center">
+        <!-- Invoerveld (alleen zichtbaar als er nog geen naam is of bij bewerken) -->
+        <div id="playerInputWrap" class="flex items-center gap-1 bg-slate-900/90 border border-slate-700 rounded-xl px-2 py-1">
+          <span class="text-xs">👤</span>
+          <input
+            id="playerNameInput"
+            type="text"
+            maxlength="18"
+            placeholder="Jouw naam..."
+            class="bg-transparent text-xs text-white focus:outline-none w-24 sm:w-28"
+            onkeydown="if(event.key==='Enter') window.savePlayerNameFromInput('playerNameInput')"
+          />
+          <button
+            type="button"
+            onclick="window.savePlayerNameFromInput('playerNameInput')"
+            class="text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-0.5 rounded-lg transition"
+          >
+            Opslaan
+          </button>
         </div>
 
-        <!-- 6 Keuzevakken -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-mono font-bold uppercase text-amber-300">Basis</span>
-              <input id="cbDiffMajor" type="checkbox" checked class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            </div>
-            <div class="text-sm font-extrabold text-white">Major</div>
-            <div class="text-[11px] font-mono text-slate-400 mt-0.5">C, F, Bb</div>
-          </label>
+        <!-- Compacte Badge (zichtbaar zodra naam is opgeslagen) -->
+        <button
+          id="playerBadgeWrap"
+          type="button"
+          onclick="window.editPlayerName()"
+          title="Klik om spelersnaam te wijzigen"
+          class="hidden items-center gap-1.5 bg-slate-800/90 hover:bg-slate-700/80 border border-slate-600/80 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-200 transition"
+        >
+          <span>👤 Speler:</span>
+          <span id="playerBadgeName" class="text-indigo-300 font-bold">—</span>
+          <span class="text-[11px] text-slate-400 ml-0.5">✏️</span>
+        </button>
+      </div>
 
-          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-mono font-bold uppercase text-cyan-300">Basis</span>
-              <input id="cbDiffMinor" type="checkbox" checked class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            </div>
-            <div class="text-sm font-extrabold text-white">Minor</div>
-            <div class="text-[11px] font-mono text-slate-400 mt-0.5">Cm, Dm, Gm</div>
-          </label>
+      <!-- Wake Lock Indicator -->
+      <div
+        id="wakeLockBadge"
+        class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-medium bg-slate-800/80 text-slate-400 border border-slate-700/70"
+        title="Voorkomt dat je scherm uitvalt tijdens het spelen"
+      >
+        <span>🔆</span>
+        <span id="wakeLockText">Scherm Actief</span>
+      </div>
 
-          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-mono font-bold uppercase text-rose-300">Basis</span>
-              <input id="cbDiffDiminished" type="checkbox" class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            </div>
-            <div class="text-sm font-extrabold text-white">Diminished</div>
-            <div class="text-[11px] font-mono text-slate-400 mt-0.5">dim, dim7, m7b5</div>
-          </label>
+      <!-- MIDI Status Knop -->
+      <button
+        id="midiStatusBtn"
+        type="button"
+        onclick="window.initMIDI(true)"
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
+      >
+        <span id="midiStatusDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span id="midiStatusText">MIDI Zoeken...</span>
+      </button>
+    </div>
+  </header>
 
-          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-mono font-bold uppercase text-orange-300">Basis</span>
-              <input id="cbDiffAugmented" type="checkbox" class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            </div>
-            <div class="text-sm font-extrabold text-white">Augmented</div>
-            <div class="text-[11px] font-mono text-slate-400 mt-0.5">aug, 7#5, maj7#5</div>
-          </label>
+  <!-- ========================================================= -->
+  <!-- SCHERM 1: STARTSCHERM (1. Configuratie -> 2. Modi -> 3. Leaderboard) -->
+  <!-- ========================================================= -->
+  <main id="startScreen" class="w-full max-w-5xl flex flex-col gap-3.5">
 
-          <label class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-amber-500/60 cursor-pointer transition-all hover:bg-club-800/80 select-none">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-mono font-bold uppercase text-emerald-300">+ 4 Noten</span>
-              <input id="cbDiffSevenths" type="checkbox" checked class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            </div>
-            <div class="text-sm font-extrabold text-white">Sevenths</div>
-            <div class="text-[11px] font-mono text-slate-400 mt-0.5">maj7, 7, m7</div>
-          </label>
-
-          <div class="diff-card flex flex-col justify-between p-3 rounded-xl bg-club-900 border-2 border-slate-800 cursor-pointer transition-all hover:bg-club-800/80 select-none" onclick="if(event.target.tagName!=='INPUT'){const cb=this.querySelector('input');cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[10px] font-mono font-bold uppercase text-purple-300">+ Jazz</span>
-              <input id="cbDiffExtensions" type="checkbox" class="diff-cb w-4 h-4 accent-amber-500 rounded cursor-pointer">
-            </div>
-            <div class="text-sm font-extrabold text-white">Further Extensions</div>
-            <div class="text-[11px] font-mono text-slate-400 mt-0.5">9ths, 11ths, 13ths</div>
-          </div>
+    <!-- STAP 1: CONFIGURATIE (Akkoordtypes & Toonsoorten BOVENAAN) -->
+    <section class="glass-card rounded-2xl p-3.5 sm:p-4 shadow-lg">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md">
+            Stap 1 • Trainingsniveau
+          </span>
+          <h2 class="text-sm sm:text-base font-bold text-white mt-1">
+            Welke akkoorden wil je oefenen?
+          </h2>
+          <p class="text-[11px] text-slate-400">
+            Drieklanken &amp; 7ths vragen strikte omkeringen • Further Extensions gebruiken Slash-Chords (<span class="mono text-indigo-300">Bb13 / D</span>).
+          </p>
         </div>
 
-        <p id="filterWarning" class="hidden text-xs font-semibold text-rose-400">
-          ⚠️ Laat minimaal één basisfamilie (Major, Minor, Diminished of Augmented) aangevinkt.
-        </p>
-
-        <!-- Actieve Pool + 12 Toonsoort Toggles -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-1">
-          <div class="bg-club-900/90 border border-slate-800 rounded-xl p-3 flex flex-col justify-between gap-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Actieve Pool:</span>
-                <span id="poolCountBadge" class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-mono text-xs font-bold">5 types</span>
-              </div>
-              <label class="flex items-center gap-1.5 cursor-pointer select-none">
-                <input id="includeTriadsWhenExtendedCb" type="checkbox" checked class="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer">
-                <span class="text-[11px] text-slate-300">Inclusief drieklanken</span>
-              </label>
-            </div>
-            <div id="activePoolPreview" class="font-mono text-xs text-emerald-300 font-semibold flex flex-wrap gap-1"></div>
-          </div>
-
-          <!-- 12 Individuele Toonsoort Knoppen -->
-          <div class="bg-club-900/90 border border-slate-800 rounded-xl p-3 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Toonsoorten (12):</span>
-              <div class="flex items-center gap-1.5">
-                <button id="allRootsBtn" type="button" class="text-[11px] px-2 py-0.5 rounded bg-club-800 hover:bg-club-700 text-amber-300 font-semibold border border-slate-700">Alle 12</button>
-                <button id="basicRootsBtn" type="button" class="text-[11px] px-2 py-0.5 rounded bg-club-800 hover:bg-club-700 text-slate-300 font-semibold border border-slate-700">Basis 6</button>
-              </div>
-            </div>
-            <div id="rootToggleGrid" class="grid grid-cols-6 sm:grid-cols-12 gap-1">
-              <!-- Dynamisch gevuld met C, Db, D, Eb, E, F, F#, G, Ab, A, Bb, B -->
-            </div>
-          </div>
+        <!-- Snelkeuze Presets -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onclick="window.applyChordPreset('triads')"
+            class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+          >
+            Enkel Drieklanken
+          </button>
+          <button
+            type="button"
+            onclick="window.applyChordPreset('standard')"
+            class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-600/25 hover:bg-indigo-600/40 text-indigo-200 border border-indigo-500/40 transition"
+          >
+            Standaard (t/m 7ths)
+          </button>
+          <button
+            type="button"
+            onclick="window.applyChordPreset('sevOnly')"
+            class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-purple-600/25 hover:bg-purple-600/40 text-purple-200 border border-purple-500/40 transition"
+          >
+            Enkel 7ths
+          </button>
+          <button
+            type="button"
+            onclick="window.applyChordPreset('all')"
+            class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-200 border border-emerald-500/40 transition"
+          >
+            Alles Aan (incl. 9/11/13)
+          </button>
         </div>
       </div>
 
-      <!-- STAP 2: KIES HET AANTAL AKKOORDEN & START -->
-      <div class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5">
-            <span class="w-6 h-6 rounded-lg bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">2</span>
-            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Stap 2: Spelersnaam, Daily & Spelmodus</h2>
+      <!-- 6 Akkoordcategorieën Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+        <!-- Major Triads -->
+        <label class="flex items-start gap-2.5 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
+          <input id="cat_major" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
+          <div class="leading-tight">
+            <div class="text-xs font-bold text-white">Major Drieklank</div>
+            <div class="text-[10px] text-slate-400 mono mt-0.5">C, F, G (1-3-5)</div>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1.5 bg-club-950 border border-slate-700/80 rounded-xl px-2.5 py-1">
-              <span class="text-xs">👤</span>
-              <input id="startPlayerNameInput" type="text" maxlength="18" placeholder="Jouw naam..."
-                class="bg-transparent text-xs font-bold text-white placeholder-slate-500 focus:outline-none w-28 sm:w-36" />
-            </div>
-            <button id="clearHighscoresBtn" type="button" class="text-xs text-slate-500 hover:text-rose-400 transition">
-              Wis lokale tijden
-            </button>
-          </div>
-        </div>
+        </label>
 
-        <!-- NIEUW: DAILY CHALLENGE BANNER (10 VASTE AKKOORDEN PER DAG, 1 POGING) -->
-        <div class="rounded-2xl bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-purple-500/15 border-2 border-amber-500/50 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
-          <div class="space-y-1">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-mono text-[11px] font-extrabold uppercase tracking-wider">
-                🔥 Daily Challenge
+        <!-- Minor Triads -->
+        <label class="flex items-start gap-2.5 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
+          <input id="cat_minor" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
+          <div class="leading-tight">
+            <div class="text-xs font-bold text-white">Minor Drieklank</div>
+            <div class="text-[10px] text-slate-400 mono mt-0.5">Cm, Dm (1-b3-5)</div>
+          </div>
+        </label>
+
+        <!-- Diminished Triads -->
+        <label class="flex items-start gap-2.5 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
+          <input id="cat_dim" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
+          <div class="leading-tight">
+            <div class="text-xs font-bold text-white">Diminished</div>
+            <div class="text-[10px] text-slate-400 mono mt-0.5">Cdim (1-b3-b5)</div>
+          </div>
+        </label>
+
+        <!-- Augmented Triads -->
+        <label class="flex items-start gap-2.5 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
+          <input id="cat_aug" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
+          <div class="leading-tight">
+            <div class="text-xs font-bold text-white">Augmented</div>
+            <div class="text-[10px] text-slate-400 mono mt-0.5">Caug (1-3-#5)</div>
+          </div>
+        </label>
+
+        <!-- Sevenths -->
+        <label class="flex items-start gap-2.5 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-slate-500/50 transition">
+          <input id="cat_sevenths" type="checkbox" checked onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-indigo-500 rounded" />
+          <div class="leading-tight">
+            <div class="text-xs font-bold text-indigo-300">Sevenths (4-noots)</div>
+            <div class="text-[10px] text-slate-400 mono mt-0.5">maj7, 7, m7, m7b5, dim7</div>
+          </div>
+        </label>
+
+        <!-- Further Extensions (Slash-Chord Hybride Modus) -->
+        <label class="flex items-start gap-2.5 p-2.5 rounded-xl glass-subtle cursor-pointer hover:border-amber-500/40 transition border border-amber-500/20">
+          <input id="cat_extensions" type="checkbox" onchange="window.updatePoolSummary()" class="mt-0.5 w-4 h-4 accent-amber-500 rounded" />
+          <div class="leading-tight">
+            <div class="text-xs font-bold text-amber-300">Further Extensions</div>
+            <div class="text-[10px] text-slate-400 mono mt-0.5">9, maj9, m9, 11, 13 (Slash)</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Toonsoorten / Grondtonen Filter (Uitklapbaar of compact) -->
+      <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-slate-300">Actieve Grondtonen:</span>
+          <button
+            type="button"
+            onclick="window.toggleAllRoots(true)"
+            class="text-[11px] text-indigo-400 hover:underline"
+          >
+            Alle 12
+          </button>
+          <span class="text-slate-600">•</span>
+          <button
+            type="button"
+            onclick="window.toggleWhiteRootsOnly()"
+            class="text-[11px] text-indigo-400 hover:underline"
+          >
+            Enkel Witte Toetsen
+          </button>
+        </div>
+        <div id="poolSummaryBadge" class="text-[11px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 rounded-lg">
+          Pool: 108 mogelijke akkoorden
+        </div>
+      </div>
+
+      <!-- 12 Root Chips -->
+      <div id="rootFilterContainer" class="grid grid-cols-6 sm:grid-cols-12 gap-1.5 mt-2">
+        <!-- Wordt gevuld door app.js -->
+      </div>
+    </section>
+
+    <!-- STAP 2: KIES JE SPELMODUS & START DIRECT -->
+    <section class="glass-card rounded-2xl p-3.5 sm:p-4 shadow-lg">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+            Stap 2 • Start Spelmodus
+          </span>
+          <h2 class="text-sm sm:text-base font-bold text-white mt-1">
+            Kies een uitdaging om te starten
+          </h2>
+        </div>
+        <span class="text-[11px] text-slate-400">
+          ⏱️ 150ms strakke aanslag-controle actief
+        </span>
+      </div>
+
+      <!-- Rij 1: Daily Challenge & Blinde ii-V-I Progressie -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-2.5">
+        <!-- DAILY CHALLENGE KAART -->
+        <div class="rounded-2xl p-3.5 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-slate-900 border border-amber-500/40 flex flex-col justify-between gap-2.5">
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/25 text-amber-200 border border-amber-400/30">
+                🔥 Dagelijkse Competitie
               </span>
-              <span id="dailyDateBadge" class="font-mono text-xs font-bold text-amber-300">Vandaag</span>
-              <span class="text-[11px] font-mono text-slate-400 bg-club-950/80 px-2 py-0.5 rounded border border-slate-800">
-                Vast: Maj / Min / Dim / Aug / 7ths (Geen Extensions)
-              </span>
+              <span id="dailyDateLabel" class="text-xs font-bold mono text-amber-300">Vandaag</span>
             </div>
-            <h3 class="text-base sm:text-lg font-extrabold text-white">
-              10 Dezelfde Akkoorden voor Iedereen &bull; Slechts 1 Poging per Dag!
+            <h3 class="text-base font-extrabold text-white mt-1.5">
+              Daily Challenge (10 Akkoorden)
             </h3>
-            <p id="dailyStatusSubtext" class="text-xs text-slate-300">
-              Iedereen krijgt vandaag exact dezelfde 10 akkoorden en inversies. Zet de snelste tijd op het online Daily-klassement!
+            <p class="text-xs text-slate-300 mt-0.5">
+              Voor iedereen exact dezelfde 10 akkoorden (Drieklanken &amp; 7ths, géén extensions). Slechts 1 officiële poging per dag voor het online klassement!
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0">
-            <div class="px-3 py-2 rounded-xl bg-club-950/90 border border-slate-800 text-left">
-              <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Jouw Daily Vandaag</div>
-              <div id="bestScoreDaily" class="font-mono text-sm font-extrabold text-emerald-400">Nog niet gespeeld</div>
-            </div>
-            <button id="startDailyBtn" type="button"
-              class="flex-1 md:flex-initial px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95">
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <span id="dailyBestBadge" class="text-xs font-semibold text-amber-200/90">
+              Nog niet gespeeld vandaag
+            </span>
+            <button
+              id="dailyStartBtn"
+              type="button"
+              onclick="window.startGame('daily')"
+              class="px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-md transition"
+            >
               🔥 Start Daily Challenge →
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <!-- 10 Akkoorden -->
-          <div class="rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-amber-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-[11px] font-bold">SPRINT</span>
-                <span class="text-lg">⚡</span>
-              </div>
-              <h3 class="text-lg font-extrabold text-white">10 Akkoorden</h3>
-              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore</div>
-                <div id="bestScore10" class="font-mono text-base font-extrabold text-emerald-400">Nog geen tijd</div>
-                <div id="bestAvg10" class="font-mono text-[11px] text-slate-500">—</div>
-              </div>
-            </div>
-            <button type="button" data-start-mode="10"
-              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md transition active:scale-95">
-              Start 10 Akkoorden →
-            </button>
-          </div>
-
-          <!-- 20 Akkoorden -->
-          <div class="rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-cyan-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] font-bold">RUN</span>
-                <span class="text-lg">🔥</span>
-              </div>
-              <h3 class="text-lg font-extrabold text-white">20 Akkoorden</h3>
-              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore</div>
-                <div id="bestScore20" class="font-mono text-base font-extrabold text-emerald-400">Nog geen tijd</div>
-                <div id="bestAvg20" class="font-mono text-[11px] text-slate-500">—</div>
-              </div>
-            </div>
-            <button type="button" data-start-mode="20"
-              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md transition active:scale-95">
-              Start 20 Akkoorden →
-            </button>
-          </div>
-
-          <!-- 50 Akkoorden -->
-          <div class="rounded-2xl bg-gradient-to-b from-club-800 to-club-900 border border-slate-700/80 hover:border-purple-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="px-2 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-purple-300 font-mono text-[11px] font-bold">MARATHON</span>
-                <span class="text-lg">👑</span>
-              </div>
-              <h3 class="text-lg font-extrabold text-white">50 Akkoorden</h3>
-              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">🏆 Topscore</div>
-                <div id="bestScore50" class="font-mono text-base font-extrabold text-emerald-400">Nog geen tijd</div>
-                <div id="bestAvg50" class="font-mono text-[11px] text-slate-500">—</div>
-              </div>
-            </div>
-            <button type="button" data-start-mode="50"
-              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-300 hover:to-indigo-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md transition active:scale-95">
-              Start 50 Akkoorden →
-            </button>
-          </div>
-
-          <!-- Vrij Oefenen -->
-          <div class="rounded-2xl bg-gradient-to-b from-club-800/80 to-club-900 border border-slate-700/80 hover:border-emerald-500/70 p-4 flex flex-col justify-between transition-all shadow-lg">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-bold">STUDIO</span>
-                <span class="text-lg">🎷</span>
-              </div>
-              <h3 class="text-lg font-extrabold text-white">Vrij Oefenen</h3>
-              <div class="mt-2.5 p-2.5 rounded-xl bg-club-950/90 border border-slate-800/90">
-                <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Zonder klok</div>
-                <div class="text-xs font-semibold text-slate-300 mt-1">Eigen tempo &bull; Audio</div>
-              </div>
-            </div>
-            <button type="button" data-start-mode="free"
-              class="start-mode-btn mt-3.5 w-full py-2.5 rounded-xl bg-club-700 hover:bg-slate-700 border border-slate-600 text-white font-bold text-xs sm:text-sm transition active:scale-95">
-              Vrij Oefenen →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- STAP 3: LIVE ONLINE RANGLIJST (FIREBASE REALTIME DATABASE) -->
-      <div id="leaderboardCard" class="bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3.5">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">🏆</span>
-            <h2 class="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white">Online Ranglijst (Vrienden & Daily)</h2>
-            <span id="leaderboardStatusIndicator" class="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">Live</span>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-1.5">
-            <button type="button" data-lb-tab="daily" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950 transition">
-              🔥 Daily Vandaag
-            </button>
-            <button type="button" data-lb-tab="10" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition">
-              ⚡ 10 Akkoorden
-            </button>
-            <button type="button" data-lb-tab="20" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition">
-              🔥 20 Akkoorden
-            </button>
-            <button type="button" data-lb-tab="50" class="lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition">
-              👑 50 Akkoorden
-            </button>
-            <button id="refreshLeaderboardBtn" type="button" title="Ververs Ranglijst"
-              class="px-2.5 py-1 rounded-xl text-xs font-bold bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 transition active:scale-95">
-              🔄
-            </button>
-          </div>
-        </div>
-
-        <div id="leaderboardListContainer" class="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-          <div class="text-xs text-slate-400 py-4 text-center font-mono">Ranglijst laden...</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- =================================================================== -->
-    <!-- SCHERM 2: ULTRA-STRAK SPELSCHERM (PAST OP 1 SCHERM ZONDER VOLZINNEN) -->
-    <!-- =================================================================== -->
-    <main id="gameView" class="hidden bg-club-900/95 border border-slate-800 rounded-2xl p-2.5 sm:p-4 shadow-2xl space-y-2 transition-all">
-
-      <!-- Compacte Status- & Knoppenbalk Bovenin -->
-      <div id="gameTopActionBar" class="bg-club-950/90 border border-slate-800 rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 flex flex-wrap items-center justify-between gap-1 sm:gap-2">
-        <!-- Links: Voortgang, Streak & Klok -->
-        <div class="flex items-center gap-1.5 sm:gap-3">
-          <div id="timedHudBar" class="flex items-center gap-1.5 sm:gap-2.5">
-            <span id="activeModeBadge" class="hidden"></span>
-            <span id="hudTargetRecord" class="hidden"></span>
-            <div class="flex items-center gap-1.5">
-              <span id="chordProgressText" class="font-mono text-xs sm:text-sm font-extrabold text-white">1 / 10</span>
-              <div class="w-8 sm:w-20 h-1.5 bg-club-800 rounded-full overflow-hidden border border-slate-700/80">
-                <div id="chordProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all duration-300" style="width: 10%"></div>
-              </div>
-            </div>
-
-            <div class="relative bg-club-900 border border-amber-500/40 rounded-lg px-2 py-0.5 flex items-center gap-1">
-              <span class="text-[10px] sm:text-xs">⏱️</span>
-              <span id="liveStopwatchDisplay" class="font-mono text-xs sm:text-lg font-extrabold text-white">00:00.0</span>
-              <span id="penaltyToast" class="hidden absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-rose-600 text-white font-mono text-[9px] font-extrabold shadow-lg border border-rose-300 animate-bounce">
-                +10s
+        <!-- BLINDE ii-V-I PROGRESSIE KAART -->
+        <div class="rounded-2xl p-3.5 bg-gradient-to-br from-purple-500/20 via-indigo-500/10 to-slate-900 border border-purple-500/40 flex flex-col justify-between gap-2.5">
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-500/25 text-purple-200 border border-purple-400/30">
+                🎷 Harmonische Trappen
               </span>
+              <span id="pr_iiVI" class="text-xs font-bold mono text-purple-300">PR: —</span>
             </div>
-          </div>
-
-          <div class="flex items-center gap-1 bg-club-900 px-1.5 sm:px-2 py-0.5 rounded-lg border border-slate-800">
-            <span class="text-[10px] sm:text-xs">🔥</span>
-            <span id="streakCounter" class="font-mono text-xs font-extrabold text-emerald-400">0</span>
-            <span id="totalSolvedCounter" class="hidden">0</span>
-          </div>
-        </div>
-
-        <!-- Rechts: Compacte Actieknoppen -->
-        <div id="gameActionButtons" class="flex flex-wrap items-center gap-1 md:gap-2">
-          <button id="playChordBtn" type="button"
-            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-100 font-semibold text-[11px] transition active:scale-95">
-            <span>🔊</span>
-            <span class="hidden md:inline">Beluister</span>
-          </button>
-
-          <button id="revealBtn" type="button"
-            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-semibold text-[11px] transition active:scale-95 disabled:opacity-45 disabled:pointer-events-none">
-            <span>💡</span>
-            <span class="hidden md:inline">Oplossing</span>
-            <span id="revealBtnLabel">+10s</span>
-          </button>
-
-          <button id="skipPenaltyBtn" type="button"
-            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-semibold text-[11px] transition active:scale-95">
-            <span>⏭️</span>
-            <span class="hidden md:inline">Overslaan</span>
-            <span id="skipBtnLabel">+15s</span>
-          </button>
-
-          <button id="demoSolveBtn" type="button" title="Simuleer de juiste noten"
-            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-300 font-semibold text-[11px] transition active:scale-95">
-            <span>🪄</span>
-            <span id="demoSolveBtnLabel" class="hidden lg:inline">Test Noten</span>
-          </button>
-
-          <button id="nextChordBtn" type="button"
-            class="hidden items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-[11px] shadow transition active:scale-95">
-            <span>Volgende →</span>
-          </button>
-
-          <button id="stopGameBtn" type="button"
-            class="flex items-center gap-1 px-2 py-1 rounded-lg bg-club-800 hover:bg-rose-950/70 border border-slate-700 hover:border-rose-500/40 text-slate-300 hover:text-rose-200 font-bold text-[11px] transition active:scale-95">
-            <span>⏹</span>
-            <span class="hidden sm:inline">Stop</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- BOVENAAN: ALLEEN HET AKKOORD GROOT IN HET MIDDEN (GEEN VOLZINNEN) -->
-      <div class="text-center py-0">
-        <div id="chordDisplayContainer" class="animate-chord inline-flex flex-col items-center">
-          <h2 id="chordSymbol" class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white font-mono leading-none">
-            Cm7
-          </h2>
-          <span id="chordFullName" class="hidden"></span>
-          <span id="chordFormulaBadge" class="hidden mt-0.5 px-2 py-0.5 rounded-full bg-club-950 border border-slate-700 text-slate-300 font-mono text-[10px] font-bold"></span>
-        </div>
-      </div>
-
-      <!-- DAARONDER: LINKS EN RECHTS DIRECT NAAST ELKAAR (OOK OP GSM: GRID-COLS-2) -->
-      <div class="grid grid-cols-2 gap-2 sm:gap-3">
-        <!-- Linkerhand -->
-        <div id="lhCard" class="rounded-xl bg-gradient-to-br from-cyan-950/40 via-club-800/80 to-club-800/50 border border-cyan-500/30 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 shadow-md flex flex-col justify-between">
-          <div class="flex items-center justify-between gap-1">
-            <div class="flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-              <span id="lhCardHeader" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-cyan-300">Links</span>
-            </div>
-            <span id="lhStatusBadge" class="text-[10px] sm:text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-1.5 py-0.5 rounded border border-slate-700">
-              0/4
-            </span>
-          </div>
-
-          <div id="lhInversionName" class="text-sm sm:text-xl md:text-2xl font-extrabold text-white my-0.5 sm:my-1 tracking-tight leading-tight">
-            Grondligging
-          </div>
-
-          <div class="flex items-center justify-between text-[10px] sm:text-xs border-t border-slate-800/80 pt-1 font-mono">
-            <span id="lhNotesDisplay" class="font-bold text-slate-500">• • • •</span>
-            <span id="playedLhNotes" class="font-bold text-cyan-200 truncate ml-1">—</span>
-          </div>
-        </div>
-
-        <!-- Rechterhand -->
-        <div id="rhCard" class="rounded-xl bg-gradient-to-br from-amber-950/40 via-club-800/80 to-club-800/50 border border-amber-500/30 px-2.5 py-1.5 sm:px-3.5 sm:py-2.5 shadow-md flex flex-col justify-between">
-          <div class="flex items-center justify-between gap-1">
-            <div class="flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
-              <span id="rhCardHeader" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-amber-300">Rechts</span>
-            </div>
-            <span id="rhStatusBadge" class="text-[10px] sm:text-xs font-mono font-bold text-slate-300 bg-club-950/80 px-1.5 py-0.5 rounded border border-slate-700">
-              0/4
-            </span>
-          </div>
-
-          <div id="rhInversionName" class="text-sm sm:text-xl md:text-2xl font-extrabold text-white my-0.5 sm:my-1 tracking-tight leading-tight">
-            2e Inversie
-          </div>
-
-          <div class="flex items-center justify-between text-[10px] sm:text-xs border-t border-slate-800/80 pt-1 font-mono">
-            <span id="rhNotesDisplay" class="font-bold text-slate-500">• • • •</span>
-            <span id="playedRhNotes" class="font-bold text-amber-200 truncate ml-1">—</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Verborgen feedback-elementen (zodat er geen lange zinnen staan, enkel directe kaartbadges) -->
-      <div id="feedbackBanner" class="hidden">
-        <span id="feedbackIcon"></span>
-        <p id="feedbackHeadline"></p>
-        <p id="feedbackSubtext"></p>
-        <span id="octaveProjectionHint"></span>
-      </div>
-
-      <!-- Metronoom Balk (Standaard verborgen zodat die geen schermruimte inneemt) -->
-      <div id="freePlayMetronomeBar" class="hidden bg-club-950/80 border border-slate-800/90 rounded-2xl px-3.5 py-2 items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button id="timerToggleBtn" type="button"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
-            <span id="timerBtnIcon">▶</span>
-            <span id="timerBtnText">Metronoom</span>
-          </button>
-          <div class="flex items-center gap-2 bg-club-900 px-2.5 py-1 rounded-xl border border-slate-800">
-            <label for="bpmSlider" class="text-[11px] font-semibold text-slate-400">BPM</label>
-            <input id="bpmSlider" type="range" min="40" max="140" value="70" class="w-20 accent-amber-500 cursor-pointer">
-            <span id="bpmValue" class="font-mono text-xs font-bold text-amber-400 w-6 text-right">70</span>
-          </div>
-          <div class="flex items-center gap-1 bg-club-900 p-0.5 rounded-xl border border-slate-800">
-            <button type="button" data-beats="4" class="beats-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950">4</button>
-            <button type="button" data-beats="8" class="beats-btn px-2 py-1 rounded-lg text-[11px] font-bold text-slate-400">8</button>
-          </div>
-          <button id="clickToggleBtn" type="button"
-            class="px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-club-900 border border-amber-500/40 text-amber-300">
-            <span>🔔</span> <span>Klik: Aan</span>
-          </button>
-        </div>
-        <div id="beatDotsContainer" class="flex items-center gap-1.5"></div>
-      </div>
-
-      <!-- Visueel Pianoklavier (4 octaven: C2 tot B5) -->
-      <div class="piano-wrapper rounded-xl border border-slate-800 bg-club-950 p-1 shadow-inner">
-        <div id="pianoKeyboard" class="piano-container"></div>
-      </div>
-
-    </main>
-
-    <!-- =================================================================== -->
-    <!-- SCHERM 3: EINDSCHERM & TOPSCORES                                    -->
-    <!-- =================================================================== -->
-    <section id="resultsView" class="hidden bg-club-900/95 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
-      <div class="text-center space-y-2">
-        <div id="recordBadge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider">
-          🏆 Nieuw Persoonlijk Record!
-        </div>
-        <h2 id="resultsTitle" class="text-3xl sm:text-4xl font-extrabold text-white">
-          Ronde Voltooid!
-        </h2>
-        <p id="resultsSubtitle" class="text-sm text-slate-400">
-          Je hebt alle akkoorden met twee verschillende inversies gespeeld.
-        </p>
-      </div>
-
-      <!-- Grote Statistieken Kaarten -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
-        <div class="bg-club-950 border border-slate-800 rounded-2xl p-5 text-center">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Totale Tijd</span>
-          <div id="finalTotalTime" class="font-mono text-3xl sm:text-4xl font-extrabold text-white mt-1">00:42.8</div>
-        </div>
-
-        <div class="bg-club-950 border border-slate-800 rounded-2xl p-5 text-center">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gemiddeld per akkoord</span>
-          <div id="finalAvgTime" class="font-mono text-3xl sm:text-4xl font-extrabold text-amber-400 mt-1">4.3s</div>
-        </div>
-
-        <div class="bg-club-950 border border-slate-800 rounded-2xl p-5 text-center">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Beste Tijd (Topscore)</span>
-          <div id="finalBestTime" class="font-mono text-3xl sm:text-4xl font-extrabold text-emerald-400 mt-1">00:42.8</div>
-        </div>
-      </div>
-
-      <!-- NIEUW: SCORE OPSLAAN OP ONLINE RANGLIJST & DEEL DAILY KNOP -->
-      <div class="max-w-3xl mx-auto bg-club-950/90 border border-amber-500/40 rounded-2xl p-4 md:p-5 space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="space-y-0.5">
-            <h3 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-300">
-              🌍 Plaats jouw tijd op het Online Leaderboard
+            <h3 class="text-base font-extrabold text-white mt-1.5">
+              ii – V – I Progressie (12 Akkoorden)
             </h3>
-            <p id="scoreSubmitStatusText" class="text-xs text-slate-400">
-              Vul je naam in om je score met je vrienden te delen.
+            <p class="text-xs text-slate-300 mt-0.5">
+              Het spel noemt alleen de <strong>Toonsoort</strong> (bijv. <em>Eb Major</em>) en de <strong>Trap</strong> (<em>ii, V of I</em>). Jij bedenkt zelf het akkoord; elke geldige inversie per hand telt!
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <input id="resultsPlayerNameInput" type="text" maxlength="18" placeholder="Jouw naam..."
-              class="px-3 py-2 rounded-xl bg-club-900 border border-slate-700 text-xs sm:text-sm font-bold text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 w-40 sm:w-48" />
-            <button id="submitOnlineScoreBtn" type="button"
-              class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow transition active:scale-95 disabled:opacity-50">
-              🚀 Score Opslaan
-            </button>
-            <button id="shareDailyResultBtn" type="button"
-              class="hidden px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs sm:text-sm transition active:scale-95">
-              📋 Deel Daily Score
+          <div class="flex items-center justify-between gap-2 pt-1">
+            <span class="text-[11px] text-purple-200/80">
+              4 toonsoorten × 3 trappen
+            </span>
+            <button
+              type="button"
+              onclick="window.startGame('iiVI')"
+              class="px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-md transition"
+            >
+              🎷 Start ii–V–I Training →
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Overzicht per gespeeld akkoord (Split times) -->
-      <div class="max-w-3xl mx-auto bg-club-950/90 border border-slate-800 rounded-2xl p-4 md:p-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Tijd per gespeeld akkoord</h3>
-          <span class="text-xs text-slate-500">Gesorteerd op volgorde</span>
+      <!-- Rij 2: Vrije Sprints (10, 20, 50 Akkoorden op eigen niveau) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <!-- 10 Akkoorden Sprint -->
+        <button
+          type="button"
+          onclick="window.startGame(10)"
+          class="group text-left p-3.5 rounded-2xl glass-subtle hover:bg-slate-800/80 hover:border-indigo-500/50 transition flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs font-extrabold text-indigo-300">⚡ Korte Sprint</span>
+            <span id="pr_10" class="text-[11px] mono font-bold text-slate-400">PR: —</span>
+          </div>
+          <div>
+            <div class="text-base font-extrabold text-white group-hover:text-indigo-200 transition">
+              10 Akkoorden
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Gebruikt jouw eigen selectie uit Stap 1
+            </div>
+          </div>
+        </button>
+
+        <!-- 20 Akkoorden Sprint -->
+        <button
+          type="button"
+          onclick="window.startGame(20)"
+          class="group text-left p-3.5 rounded-2xl glass-subtle hover:bg-slate-800/80 hover:border-indigo-500/50 transition flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs font-extrabold text-emerald-300">🚀 Standaard Sprint</span>
+            <span id="pr_20" class="text-[11px] mono font-bold text-slate-400">PR: —</span>
+          </div>
+          <div>
+            <div class="text-base font-extrabold text-white group-hover:text-emerald-200 transition">
+              20 Akkoorden
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Ideale lengte voor dagelijkse techniek
+            </div>
+          </div>
+        </button>
+
+        <!-- 50 Akkoorden Marathon -->
+        <button
+          type="button"
+          onclick="window.startGame(50)"
+          class="group text-left p-3.5 rounded-2xl glass-subtle hover:bg-slate-800/80 hover:border-indigo-500/50 transition flex flex-col justify-between gap-2"
+        >
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs font-extrabold text-rose-300">🏆 Marathon</span>
+            <span id="pr_50" class="text-[11px] mono font-bold text-slate-400">PR: —</span>
+          </div>
+          <div>
+            <div class="text-base font-extrabold text-white group-hover:text-rose-200 transition">
+              50 Akkoorden
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Ultieme uithoudingstest op jouw niveau
+            </div>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <!-- STAP 3: ONLINE DAILY LEADERBOARD (Exclusief voor Daily Challenge + Archief) -->
+    <section class="glass-card rounded-2xl p-3.5 sm:p-4 shadow-lg">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-base">🏆</span>
+            <h2 class="text-sm sm:text-base font-extrabold text-white">
+              Online Daily Challenge Klassement
+            </h2>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Alleen de snelste tijd per unieke speler telt • Bekijk ook wie er gisteren gewonnen heeft!
+          </p>
         </div>
-        <div id="splitsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
-          <!-- Splits worden via JS gevuld -->
+
+        <!-- Datum-Archief Navigatie -->
+        <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 rounded-xl p-1">
+          <button
+            type="button"
+            onclick="window.shiftLeaderboardDate(-1)"
+            class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800 transition"
+            title="Bekijk vorige dag"
+          >
+            ◀ Vorige
+          </button>
+          <button
+            id="leaderboardDateDisplay"
+            type="button"
+            onclick="window.resetLeaderboardDateToToday()"
+            class="px-2.5 py-1 rounded-lg text-xs font-extrabold mono text-amber-300 bg-amber-500/10 border border-amber-500/20"
+            title="Klik om terug te keren naar vandaag"
+          >
+            Vandaag
+          </button>
+          <button
+            id="leaderboardNextDayBtn"
+            type="button"
+            onclick="window.shiftLeaderboardDate(1)"
+            class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800 transition disabled:opacity-30 disabled:pointer-events-none"
+            title="Bekijk volgende dag"
+          >
+            Volgende ▶
+          </button>
         </div>
       </div>
 
-      <!-- Plek waar het Online Leaderboard ook direct op het eindscherm verschijnt -->
-      <div id="resultsLeaderboardMount" class="max-w-3xl mx-auto"></div>
-
-      <!-- Knoppen onderaan Eindscherm -->
-      <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
-        <button id="playAgainBtn" type="button"
-          class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm md:text-base shadow-lg shadow-amber-500/20 transition active:scale-95">
-          🔄 Opnieuw spelen (Zelfde modus)
+      <!-- Knop om een gemiste Daily uit het archief als oefening te spelen -->
+      <div id="archivePracticeBar" class="hidden mb-2.5 p-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-between gap-2">
+        <span id="archivePracticeText" class="text-xs text-indigo-200 font-medium">
+          Wil je de 10 akkoorden van deze eerdere datum oefenen?
+        </span>
+        <button
+          type="button"
+          onclick="window.practiceArchivedDaily()"
+          class="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition"
+        >
+          🕹️ Oefen deze Daily
         </button>
-        <button id="resultsToStartBtn" type="button"
-          class="px-6 py-3.5 rounded-2xl bg-club-800 hover:bg-club-700 border border-slate-700 text-slate-200 font-bold text-sm md:text-base transition active:scale-95">
+      </div>
+
+      <!-- Tabel / Lijst met Daily Scores -->
+      <div id="dailyLeaderboardList" class="flex flex-col gap-1.5 min-h-[120px]">
+        <div class="text-xs text-slate-400 py-6 text-center">
+          Scores laden uit Firebase...
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- SCHERM 2: HET SPEELSCHERM (Compact, Zonder Scrollen)       -->
+  <!-- ========================================================= -->
+  <main id="gameScreen" class="hidden w-full max-w-5xl flex flex-col gap-2.5">
+
+    <!-- Bovenbalk: Stopknop, Voortgang, Modus-badge & Live Timer -->
+    <div class="glass-card rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          onclick="window.returnToMenu()"
+          class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+        >
+          ✕ Stop
+        </button>
+        <span id="gameModeBadge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+          Sprint
+        </span>
+      </div>
+
+      <!-- Voortgang Teller -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400 font-medium">Opgave</span>
+        <span id="progressCounter" class="text-sm sm:text-base font-extrabold mono text-white">1 / 10</span>
+      </div>
+
+      <!-- Live Tijd & Laatste Split -->
+      <div class="flex items-center gap-2">
+        <span id="currentChordTimer" class="hidden sm:inline-block text-xs mono text-slate-400">
+          Huidig: 0.0s
+        </span>
+        <div class="px-3 py-1 rounded-xl bg-slate-900 border border-slate-700 text-sm sm:text-base font-extrabold mono text-emerald-400">
+          ⏱️ <span id="liveTimerDisplay">00:00.0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRALE AKKOORD OPDRACHT KAART -->
+    <div class="glass-card rounded-2xl p-3 sm:p-4 text-center relative overflow-hidden shadow-xl">
+      <!-- Subtiele 150ms Hold Progress Bar bovenin de kaart -->
+      <div id="holdProgressContainer" class="w-full h-1.5 bg-slate-800/90 rounded-full overflow-hidden mb-2.5 opacity-0">
+        <div id="holdProgressBar" class="h-full w-0 bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-75"></div>
+      </div>
+
+      <!-- Context-vaantje (Bijv. Toonsoort bij ii-V-I of Slash-Chord modus) -->
+      <div class="flex items-center justify-center gap-2 mb-1">
+        <span id="chordCategoryTag" class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-800 text-indigo-300 border border-slate-700">
+          Seventh Chord
+        </span>
+      </div>
+
+      <!-- Grote Hoofdtitel (Bijv. "Cmaj7" of bij ii-V-I: "ii — Mineur 7 (m7)") -->
+      <h2 id="targetChordTitle" class="text-2xl sm:text-4xl font-black tracking-tight text-white my-0.5">
+        Cmaj7
+      </h2>
+
+      <!-- Subtitel / Formule / Hint -->
+      <p id="targetChordSubtitle" class="text-xs sm:text-sm text-slate-300 font-medium">
+        Speel met beide handen de gevraagde ligging
+      </p>
+
+      <!-- TWEE HAND-KAARTEN (LINKS & RECHTS) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3 text-left">
+        <!-- Linkerhand Kaart -->
+        <div id="lhCard" class="rounded-xl p-3 bg-blue-950/35 border border-blue-500/30 transition">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-blue-300">
+              🤚 Linkerhand (Laagste noten)
+            </span>
+            <span id="lhStatusBadge" class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-900/90 text-slate-300 border border-slate-700">
+              Wacht op aanslag...
+            </span>
+          </div>
+          <div id="lhTargetLabel" class="text-base sm:text-lg font-extrabold text-white mono">
+            1e Inversie
+          </div>
+          <div id="lhSubHint" class="text-xs text-blue-200/80 mt-0.5">
+            3e (Terts) als laagste noot in links
+          </div>
+          <div id="lhPlayedNotes" class="text-[11px] mono text-slate-400 mt-1.5">
+            Ingedrukt: —
+          </div>
+        </div>
+
+        <!-- Rechterhand Kaart -->
+        <div id="rhCard" class="rounded-xl p-3 bg-purple-950/35 border border-purple-500/30 transition">
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-purple-300">
+              ✋ Rechterhand (Hoogste noten)
+            </span>
+            <span id="rhStatusBadge" class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-900/90 text-slate-300 border border-slate-700">
+              Wacht op aanslag...
+            </span>
+          </div>
+          <div id="rhTargetLabel" class="text-base sm:text-lg font-extrabold text-white mono">
+            2e Inversie
+          </div>
+          <div id="rhSubHint" class="text-xs text-purple-200/80 mt-0.5">
+            5e (Kwint) als laagste noot in rechts
+          </div>
+          <div id="rhPlayedNotes" class="text-[11px] mono text-slate-400 mt-1.5">
+            Ingedrukt: —
+          </div>
+        </div>
+      </div>
+
+      <!-- Hulpmiddelen Balk: Oplossing Tonen, Beluister, Test/Simuleer & Sla Over -->
+      <div class="flex flex-wrap items-center justify-center gap-2 mt-3 pt-2.5 border-t border-slate-800/80">
+        <button
+          type="button"
+          onclick="window.showCurrentSolution()"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition"
+        >
+          💡 Oplossing
+        </button>
+        <button
+          type="button"
+          onclick="window.playCurrentChordAudio()"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition"
+        >
+          🔊 Beluister
+        </button>
+        <button
+          type="button"
+          onclick="window.simulateCorrectChord()"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition"
+          title="Simuleer de juiste greep (handig om zonder MIDI-piano te testen)"
+        >
+          🎹 Test Greep
+        </button>
+        <button
+          type="button"
+          onclick="window.clearScreenKeys()"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition"
+        >
+          🧹 Wis Toetsen
+        </button>
+      </div>
+
+      <!-- Uitklapbare Oplossingsbalk -->
+      <div id="solutionRevealBox" class="hidden mt-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 mono">
+        <!-- Wordt ingevuld zodra je op Oplossing klikt -->
+      </div>
+    </div>
+
+    <!-- VIRTUEEL KLAVIER (C2 t/m C6 - zonder vaste C4 split, puur links/rechts op volgorde) -->
+    <div class="glass-card rounded-2xl p-2.5 sm:p-3 shadow-lg">
+      <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 px-1">
+        <span>💡 De laagste 3 of 4 ingedrukte toetsen = <strong class="text-blue-400">Links</strong> • De hoogste 3 of 4 = <strong class="text-purple-400">Rechts</strong> (geen vaste C4-split)</span>
+        <span id="pressedCountLabel" class="mono font-bold text-slate-300">0 toetsen actief</span>
+      </div>
+      <div class="piano-wrapper">
+        <div id="pianoKeyboard" class="piano-keys">
+          <!-- Wordt dynamisch opgebouwd door app.js -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- SCHERM 3: EINDSCHERM (Resultaat, 3 Traagste & Daily Ranking) -->
+  <!-- ========================================================= -->
+  <main id="endScreen" class="hidden w-full max-w-4xl flex flex-col gap-3.5">
+    <section class="glass-card rounded-2xl p-4 sm:p-6 text-center shadow-xl">
+      <span id="endModeBadge" class="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+        Sessie Voltooid!
+      </span>
+
+      <h2 class="text-2xl sm:text-3xl font-black text-white mt-2">
+        Knap gespeeld! 🎹
+      </h2>
+
+      <!-- Eindtijd & Gemiddelde per akkoord -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-4 max-w-xl mx-auto">
+        <div class="p-3 rounded-2xl glass-subtle">
+          <div class="text-[11px] text-slate-400 font-semibold">Totale Tijd</div>
+          <div id="finalTotalTime" class="text-xl sm:text-2xl font-black mono text-emerald-400 mt-0.5">00:00.0</div>
+        </div>
+        <div class="p-3 rounded-2xl glass-subtle">
+          <div class="text-[11px] text-slate-400 font-semibold">Gemiddeld / Akkoord</div>
+          <div id="finalAvgTime" class="text-xl sm:text-2xl font-black mono text-indigo-300 mt-0.5">0.0s</div>
+        </div>
+        <div class="col-span-2 sm:col-span-1 p-3 rounded-2xl glass-subtle">
+          <div class="text-[11px] text-slate-400 font-semibold">Status / Record</div>
+          <div id="finalRecordStatus" class="text-sm font-extrabold text-amber-300 mt-1">Nieuw Record!</div>
+        </div>
+      </div>
+
+      <!-- Spelersnaam bevestiging op eindscherm (alleen relevant voor Daily Leaderboard) -->
+      <div id="endPlayerSection" class="max-w-md mx-auto mb-4">
+        <div id="endPlayerInputWrap" class="flex items-center justify-center gap-2 bg-slate-900/90 border border-slate-700 rounded-xl p-2">
+          <span class="text-xs text-slate-300">Naam voor klassement:</span>
+          <input
+            id="endPlayerNameInput"
+            type="text"
+            maxlength="18"
+            placeholder="Jouw naam..."
+            class="bg-slate-800 text-xs text-white px-2.5 py-1 rounded-lg border border-slate-600 focus:outline-none"
+            onkeydown="if(event.key==='Enter') window.savePlayerNameFromInput('endPlayerNameInput')"
+          />
+          <button
+            type="button"
+            onclick="window.savePlayerNameFromInput('endPlayerNameInput')"
+            class="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-lg transition"
+          >
+            Opslaan &amp; Post
+          </button>
+        </div>
+
+        <div id="endPlayerBadgeWrap" class="hidden items-center justify-center gap-2">
+          <button
+            type="button"
+            onclick="window.editPlayerNameOnEndScreen()"
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-600 transition"
+          >
+            <span>👤 Gespeeld als:</span>
+            <span id="endPlayerBadgeName" class="text-indigo-300 font-bold">—</span>
+            <span class="text-slate-400">✏️</span>
+          </button>
+          <span id="scoreSyncStatus" class="text-xs font-semibold text-emerald-400"></span>
+        </div>
+      </div>
+
+      <!-- FOUTEN-ANALYSE: JOUW 3 TRAAGSTE AKKOORDEN VAN DEZE RONDE -->
+      <div id="slowestChordsSection" class="max-w-xl mx-auto mb-4 p-3.5 rounded-2xl bg-slate-900/85 border border-slate-700/80 text-left">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div>
+            <h3 class="text-xs sm:text-sm font-extrabold text-amber-300">
+              🎯 Analyse: Jouw 3 lastigste opgaven in deze sessie
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              Herhaal deze specifieke grepen direct in een korte focus-sprint van 6 opgaven.
+            </p>
+          </div>
+          <button
+            id="retrySlowestBtn"
+            type="button"
+            onclick="window.startSlowestRetry()"
+            class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow"
+          >
+            🎯 Herkans mijn 3 traagste akkoorden →
+          </button>
+        </div>
+        <div id="slowestChordsList" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+          <!-- Wordt dynamisch gevuld -->
+        </div>
+      </div>
+
+      <!-- Actieknoppen onderaan Eindscherm -->
+      <div class="flex flex-wrap items-center justify-center gap-2.5">
+        <button
+          id="shareDailyBtn"
+          type="button"
+          onclick="window.shareDailyScore()"
+          class="hidden px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition"
+        >
+          📋 Deel Daily Score
+        </button>
+        <button
+          id="playAgainSameModeBtn"
+          type="button"
+          onclick="window.replayLastMode()"
+          class="px-4 py-2 rounded-xl font-extrabold text-xs sm:text-sm bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-md"
+        >
+          🔄 Nog een keer spelen
+        </button>
+        <button
+          type="button"
+          onclick="window.returnToMenu()"
+          class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+        >
           🏠 Terug naar Startscherm
         </button>
       </div>
     </section>
 
-  </div>
-
-  <script>
-    // =========================================================================
-    // 1. MUZIEKTHEORIE & AKKOORD-DATA (DRIEKLANKEN, 7THS & FURTHER EXTENSIONS)
-    // =========================================================================
-    const ROOTS = [
-      { name: 'C',  midiBase: 0,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
-      { name: 'Db', midiBase: 1,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: false },
-      { name: 'D',  midiBase: 2,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'], basic: true },
-      { name: 'Eb', midiBase: 3,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
-      { name: 'E',  midiBase: 4,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], basic: false },
-      { name: 'F',  midiBase: 5,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
-      { name: 'F#', midiBase: 6,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], basic: false },
-      { name: 'G',  midiBase: 7,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
-      { name: 'Ab', midiBase: 8,  notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: false },
-      { name: 'A',  midiBase: 9,  notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'], basic: false },
-      { name: 'Bb', midiBase: 10, notes: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'], basic: true },
-      { name: 'B',  midiBase: 11, notes: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'], basic: false },
-    ];
-
-    // Alle ondersteunde akkoordtypes verdeeld over Triads (3 noten per hand), Sevenths (4 noten per hand) en Further Extensions (4-noot jazz-voicing per hand)
-    const CHORD_TYPES = {
-      // --- DRIEKLANKEN (3 noten per hand, 3 omkeringen: Grond, 1e, 2e) ---
-      'maj': {
-        suffix: '',
-        displaySuffix: 'major',
-        label: 'groot (majeur drieklank)',
-        formula: '1 – 3 – 5 (3 noten/hand)',
-        family: 'major',
-        tier: 'triad',
-        intervals: [0, 4, 7]
-      },
-      'min': {
-        suffix: 'm',
-        displaySuffix: 'm',
-        label: 'klein (mineur drieklank)',
-        formula: '1 – b3 – 5 (3 noten/hand)',
-        family: 'minor',
-        tier: 'triad',
-        intervals: [0, 3, 7]
-      },
-      'dim': {
-        suffix: 'dim',
-        displaySuffix: 'dim',
-        label: 'verminderde drieklank (°)',
-        formula: '1 – b3 – b5 (3 noten/hand)',
-        family: 'diminished',
-        tier: 'triad',
-        intervals: [0, 3, 6]
-      },
-      'aug': {
-        suffix: 'aug',
-        displaySuffix: 'aug',
-        label: 'overmatige drieklank (+)',
-        formula: '1 – 3 – #5 (3 noten/hand)',
-        family: 'augmented',
-        tier: 'triad',
-        intervals: [0, 4, 8]
-      },
-
-      // --- SEVENTHS (4 noten per hand, 4 omkeringen: Grond, 1e, 2e, 3e) ---
-      'maj7': {
-        suffix: 'maj7',
-        displaySuffix: 'maj7',
-        label: 'majeur 7',
-        formula: '1 – 3 – 5 – 7',
-        family: 'major',
-        tier: 'seventh',
-        intervals: [0, 4, 7, 11]
-      },
-      '7': {
-        suffix: '7',
-        displaySuffix: '7',
-        label: 'dominant 7',
-        formula: '1 – 3 – 5 – b7',
-        family: 'major',
-        tier: 'seventh',
-        intervals: [0, 4, 7, 10]
-      },
-      'm7': {
-        suffix: 'm7',
-        displaySuffix: 'm7',
-        label: 'mineur 7',
-        formula: '1 – b3 – 5 – b7',
-        family: 'minor',
-        tier: 'seventh',
-        intervals: [0, 3, 7, 10]
-      },
-      'dim7': {
-        suffix: 'dim7',
-        displaySuffix: 'dim7',
-        label: 'volledig verminderd 7 (°7)',
-        formula: '1 – b3 – b5 – bb7(6)',
-        family: 'diminished',
-        tier: 'seventh',
-        intervals: [0, 3, 6, 9]
-      },
-      'm7b5': {
-        suffix: 'm7b5',
-        displaySuffix: 'm7b5',
-        label: 'halfverminderd 7 (ø7)',
-        formula: '1 – b3 – b5 – b7',
-        family: 'diminished',
-        tier: 'seventh',
-        intervals: [0, 3, 6, 10]
-      },
-      '7#5': {
-        suffix: '7#5',
-        displaySuffix: '7#5',
-        label: 'overmatig dominant 7 (aug7)',
-        formula: '1 – 3 – #5 – b7',
-        family: 'augmented',
-        tier: 'seventh',
-        intervals: [0, 4, 8, 10]
-      },
-      'maj7#5': {
-        suffix: 'maj7#5',
-        displaySuffix: 'maj7#5',
-        label: 'overmatig majeur 7',
-        formula: '1 – 3 – #5 – 7',
-        family: 'augmented',
-        tier: 'seventh',
-        intervals: [0, 4, 8, 11]
-      },
-
-      // --- FURTHER EXTENSIONS (Slash-Chord modus: verplichte basnoot + vrije keuze uit geldige akkoordtonen incl. karakteristieke extensie) ---
-      'maj9': {
-        suffix: 'maj9',
-        displaySuffix: 'maj9',
-        label: 'majeur 9 (slash-voicing met verplichte 9)',
-        formula: 'Toegestaan: 1, 3, 5, 7, 9 (9 verplicht)',
-        family: 'major',
-        tier: 'extension',
-        intervals: [0, 2, 4, 11],
-        allowedIntervals: [0, 4, 7, 11, 2],
-        bassCandidateIntervals: [0, 4, 7, 11],
-        requiredExtensionInterval: 2,
-        requiredExtensionLabel: '9'
-      },
-      '9': {
-        suffix: '9',
-        displaySuffix: '9',
-        label: 'dominant 9 (slash-voicing met verplichte 9)',
-        formula: 'Toegestaan: 1, 3, 5, b7, 9 (9 verplicht)',
-        family: 'major',
-        tier: 'extension',
-        intervals: [0, 2, 4, 10],
-        allowedIntervals: [0, 4, 7, 10, 2],
-        bassCandidateIntervals: [0, 4, 7, 10],
-        requiredExtensionInterval: 2,
-        requiredExtensionLabel: '9'
-      },
-      '11': {
-        suffix: '11',
-        displaySuffix: '11',
-        label: 'dominant 11 (slash-voicing met verplichte 11)',
-        formula: 'Toegestaan: 1, 3, 5, b7, 9, 11 (11 verplicht)',
-        family: 'major',
-        tier: 'extension',
-        intervals: [0, 5, 7, 10],
-        allowedIntervals: [0, 4, 7, 10, 2, 5],
-        bassCandidateIntervals: [0, 4, 7, 10],
-        requiredExtensionInterval: 5,
-        requiredExtensionLabel: '11'
-      },
-      'maj13': {
-        suffix: 'maj13',
-        displaySuffix: 'maj13',
-        label: 'majeur 13 (slash-voicing met verplichte 13, zonder 11)',
-        formula: 'Toegestaan: 1, 3, 5, 7, 9, 13 (13 verplicht)',
-        family: 'major',
-        tier: 'extension',
-        intervals: [0, 4, 9, 11],
-        allowedIntervals: [0, 4, 7, 11, 2, 9],
-        bassCandidateIntervals: [0, 4, 7, 11],
-        requiredExtensionInterval: 9,
-        requiredExtensionLabel: '13'
-      },
-      '13': {
-        suffix: '13',
-        displaySuffix: '13',
-        label: 'dominant 13 (slash-voicing met verplichte 13, zonder 11)',
-        formula: 'Toegestaan: 1, 3, 5, b7, 9, 13 (13 verplicht)',
-        family: 'major',
-        tier: 'extension',
-        intervals: [0, 4, 9, 10],
-        allowedIntervals: [0, 4, 7, 10, 2, 9],
-        bassCandidateIntervals: [0, 4, 7, 10],
-        requiredExtensionInterval: 9,
-        requiredExtensionLabel: '13'
-      },
-      'm9': {
-        suffix: 'm9',
-        displaySuffix: 'm9',
-        label: 'mineur 9 (slash-voicing met verplichte 9)',
-        formula: 'Toegestaan: 1, b3, 5, b7, 9 (9 verplicht)',
-        family: 'minor',
-        tier: 'extension',
-        intervals: [0, 2, 3, 10],
-        allowedIntervals: [0, 3, 7, 10, 2],
-        bassCandidateIntervals: [0, 3, 7, 10],
-        requiredExtensionInterval: 2,
-        requiredExtensionLabel: '9'
-      },
-      'm11': {
-        suffix: 'm11',
-        displaySuffix: 'm11',
-        label: 'mineur 11 (slash-voicing met verplichte 11)',
-        formula: 'Toegestaan: 1, b3, 5, b7, 9, 11 (11 verplicht)',
-        family: 'minor',
-        tier: 'extension',
-        intervals: [0, 3, 5, 10],
-        allowedIntervals: [0, 3, 7, 10, 2, 5],
-        bassCandidateIntervals: [0, 3, 7, 10],
-        requiredExtensionInterval: 5,
-        requiredExtensionLabel: '11'
-      },
-      'm13': {
-        suffix: 'm13',
-        displaySuffix: 'm13',
-        label: 'mineur 13 (slash-voicing met verplichte 13)',
-        formula: 'Toegestaan: 1, b3, 5, b7, 9, 11, 13 (13 verplicht)',
-        family: 'minor',
-        tier: 'extension',
-        intervals: [0, 3, 9, 10],
-        allowedIntervals: [0, 3, 7, 10, 2, 5, 9],
-        bassCandidateIntervals: [0, 3, 7, 10],
-        requiredExtensionInterval: 9,
-        requiredExtensionLabel: '13'
-      },
-      'dim(maj7)': {
-        suffix: 'dim(maj7)',
-        displaySuffix: 'dim(maj7)',
-        label: 'verminderd majeur 7 (slash-voicing met verplichte 7)',
-        formula: 'Toegestaan: 1, b3, b5, bb7, 7 (7 verplicht)',
-        family: 'diminished',
-        tier: 'extension',
-        intervals: [0, 3, 6, 11],
-        allowedIntervals: [0, 3, 6, 9, 11],
-        bassCandidateIntervals: [0, 3, 6, 11],
-        requiredExtensionInterval: 11,
-        requiredExtensionLabel: 'maj7'
-      },
-      'm9b5': {
-        suffix: 'm9b5',
-        displaySuffix: 'm9b5',
-        label: 'halfverminderd 9 (slash-voicing met verplichte 9)',
-        formula: 'Toegestaan: 1, b3, b5, b7, 9 (9 verplicht)',
-        family: 'diminished',
-        tier: 'extension',
-        intervals: [0, 2, 6, 10],
-        allowedIntervals: [0, 3, 6, 10, 2],
-        bassCandidateIntervals: [0, 3, 6, 10],
-        requiredExtensionInterval: 2,
-        requiredExtensionLabel: '9'
-      },
-      '9#5': {
-        suffix: '9#5',
-        displaySuffix: '9#5',
-        label: 'overmatig dominant 9 (slash-voicing met verplichte 9)',
-        formula: 'Toegestaan: 1, 3, #5, b7, 9 (9 verplicht)',
-        family: 'augmented',
-        tier: 'extension',
-        intervals: [0, 2, 4, 8],
-        allowedIntervals: [0, 4, 8, 10, 2],
-        bassCandidateIntervals: [0, 4, 8, 10],
-        requiredExtensionInterval: 2,
-        requiredExtensionLabel: '9'
-      }
-    };
-
-    const INVERSION_NAMES = [
-      'Grondligging',
-      '1e Inversie',
-      '2e Inversie',
-      '3e Inversie'
-    ];
-
-    const STORAGE_KEY_PREFIX = 'jazz_inversie_best_ms_';
-    const PLAYER_NAME_STORAGE_KEY = 'jazz_player_name';
-    const DAILY_PLAYED_DATE_KEY = 'jazz_daily_played_date';
-    const DAILY_BEST_MS_PREFIX = 'jazz_daily_best_ms_';
-    const FIREBASE_DB_URL = 'https://jazz-inversie-studio-default-rtdb.europe-west1.firebasedatabase.app';
-
-    // Vaste akkoordenpool voor de Daily Challenge (Major, Minor, Diminished, Augmented & Sevenths — géén Further Extensions)
-    const DAILY_CHORD_TYPES = [
-      'maj', 'min', 'dim', 'aug',
-      'maj7', '7', 'm7', 'dim7', 'm7b5', '7#5', 'maj7#5'
-    ];
-
-    // =========================================================================
-    // 2. APPLICATIE STATE
-    // =========================================================================
-    const state = {
-      view: 'start',          // 'start' | 'game' | 'results'
-      gameMode: '10',         // 'daily' | '10' | '20' | '50' | 'free'
-      targetChordsCount: 10,
-      currentChordIndex: 0,
-      dailySequence: [],      // Vaste reeks van 10 akkoorden voor de Daily Challenge van vandaag
-      lastCompletedRun: null, // Gegevens van de laatst voltooide ronde voor online opslag
-      scoreSubmittedForCurrentRun: false,
-      activeLeaderboardTab: 'daily',
-
-      // Moeilijkheid Keuzevakken (Stap 1)
-      diffMajor: true,
-      diffMinor: true,
-      diffDiminished: false,
-      diffAugmented: false,
-      diffSevenths: true,
-      diffExtensions: false,
-      includeTriadsWhenExtended: true,
-      activeTypes: ['maj', 'min', 'maj7', '7', 'm7'],
-      enabledRoots: new Set(ROOTS.map(r => r.name)),
-
-      keySet: 'all',          // 'all' | 'basic'
-      handRule: 'random',     // 'random' | 'zones'
-      practiceMode: true,     // Standaard altijd verborgen doelnoten tot oplossing gevraagd of opgelost
-      revealed: false,
-      solutionUsedForCurrentChord: false,
-      currentChordPenaltyMs: 0,
-      currentChallenge: null,
-
-      // Stopwatch voor 10 / 20 / 50 modus
-      stopwatchRunning: false,
-      runStartTimeMs: 0,
-      chordStartTimeMs: 0,
-      penaltyMs: 0,
-      elapsedMs: 0,
-      stopwatchRafId: null,
-      penaltyToastTimeoutId: null,
-      chordSplits: [],        // [{ symbol, lhInv, rhInv, timeMs, skipped, usedSolution }]
-      bpm: 70,
-      beatsPerChord: 4,
-      currentBeat: 0,
-      clickSound: true,
-      timerIntervalId: null,
-
-      // Web MIDI & Live Validatie
-      midiAccess: null,
-      selectedMidiInputId: 'all',
-      midiConnected: false,
-      activeMidiNotes: new Set(),
-      mouseClickToggleMode: true,
-      autoNextOnCorrect: true,
-      challengeSolved: false,
-      autoNextTimeoutId: null,
-      streak: 0,
-      totalSolved: 0
-    };
-
-    // =========================================================================
-    // 3. TOPSCORES (LOCALSTORAGE) & TIJDFORMATTERING
-    // =========================================================================
-    function getBestTimeMs(modeKey) {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY_PREFIX + modeKey);
-        if (!raw) return null;
-        const val = parseFloat(raw);
-        return Number.isFinite(val) && val > 0 ? val : null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function saveBestTimeMs(modeKey, ms) {
-      try {
-        localStorage.setItem(STORAGE_KEY_PREFIX + modeKey, String(Math.round(ms)));
-      } catch (e) {}
-    }
-
-    function formatTimeMs(ms) {
-      const totalSeconds = Math.max(0, ms / 1000);
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = Math.floor(totalSeconds % 60);
-      const tenths = Math.floor((totalSeconds * 10) % 10);
-      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
-    }
-
-    function formatTimeDetailedMs(ms) {
-      const totalSeconds = Math.max(0, ms / 1000);
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = (totalSeconds % 60).toFixed(2).padStart(5, '0');
-      return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-    }
-
-    // =========================================================================
-    // 3B. DAILY CHALLENGE SEEDED PRNG & DATUM-LOGICA (1 POGING PER DAG)
-    // =========================================================================
-    function getTodayDateString() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    function getTodayDisplayDate() {
-      const now = new Date();
-      const d = String(now.getDate()).padStart(2, '0');
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const y = now.getFullYear();
-      return `${d}/${m}/${y}`;
-    }
-
-    // Deterministische hash & Mulberry32 PRNG zodat iedereen op dezelfde dag exact dezelfde 10 akkoorden krijgt
-    function createSeededRandom(seedStr) {
-      let h = 1779033703 ^ seedStr.length;
-      for (let i = 0; i < seedStr.length; i++) {
-        h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
-        h = (h << 13) | (h >>> 19);
-      }
-      h = Math.imul(h ^ (h >>> 16), 2246822507);
-      h = Math.imul(h ^ (h >>> 13), 3266489909);
-      let a = (h ^= h >>> 16) >>> 0;
-
-      return function () {
-        let t = (a += 0x6D2B79F5);
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    function generateDailySequenceForDate(dateStr) {
-      const rng = createSeededRandom(`JAZZ_DAILY_V1_${dateStr}`);
-      const sequence = [];
-      let prevSignature = '';
-
-      for (let i = 0; i < 10; i++) {
-        let pick = null;
-        let attempts = 0;
-        do {
-          const rootObj = ROOTS[Math.floor(rng() * ROOTS.length)];
-          const typeKey = DAILY_CHORD_TYPES[Math.floor(rng() * DAILY_CHORD_TYPES.length)];
-          const chordDef = CHORD_TYPES[typeKey];
-          const numInvs = chordDef.intervals.length; // 3 of 4
-          const lhInv = Math.floor(rng() * numInvs);
-          const allInvs = Array.from({ length: numInvs }, (_, idx) => idx).filter(idx => idx !== lhInv);
-          const rhInv = allInvs[Math.floor(rng() * allInvs.length)];
-          const sig = `${rootObj.name}${chordDef.suffix}-${lhInv}-${rhInv}`;
-
-          pick = { rootObj, typeKey, lhInv, rhInv, sig };
-          attempts++;
-        } while (pick.sig === prevSignature && attempts < 10);
-
-        prevSignature = pick.sig;
-        sequence.push(pick);
-      }
-      return sequence;
-    }
-
-    function hasPlayedDailyToday() {
-      try {
-        return localStorage.getItem(DAILY_PLAYED_DATE_KEY) === getTodayDateString();
-      } catch (e) {
-        return false;
-      }
-    }
-
-    function markDailyPlayedToday() {
-      try {
-        localStorage.setItem(DAILY_PLAYED_DATE_KEY, getTodayDateString());
-      } catch (e) {}
-    }
-
-    function getDailyBestMsToday() {
-      try {
-        const raw = localStorage.getItem(DAILY_BEST_MS_PREFIX + getTodayDateString());
-        if (!raw) return null;
-        const val = parseFloat(raw);
-        return Number.isFinite(val) && val > 0 ? val : null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function saveDailyBestMsToday(ms) {
-      try {
-        localStorage.setItem(DAILY_BEST_MS_PREFIX + getTodayDateString(), String(Math.round(ms)));
-      } catch (e) {}
-    }
-
-    function getStoredPlayerName() {
-      try {
-        return (localStorage.getItem(PLAYER_NAME_STORAGE_KEY) || '').trim();
-      } catch (e) {
-        return '';
-      }
-    }
-
-    function setStoredPlayerName(name) {
-      const clean = (name || '').trim().slice(0, 18);
-      try {
-        localStorage.setItem(PLAYER_NAME_STORAGE_KEY, clean);
-      } catch (e) {}
-      const startInput = document.getElementById('startPlayerNameInput');
-      const resInput = document.getElementById('resultsPlayerNameInput');
-      if (startInput && startInput.value !== clean) startInput.value = clean;
-      if (resInput && resInput.value !== clean) resInput.value = clean;
-      return clean;
-    }
-
-    function updateDailyBannerUI() {
-      const todayBadge = document.getElementById('dailyDateBadge');
-      const bestDailyEl = document.getElementById('bestScoreDaily');
-      const startDailyBtn = document.getElementById('startDailyBtn');
-      const subtextEl = document.getElementById('dailyStatusSubtext');
-      if (!todayBadge || !bestDailyEl || !startDailyBtn) return;
-
-      todayBadge.textContent = getTodayDisplayDate();
-      const played = hasPlayedDailyToday();
-      const todayMs = getDailyBestMsToday();
-
-      if (todayMs !== null) {
-        bestDailyEl.textContent = formatTimeDetailedMs(todayMs);
-      } else if (played) {
-        bestDailyEl.textContent = 'Poging gebruikt';
-      } else {
-        bestDailyEl.textContent = 'Nog niet gespeeld';
-      }
-
-      if (played) {
-        startDailyBtn.disabled = true;
-        startDailyBtn.textContent = '✅ Daily Vandaag Gespeeld';
-        startDailyBtn.className = 'flex-1 md:flex-initial px-5 py-3 rounded-xl bg-club-800 border border-emerald-500/40 text-emerald-300 font-extrabold text-xs sm:text-sm opacity-80 cursor-not-allowed';
-        if (subtextEl) {
-          subtextEl.textContent = 'Je hebt de Daily Challenge van vandaag al gespeeld. Morgen om 00:00 staat er een nieuwe reeks van 10 akkoorden klaar!';
-        }
-      } else {
-        startDailyBtn.disabled = false;
-        startDailyBtn.textContent = `🔥 Start Daily (${getTodayDisplayDate()}) →`;
-        startDailyBtn.className = 'flex-1 md:flex-initial px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition active:scale-95';
-        if (subtextEl) {
-          subtextEl.textContent = 'Iedereen krijgt vandaag exact dezelfde 10 akkoorden en inversies. Zet de snelste tijd op het online Daily-klassement!';
-        }
-      }
-    }
-
-    // =========================================================================
-    // 3C. FIREBASE REALTIME DATABASE LEADERBOARD (FETCH REST API)
-    // =========================================================================
-    function getDifficultySummaryLabel() {
-      if (state.gameMode === 'daily') return 'Daily Mix';
-      const parts = [];
-      if (state.diffMajor) parts.push('Maj');
-      if (state.diffMinor) parts.push('Min');
-      if (state.diffDiminished) parts.push('Dim');
-      if (state.diffAugmented) parts.push('Aug');
-      if (state.diffSevenths) parts.push('7th');
-      if (state.diffExtensions) parts.push('Ext');
-      return parts.join('+') || 'Basis';
-    }
-
-    async function submitScoreToFirebase(playerName) {
-      if (!state.lastCompletedRun || state.scoreSubmittedForCurrentRun) return;
-      const cleanName = setStoredPlayerName(playerName);
-      const statusText = document.getElementById('scoreSubmitStatusText');
-      const submitBtn = document.getElementById('submitOnlineScoreBtn');
-
-      if (!cleanName) {
-        if (statusText) {
-          statusText.textContent = '⚠️ Vul eerst een spelersnaam in om je score op te slaan.';
-          statusText.className = 'text-xs text-amber-300 font-semibold';
-        }
-        return;
-      }
-
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ Opslaan...';
-      }
-
-      const run = state.lastCompletedRun;
-      const payload = {
-        name: cleanName,
-        mode: run.mode,
-        timeMs: Math.round(run.timeMs),
-        avgSec: parseFloat(run.avgSec),
-        mix: run.mixLabel,
-        penalties: run.penaltiesCount,
-        date: run.dateStr,
-        timestamp: Date.now()
-      };
-
-      const endpoint = run.mode === 'daily'
-        ? `${FIREBASE_DB_URL}/daily/${run.dateStr}.json`
-        : `${FIREBASE_DB_URL}/scores.json`;
-
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        state.scoreSubmittedForCurrentRun = true;
-        if (submitBtn) {
-          submitBtn.textContent = '✅ Opgeslagen!';
-        }
-        if (statusText) {
-          statusText.textContent = `Top! Je tijd (${formatTimeDetailedMs(run.timeMs)}) staat nu live op de ranglijst onder "${cleanName}".`;
-          statusText.className = 'text-xs text-emerald-400 font-semibold';
-        }
-
-        // Schakel leaderboard-tab naar de zojuist gespeelde modus en ververs direct
-        setLeaderboardTab(run.mode === 'daily' ? 'daily' : run.mode);
-      } catch (err) {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = '🚀 Opnieuw proberen';
-        }
-        if (statusText) {
-          statusText.textContent = '⚠️ Kon geen verbinding maken met de online database. Controleer je internet.';
-          statusText.className = 'text-xs text-rose-400 font-semibold';
-        }
-      }
-    }
-
-    function setLeaderboardTab(tabKey) {
-      state.activeLeaderboardTab = tabKey;
-      document.querySelectorAll('.lb-tab-btn').forEach(btn => {
-        const isCurrent = btn.dataset.lbTab === tabKey;
-        btn.className = isCurrent
-          ? 'lb-tab-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950 transition'
-          : 'lb-tab-btn px-3 py-1 rounded-xl text-xs font-bold bg-club-900 text-slate-300 hover:text-white border border-slate-800 transition';
-      });
-      fetchAndRenderLeaderboard();
-    }
-
-    async function fetchAndRenderLeaderboard() {
-      const container = document.getElementById('leaderboardListContainer');
-      const statusBadge = document.getElementById('leaderboardStatusIndicator');
-      if (!container) return;
-
-      const tab = state.activeLeaderboardTab;
-      const todayStr = getTodayDateString();
-      const url = tab === 'daily'
-        ? `${FIREBASE_DB_URL}/daily/${todayStr}.json`
-        : `${FIREBASE_DB_URL}/scores.json`;
-
-      container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center font-mono">Ranglijst ophalen...</div>';
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-
-        let entries = data ? Object.values(data) : [];
-        if (tab !== 'daily') {
-          entries = entries.filter(item => item && String(item.mode) === String(tab));
-        } else {
-          entries = entries.filter(item => item && Number.isFinite(item.timeMs));
-        }
-
-        // Sorteer op snelste tijd (laagste timeMs bovenaan) en houd per speler de beste poging bij
-        entries.sort((a, b) => (a.timeMs || 9999999) - (b.timeMs || 9999999));
-
-        const bestPerPlayer = [];
-        const seenNames = new Set();
-        for (const entry of entries) {
-          const key = (entry.name || 'Anoniem').trim().toLowerCase();
-          if (!seenNames.has(key)) {
-            seenNames.add(key);
-            bestPerPlayer.push(entry);
-          }
-          if (bestPerPlayer.length >= 15) break;
-        }
-
-        if (statusBadge) {
-          statusBadge.textContent = tab === 'daily' ? `Live (${ getTodayDisplayDate() })` : 'Live';
-        }
-
-        if (bestPerPlayer.length === 0) {
-          container.innerHTML = `
-            <div class="text-xs text-slate-400 py-5 text-center">
-              Nog geen scores voor <span class="text-white font-bold">${tab === 'daily' ? 'de Daily Challenge van vandaag' : tab + ' Akkoorden'}</span>. Speel een ronde en zet de eerste tijd!
-            </div>
-          `;
-          return;
-        }
-
-        const currentName = getStoredPlayerName().toLowerCase();
-        container.innerHTML = '';
-
-        bestPerPlayer.forEach((item, idx) => {
-          const rank = idx + 1;
-          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
-          const isMe = currentName && (item.name || '').trim().toLowerCase() === currentName;
-
-          const row = document.createElement('div');
-          row.className = `flex items-center justify-between px-3 py-2 rounded-xl border text-xs ${
-            isMe
-              ? 'bg-amber-500/15 border-amber-500/50 text-white'
-              : 'bg-club-900/90 border-slate-800/90 text-slate-200'
-          }`;
-
-          const leftSide = document.createElement('div');
-          leftSide.className = 'flex items-center gap-2.5 min-w-0';
-
-          const rankSpan = document.createElement('span');
-          rankSpan.className = 'font-mono font-extrabold w-6 text-center shrink-0';
-          rankSpan.textContent = medal;
-
-          const nameSpan = document.createElement('span');
-          nameSpan.className = 'font-extrabold text-white truncate';
-          nameSpan.textContent = item.name || 'Speler';
-
-          const mixSpan = document.createElement('span');
-          mixSpan.className = 'hidden sm:inline-block px-2 py-0.5 rounded bg-club-950 border border-slate-800 font-mono text-[10px] text-slate-400';
-          mixSpan.textContent = item.mix || 'Mix';
-
-          leftSide.appendChild(rankSpan);
-          leftSide.appendChild(nameSpan);
-          leftSide.appendChild(mixSpan);
-
-          const rightSide = document.createElement('div');
-          rightSide.className = 'flex items-center gap-3 shrink-0 font-mono';
-
-          const avgSpan = document.createElement('span');
-          avgSpan.className = 'text-[11px] text-slate-400 hidden sm:inline';
-          const chordsCount = tab === 'daily' ? 10 : parseInt(tab, 10) || 10;
-          const avgCalc = (item.timeMs / 1000 / chordsCount).toFixed(2);
-          avgSpan.textContent = `${avgCalc}s / akk`;
-
-          const timeSpan = document.createElement('span');
-          timeSpan.className = 'font-extrabold text-sm text-emerald-400';
-          timeSpan.textContent = formatTimeDetailedMs(item.timeMs);
-
-          rightSide.appendChild(avgSpan);
-          rightSide.appendChild(timeSpan);
-
-          row.appendChild(leftSide);
-          row.appendChild(rightSide);
-          container.appendChild(row);
-        });
-      } catch (err) {
-        container.innerHTML = '<div class="text-xs text-rose-400 py-4 text-center">Kon ranglijst tijdelijk niet laden.</div>';
-      }
-    }
-
-    function renderStartScreenHighscores() {
-      updateDailyBannerUI();
-      ['10', '20', '50'].forEach(modeKey => {
-        const bestEl = document.getElementById(`bestScore${modeKey}`);
-        const avgEl = document.getElementById(`bestAvg${modeKey}`);
-        if (!bestEl || !avgEl) return;
-
-        const bestMs = getBestTimeMs(modeKey);
-        if (bestMs !== null) {
-          bestEl.textContent = formatTimeDetailedMs(bestMs);
-          const avgSec = (bestMs / 1000 / parseInt(modeKey, 10)).toFixed(2);
-          avgEl.textContent = `Gemiddeld ${avgSec}s / akkoord`;
-        } else {
-          bestEl.textContent = 'Nog geen tijd';
-          avgEl.textContent = 'Speel een potje om een record te zetten';
-        }
-      });
-    }
-
-    // =========================================================================
-    // 4. WEB AUDIO API SYNTHESIZER (WARME RHODES PIANO + METRONOOM + CHIME)
-    // =========================================================================
-    let audioCtx = null;
-
-    function ensureAudioContext() {
-      if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContextClass();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
-
-    function midiToFreq(midi) {
-      return 440 * Math.pow(2, (midi - 69) / 12);
-    }
-
-    function playRhodesNote(midi, startTime = 0, duration = 1.4, velocity = 0.14) {
-      ensureAudioContext();
-      const now = Math.max(audioCtx.currentTime, startTime);
-      const freq = midiToFreq(midi);
-
-      const mainOsc = audioCtx.createOscillator();
-      const tineOsc = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      const tineGain = audioCtx.createGain();
-
-      mainOsc.type = 'triangle';
-      mainOsc.frequency.setValueAtTime(freq, now);
-
-      tineOsc.type = 'sine';
-      tineOsc.frequency.setValueAtTime(freq * 2, now);
-
-      tineGain.gain.setValueAtTime(velocity * 0.35, now);
-      tineGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-
-      gainNode.gain.setValueAtTime(0.001, now);
-      gainNode.gain.linearRampToValueAtTime(velocity, now + 0.018);
-      gainNode.gain.exponentialRampToValueAtTime(velocity * 0.55, now + 0.25);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      mainOsc.connect(gainNode);
-      tineOsc.connect(tineGain);
-      tineGain.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-
-      mainOsc.start(now);
-      tineOsc.start(now);
-      mainOsc.stop(now + duration + 0.05);
-      tineOsc.stop(now + duration + 0.05);
-    }
-
-    function playCurrentVoicing() {
-      if (!state.currentChallenge) return;
-      ensureAudioContext();
-      const now = audioCtx.currentTime;
-      const allMidis = [
-        ...state.currentChallenge.lh.midis,
-        ...state.currentChallenge.rh.midis
-      ];
-      allMidis.forEach((midi, index) => {
-        playRhodesNote(midi, now + index * 0.028, 1.65, 0.12);
-      });
-    }
-
-    function playSuccessChime() {
-      try {
-        ensureAudioContext();
-        const now = audioCtx.currentTime;
-        [72, 76, 79, 84].forEach((midi, idx) => {
-          playRhodesNote(midi, now + idx * 0.045, 0.45, 0.08);
-        });
-      } catch (e) {}
-    }
-
-    function playMetronomeClick(isAccent = false) {
-      if (!state.clickSound) return;
-      ensureAudioContext();
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(isAccent ? 1150 : 760, now);
-
-      gain.gain.setValueAtTime(isAccent ? 0.16 : 0.09, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
-
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.05);
-    }
-
-    // =========================================================================
-    // 5. MOEILIJKHEIDS-POOL & VOICING GENERATOR (3 OF 4 NOTEN PER HAND)
-    // =========================================================================
-    function computeActiveChordTypes() {
-      const families = [];
-      if (state.diffMajor) families.push('major');
-      if (state.diffMinor) families.push('minor');
-      if (state.diffDiminished) families.push('diminished');
-      if (state.diffAugmented) families.push('augmented');
-
-      const hasHigherTiers = state.diffSevenths || state.diffExtensions;
-      const includeTriads = !hasHigherTiers || state.includeTriadsWhenExtended;
-
-      const result = [];
-      Object.entries(CHORD_TYPES).forEach(([key, def]) => {
-        if (!families.includes(def.family)) return;
-        if (def.tier === 'triad' && includeTriads) result.push(key);
-        if (def.tier === 'seventh' && state.diffSevenths) result.push(key);
-        if (def.tier === 'extension' && state.diffExtensions) result.push(key);
-      });
-
-      // Fallback voor het geval er niets in zit
-      if (result.length === 0) {
-        if (state.diffMajor) result.push('maj');
-        else if (state.diffMinor) result.push('min');
-        else if (state.diffDiminished) result.push('dim');
-        else if (state.diffAugmented) result.push('aug');
-        else result.push('maj');
-      }
-
-      state.activeTypes = result;
-      updateDifficultyPreviewUI();
-    }
-
-    function updateDifficultyPreviewUI() {
-      const previewEl = document.getElementById('activePoolPreview');
-      const countBadge = document.getElementById('poolCountBadge');
-      if (!previewEl || !countBadge) return;
-
-      countBadge.textContent = `${state.activeTypes.length} akkoordtypes`;
-      previewEl.innerHTML = '';
-
-      // Laat concrete voorbeelden zien (afwisselend C en Bb zodat bijv. C major, Cdim, Caug en Bbmaj13 direct zichtbaar zijn)
-      state.activeTypes.forEach((typeKey, idx) => {
-        const def = CHORD_TYPES[typeKey];
-        const sampleRoot = idx % 2 === 0 ? 'C' : 'Bb';
-        const labelText = def.suffix === '' ? `${sampleRoot} major` : `${sampleRoot}${def.suffix}`;
-        const pill = document.createElement('span');
-        pill.className = 'px-2 py-0.5 rounded-md bg-club-950 border border-slate-700/90 text-xs text-slate-200';
-        pill.textContent = labelText;
-        previewEl.appendChild(pill);
-      });
-
-      // Update de visuele rand van de 6 keuzevak-kaarten
-      const cardBindings = [
-        { id: 'cbDiffMajor', active: state.diffMajor },
-        { id: 'cbDiffMinor', active: state.diffMinor },
-        { id: 'cbDiffDiminished', active: state.diffDiminished },
-        { id: 'cbDiffAugmented', active: state.diffAugmented },
-        { id: 'cbDiffSevenths', active: state.diffSevenths },
-        { id: 'cbDiffExtensions', active: state.diffExtensions }
-      ];
-      cardBindings.forEach(({ id, active }) => {
-        const cb = document.getElementById(id);
-        if (!cb) return;
-        const card = cb.closest('.diff-card');
-        if (!card) return;
-        if (active) {
-          card.classList.remove('border-slate-800', 'opacity-75');
-          card.classList.add('border-amber-500/60');
-        } else {
-          card.classList.remove('border-amber-500/60');
-          card.classList.add('border-slate-800', 'opacity-75');
-        }
-      });
-    }
-
-    function buildInversionVoicing(rootObj, intervals, inversionIndex, targetMinMidi) {
-      const numNotes = intervals.length; // 3 voor drieklanken, 4 voor 7ths & extensions
-      const rotated = [];
-      for (let i = 0; i < numNotes; i++) {
-        const idx = (i + inversionIndex) % numNotes;
-        let semitone = intervals[idx];
-        while (i > 0 && semitone <= rotated[i - 1]) {
-          semitone += 12;
-        }
-        rotated.push(semitone);
-      }
-
-      let baseMidi = 36 + rootObj.midiBase + rotated[0]; // Start vanaf C2 (36)
-      while (baseMidi < targetMinMidi) {
-        baseMidi += 12;
-      }
-      while (baseMidi > targetMinMidi + 11) {
-        baseMidi -= 12;
-      }
-
-      const midis = rotated.map(semi => baseMidi + (semi - rotated[0]));
-      const noteNames = midis.map(m => rootObj.notes[m % 12]);
-
-      return {
-        inversionIndex,
-        inversionName: INVERSION_NAMES[inversionIndex],
-        bassPc: midis[0] % 12,
-        bassNoteName: noteNames[0],
-        midis,
-        noteNames
-      };
-    }
-
-    // Bouwt een muzikale 4-noots aanbevolen slash-voicing voor Further Extensions (startend op de gevraagde slash-basnoot + karakteristieke extensie + guide tones)
-    function buildSlashExtensionVoicing(rootObj, chordDef, bassInterval, inversionIndex, targetMinMidi, chordSymbol) {
-      const reqExt = chordDef.requiredExtensionInterval;
-      const allowed = chordDef.allowedIntervals || chordDef.intervals;
-
-      // Prioriteer: 1) Gevraagde basnoot, 2) Verplichte extensietoon (9/11/13), 3) Guide tones (terts & septiem), 4) Overige akkoordtonen
-      const priorityPool = [
-        reqExt,
-        ...chordDef.intervals,
-        ...allowed
-      ];
-
-      const chosenIntervals = [bassInterval];
-      for (const iv of priorityPool) {
-        if (chosenIntervals.length >= 4) break;
-        if (!chosenIntervals.includes(iv)) {
-          chosenIntervals.push(iv);
-        }
-      }
-
-      // Stapel de 4 gekozen tonen in stijgende volgorde binnen één handbereik vanaf de slash-basnoot
-      const ascendingOffsets = [0];
-      const upperOffsets = chosenIntervals
-        .slice(1)
-        .map(iv => (iv - bassInterval + 12) % 12)
-        .sort((a, b) => a - b);
-
-      upperOffsets.forEach(off => ascendingOffsets.push(off));
-
-      let baseMidi = 36 + rootObj.midiBase + bassInterval;
-      while (baseMidi < targetMinMidi) {
-        baseMidi += 12;
-      }
-      while (baseMidi > targetMinMidi + 11) {
-        baseMidi -= 12;
-      }
-
-      const midis = ascendingOffsets.map(off => baseMidi + off);
-      const noteNames = midis.map(m => rootObj.notes[m % 12]);
-      const bassNoteName = rootObj.notes[(rootObj.midiBase + bassInterval) % 12];
-
-      return {
-        inversionIndex,
-        inversionName: `${chordSymbol} / ${bassNoteName}`,
-        bassPc: (rootObj.midiBase + bassInterval) % 12,
-        bassNoteName,
-        midis,
-        noteNames
-      };
-    }
-
-    function generateNewChallenge(forceFirstExample = false) {
-      computeActiveChordTypes();
-
-      const availableRoots = ROOTS.filter(r => state.enabledRoots.has(r.name));
-      const rootPool = availableRoots.length > 0 ? availableRoots : ROOTS;
-
-      let rootObj, typeKey, lhInv, rhInv;
-
-      if (state.gameMode === 'daily' && state.dailySequence.length > 0) {
-        const pickIndex = Math.max(0, Math.min(state.dailySequence.length - 1, state.currentChordIndex - 1));
-        const dailyPick = state.dailySequence[pickIndex];
-        rootObj = dailyPick.rootObj;
-        typeKey = dailyPick.typeKey;
-        lhInv = dailyPick.lhInv;
-        rhInv = dailyPick.rhInv;
-      } else if (forceFirstExample && state.activeTypes.includes('m7')) {
-        rootObj = ROOTS[0]; // C
-        typeKey = 'm7';
-        lhInv = 0;          // Grondligging (C - Eb - G - Bb)
-        rhInv = 2;          // 2e Inversie  (G - Bb - C - Eb)
-      } else {
-        rootObj = rootPool[Math.floor(Math.random() * rootPool.length)];
-        typeKey = state.activeTypes[Math.floor(Math.random() * state.activeTypes.length)];
-        const chordDefTemp = CHORD_TYPES[typeKey];
-        const numInversions = chordDefTemp.tier === 'extension'
-          ? (chordDefTemp.bassCandidateIntervals ? chordDefTemp.bassCandidateIntervals.length : 4)
-          : chordDefTemp.intervals.length; // 3 bij triads, 4 bij 7ths/extensions
-
-        if (state.handRule === 'zones') {
-          if (numInversions === 3) {
-            lhInv = Math.random() < 0.5 ? 0 : 1;
-            rhInv = lhInv === 1 ? 2 : (Math.random() < 0.5 ? 1 : 2);
-          } else {
-            lhInv = Math.random() < 0.5 ? 0 : 1;
-            rhInv = Math.random() < 0.5 ? 2 : 3;
-          }
-        } else {
-          lhInv = Math.floor(Math.random() * numInversions);
-          const allInvs = Array.from({ length: numInversions }, (_, i) => i);
-          const remaining = allInvs.filter(i => i !== lhInv);
-          rhInv = remaining[Math.floor(Math.random() * remaining.length)];
-        }
-      }
-
-      const chordDef = CHORD_TYPES[typeKey];
-      const isSlashExtension = chordDef.tier === 'extension';
-      const notesPerHand = isSlashExtension ? 4 : chordDef.intervals.length;
-
-      // Gebruik een extra duidelijk symbool: bijv. "C major" of "Cm" of "Bb13"
-      const displaySymbol = chordDef.suffix === ''
-        ? `${rootObj.name} major`
-        : `${rootObj.name}${chordDef.suffix}`;
-
-      let lh, rh;
-      if (isSlashExtension) {
-        const bassCandidates = chordDef.bassCandidateIntervals || [0, 4, 7, 10];
-        const lhBassInterval = bassCandidates[lhInv % bassCandidates.length];
-        const rhBassInterval = bassCandidates[rhInv % bassCandidates.length];
-        lh = buildSlashExtensionVoicing(rootObj, chordDef, lhBassInterval, lhInv, 41, displaySymbol);
-        rh = buildSlashExtensionVoicing(rootObj, chordDef, rhBassInterval, rhInv, 58, displaySymbol);
-      } else {
-        // Bouw exacte MIDI-noten voor LH en RH (Triads & Sevenths)
-        lh = buildInversionVoicing(rootObj, chordDef.intervals, lhInv, 41);
-        rh = buildInversionVoicing(rootObj, chordDef.intervals, rhInv, 58);
-      }
-
-      // Zorg dat rechterhand altijd hoger ligt dan de hoogste noot van de linkerhand
-      const highestLh = lh.midis[lh.midis.length - 1];
-      while (rh.midis[0] <= highestLh && rh.midis[rh.midis.length - 1] + 12 <= 83) {
-        rh.midis = rh.midis.map(m => m + 12);
-      }
-
-      const signature = `${rootObj.name}${chordDef.suffix}-${lhInv}-${rhInv}`;
-      if (state.gameMode !== 'daily' && !forceFirstExample && state.currentChallenge && state.currentChallenge.signature === signature && (rootPool.length > 1 || state.activeTypes.length > 1)) {
-        return generateNewChallenge(false);
-      }
-
-      const expectedPitchClasses = chordDef.intervals.map(i => (rootObj.midiBase + i) % 12);
-      const allowedPitchClasses = isSlashExtension
-        ? (chordDef.allowedIntervals || chordDef.intervals).map(i => (rootObj.midiBase + i) % 12)
-        : expectedPitchClasses;
-      const requiredExtensionPc = isSlashExtension && chordDef.requiredExtensionInterval !== undefined
-        ? (rootObj.midiBase + chordDef.requiredExtensionInterval) % 12
-        : null;
-      const requiredExtensionNoteName = requiredExtensionPc !== null
-        ? rootObj.notes[requiredExtensionPc]
-        : null;
-
-      const lhExpectedPCs = lh.midis.map(m => m % 12);
-      const rhExpectedPCs = rh.midis.map(m => m % 12);
-
-      if (state.autoNextTimeoutId) {
-        clearTimeout(state.autoNextTimeoutId);
-        state.autoNextTimeoutId = null;
-      }
-
-      state.challengeSolved = false;
-      state.chordStartTimeMs = performance.now();
-      state.activeMidiNotes.clear();
-      state.revealed = false;
-      state.solutionUsedForCurrentChord = false;
-      state.currentChordPenaltyMs = 0;
-
-      state.currentChallenge = {
-        signature,
-        rootObj,
-        chordDef,
-        isSlashExtension,
-        notesPerHand,
-        totalExpectedNotes: notesPerHand * 2,
-        symbol: displaySymbol,
-        fullName: `${rootObj.name} ${chordDef.label}`,
-        formula: chordDef.formula,
-        expectedPitchClasses,
-        allowedPitchClasses,
-        requiredExtensionPc,
-        requiredExtensionNoteName,
-        lhExpectedPCs,
-        rhExpectedPCs,
-        lh,
-        rh
-      };
-
-      renderChallenge();
-      evaluateMidiInput();
-    }
-
-    // =========================================================================
-    // 6. SPELVERLOOP: STARTEN, STOPWATCH & RONDE VOLTOOIEN
-    // =========================================================================
-    function switchView(viewName) {
-      state.view = viewName;
-      document.body.classList.toggle('game-active', viewName === 'game');
-      const startEl = document.getElementById('startScreenView');
-      const gameEl = document.getElementById('gameView');
-      const resultsEl = document.getElementById('resultsView');
-      const backBtn = document.getElementById('backToStartBtn');
-      const filterBtn = document.getElementById('toggleSettingsBtn');
-      const settingsPanel = document.getElementById('settingsPanel');
-      const step2Container = startEl.querySelector('.space-y-3');
-      const leaderboardCard = document.getElementById('leaderboardCard');
-      const resultsLbMount = document.getElementById('resultsLeaderboardMount');
-
-      startEl.classList.add('hidden');
-      gameEl.classList.add('hidden');
-      resultsEl.classList.add('hidden');
-
-      if (viewName === 'start') {
-        stopStopwatch();
-        stopTimer();
-        startEl.classList.remove('hidden');
-        backBtn.classList.add('hidden');
-        filterBtn.classList.add('hidden');
-        // Plaats Stap 1 (settingsPanel) terug boven Stap 2 op het Startscherm
-        if (step2Container) {
-          startEl.insertBefore(settingsPanel, step2Container);
-        }
-        if (leaderboardCard && leaderboardCard.parentNode !== startEl) {
-          startEl.appendChild(leaderboardCard);
-        }
-        settingsPanel.classList.remove('hidden');
-        renderStartScreenHighscores();
-        fetchAndRenderLeaderboard();
-      } else if (viewName === 'game') {
-        gameEl.classList.remove('hidden');
-        backBtn.classList.remove('hidden');
-        backBtn.classList.add('flex');
-        if (state.gameMode === 'daily') {
-          filterBtn.classList.add('hidden');
-          filterBtn.classList.remove('flex');
-        } else {
-          filterBtn.classList.remove('hidden');
-          filterBtn.classList.add('flex');
-        }
-        // Verplaats settingsPanel boven gameView (standaard ingeklapt tijdens spelen)
-        gameEl.parentNode.insertBefore(settingsPanel, gameEl);
-        settingsPanel.classList.add('hidden');
-      } else if (viewName === 'results') {
-        stopStopwatch();
-        stopTimer();
-        resultsEl.classList.remove('hidden');
-        backBtn.classList.remove('hidden');
-        backBtn.classList.add('flex');
-        filterBtn.classList.add('hidden');
-        if (leaderboardCard && resultsLbMount) {
-          resultsLbMount.appendChild(leaderboardCard);
-        }
-        fetchAndRenderLeaderboard();
-      }
-    }
-
-    function startGameSession(mode) {
-      if (mode === 'daily' && hasPlayedDailyToday()) {
-        updateDailyBannerUI();
-        setLeaderboardTab('daily');
-        return;
-      }
-
-      requestWakeLock();
-      state.gameMode = mode;
-      state.chordSplits = [];
-      state.penaltyMs = 0;
-      state.currentChordPenaltyMs = 0;
-      state.currentChordIndex = 1;
-      state.scoreSubmittedForCurrentRun = false;
-      state.lastCompletedRun = null;
-
-      const timedHud = document.getElementById('timedHudBar');
-      const freeBar = document.getElementById('freePlayMetronomeBar');
-      const nextBtn = document.getElementById('nextChordBtn');
-      const skipBtn = document.getElementById('skipPenaltyBtn');
-      const skipLabel = document.getElementById('skipBtnLabel');
-
-      // Houd de metronoombalk altijd verborgen op het speelscherm zodat alles compact op 1 scherm past
-      freeBar.classList.add('hidden');
-      freeBar.classList.remove('flex');
-
-      if (mode === 'free') {
-        timedHud.classList.add('hidden');
-        nextBtn.classList.remove('hidden');
-        nextBtn.classList.add('flex');
-        skipBtn.classList.remove('hidden');
-        skipLabel.textContent = 'Overslaan';
-        stopStopwatch();
-      } else if (mode === 'daily') {
-        state.targetChordsCount = 10;
-        state.dailySequence = generateDailySequenceForDate(getTodayDateString());
-        // Vergrendel de Daily Challenge van vandaag direct bij het starten (1 poging per dag)
-        markDailyPlayedToday();
-        timedHud.classList.remove('hidden');
-        nextBtn.classList.add('hidden');
-        nextBtn.classList.remove('flex');
-        skipBtn.classList.remove('hidden');
-        skipLabel.textContent = '+15s';
-
-        updateHudProgress();
-        startStopwatch();
-      } else {
-        state.targetChordsCount = parseInt(mode, 10);
-        timedHud.classList.remove('hidden');
-        nextBtn.classList.add('hidden');
-        nextBtn.classList.remove('flex');
-        skipBtn.classList.remove('hidden');
-        skipLabel.textContent = '+15s';
-
-        updateHudProgress();
-        startStopwatch();
-      }
-
-      switchView('game');
-      generateNewChallenge(false);
-    }
-
-    function updateHudProgress() {
-      if (state.gameMode === 'free') return;
-      const idx = state.currentChordIndex;
-      const total = state.targetChordsCount;
-      document.getElementById('chordProgressText').textContent = `${idx} / ${total}`;
-      const pct = Math.min(100, Math.round(((idx - 1) / total) * 100));
-      document.getElementById('chordProgressBar').style.width = `${ Math.max(6, pct) }%`;
-    }
-
-    function startStopwatch() {
-      stopStopwatch();
-      state.stopwatchRunning = true;
-      state.runStartTimeMs = performance.now();
-      state.chordStartTimeMs = state.runStartTimeMs;
-      state.elapsedMs = 0;
-
-      function tick() {
-        if (!state.stopwatchRunning) return;
-        const now = performance.now();
-        state.elapsedMs = (now - state.runStartTimeMs) + state.penaltyMs;
-        document.getElementById('liveStopwatchDisplay').textContent = formatTimeMs(state.elapsedMs);
-        state.stopwatchRafId = requestAnimationFrame(tick);
-      }
-
-      state.stopwatchRafId = requestAnimationFrame(tick);
-    }
-
-    function stopStopwatch() {
-      state.stopwatchRunning = false;
-      if (state.stopwatchRafId) {
-        cancelAnimationFrame(state.stopwatchRafId);
-        state.stopwatchRafId = null;
-      }
-    }
-
-    function showPenaltyToast(text = '+10s straftijd') {
-      const toast = document.getElementById('penaltyToast');
-      if (!toast) return;
-      toast.textContent = text;
-      toast.classList.remove('hidden');
-      if (state.penaltyToastTimeoutId) {
-        clearTimeout(state.penaltyToastTimeoutId);
-      }
-      state.penaltyToastTimeoutId = setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 2200);
-    }
-
-    function handleChordCompleted(wasSkipped = false) {
-      const now = performance.now();
-      const skipPenaltyMs = (wasSkipped && state.gameMode !== 'free') ? 15000 : 0;
-      const splitMs = (now - state.chordStartTimeMs) + state.currentChordPenaltyMs + skipPenaltyMs;
-
-      if (state.currentChallenge) {
-        state.chordSplits.push({
-          index: state.currentChordIndex,
-          symbol: state.currentChallenge.symbol,
-          lhName: state.currentChallenge.lh.inversionName,
-          rhName: state.currentChallenge.rh.inversionName,
-          lhNotes: state.currentChallenge.lh.noteNames.join('-'),
-          rhNotes: state.currentChallenge.rh.noteNames.join('-'),
-          timeMs: splitMs,
-          skipped: wasSkipped,
-          usedSolution: state.solutionUsedForCurrentChord
-        });
-      }
-
-      if (state.gameMode === 'free') {
-        generateNewChallenge(false);
-        return;
-      }
-
-      if (state.currentChordIndex >= state.targetChordsCount) {
-        // Volledige sessie van 10, 20 of 50 akkoorden is klaar!
-        document.getElementById('chordProgressBar').style.width = '100%';
-        finishTimedRun();
-      } else {
-        state.currentChordIndex++;
-        updateHudProgress();
-        generateNewChallenge(false);
-      }
-    }
-
-    function finishTimedRun() {
-      const finalMs = (performance.now() - state.runStartTimeMs) + state.penaltyMs;
-      stopStopwatch();
-
-      const modeKey = state.gameMode;
-      const isDaily = modeKey === 'daily';
-      const prevBestMs = isDaily ? getDailyBestMsToday() : getBestTimeMs(modeKey);
-      const isNewRecord = prevBestMs === null || finalMs < prevBestMs;
-
-      if (isDaily) {
-        saveDailyBestMsToday(finalMs);
-      } else if (isNewRecord) {
-        saveBestTimeMs(modeKey, finalMs);
-      }
-
-      const bestNowMs = isNewRecord ? finalMs : prevBestMs;
-      const avgSec = (finalMs / 1000 / state.targetChordsCount).toFixed(2);
-      const penaltiesCount = state.chordSplits.filter(s => s.skipped || s.usedSolution).length;
-
-      state.lastCompletedRun = {
-        mode: modeKey,
-        timeMs: finalMs,
-        avgSec,
-        mixLabel: getDifficultySummaryLabel(),
-        penaltiesCount,
-        dateStr: getTodayDateString(),
-        displayDate: getTodayDisplayDate()
-      };
-      state.scoreSubmittedForCurrentRun = false;
-
-      document.getElementById('finalTotalTime').textContent = formatTimeDetailedMs(finalMs);
-      document.getElementById('finalAvgTime').textContent = `${avgSec}s`;
-      document.getElementById('finalBestTime').textContent = formatTimeDetailedMs(bestNowMs);
-
-      const badge = document.getElementById('recordBadge');
-      const title = document.getElementById('resultsTitle');
-      const sub = document.getElementById('resultsSubtitle');
-      const playAgainBtn = document.getElementById('playAgainBtn');
-      const shareDailyBtn = document.getElementById('shareDailyResultBtn');
-
-      if (isDaily) {
-        badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider';
-        badge.textContent = `🔥 Daily Challenge (${getTodayDisplayDate()}) Voltooid!`;
-        title.textContent = `Daily Tijd: ${formatTimeDetailedMs(finalMs)}`;
-        sub.textContent = `Je hebt de 10 vaste Daily-akkoorden van vandaag uitgespeeld (${avgSec}s / akkoord).`;
-        playAgainBtn.classList.add('hidden');
-        shareDailyBtn.classList.remove('hidden');
-      } else {
-        playAgainBtn.classList.remove('hidden');
-        shareDailyBtn.classList.add('hidden');
-        if (isNewRecord) {
-          badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-extrabold uppercase tracking-wider';
-          badge.textContent = prevBestMs === null
-            ? '🏆 Eerste Topscore Gezet!'
-            : `🏆 Nieuw Persoonlijk Record! (-${((prevBestMs - finalMs) / 1000).toFixed(2)}s)`;
-        } else {
-          const diffSec = ((finalMs - prevBestMs) / 1000).toFixed(2);
-          badge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-bold uppercase tracking-wider';
-          badge.textContent = `⏱️ +${diffSec}s boven je record (${formatTimeDetailedMs(prevBestMs)})`;
-        }
-        title.textContent = `${state.targetChordsCount} Akkoorden Voltooid!`;
-        sub.textContent = `Gemiddeld ${avgSec} seconden per twee-handige akkoordomkering.`;
-      }
-
-      // Bereid online leaderboard-invoer voor
-      const savedName = getStoredPlayerName();
-      const resNameInput = document.getElementById('resultsPlayerNameInput');
-      const submitBtn = document.getElementById('submitOnlineScoreBtn');
-      const statusText = document.getElementById('scoreSubmitStatusText');
-      if (resNameInput) resNameInput.value = savedName;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '🚀 Score Opslaan';
-      }
-      if (statusText) {
-        statusText.textContent = 'Vul je naam in om je score op het online leaderboard te zetten.';
-        statusText.className = 'text-xs text-slate-400';
-      }
-
-      // Render lijst met alle gespeelde akkoorden en hun tussentijd
-      const splitsContainer = document.getElementById('splitsList');
-      splitsContainer.innerHTML = '';
-      state.chordSplits.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between p-2.5 rounded-xl bg-club-900 border border-slate-800/90 text-xs';
-        const secStr = (item.timeMs / 1000).toFixed(2) + 's';
-        let statusRight = secStr;
-        let statusColor = 'text-emerald-400';
-
-        if (item.skipped && item.usedSolution) {
-          statusRight = `⏭️ Overgeslagen (+15s) & 💡 Oplossing (+10s) • ${secStr}`;
-          statusColor = 'text-rose-400';
-        } else if (item.skipped) {
-          statusRight = `⏭️ Overgeslagen (+15s straf) • ${secStr}`;
-          statusColor = 'text-rose-400';
-        } else if (item.usedSolution) {
-          statusRight = `💡 Oplossing (+10s) • ${secStr}`;
-          statusColor = 'text-amber-300';
-        }
-
-        row.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="font-mono text-slate-500 font-bold">#${item.index}</span>
-            <span class="font-mono font-extrabold text-white text-sm">${item.symbol}</span>
-            <span class="text-[11px] text-slate-400">LH: ${item.lhName.replace(' (Root)', '')} &bull; RH: ${item.rhName}</span>
-          </div>
-          <span class="font-mono font-bold ${statusColor}">
-            ${statusRight}
-          </span>
-        `;
-        splitsContainer.appendChild(row);
-      });
-
-      state.activeLeaderboardTab = isDaily ? 'daily' : modeKey;
-      switchView('results');
-
-      // Als de speler al een naam had ingevuld, stuur de score direct automatisch door naar Firebase
-      if (savedName) {
-        submitScoreToFirebase(savedName);
-      }
-    }
-
-    // =========================================================================
-    // 7. PIANOKLAVIER OPBOUW (4 OCTAVEN: C2 = MIDI 36 t/m B5 = MIDI 83)
-    // =========================================================================
-    const START_MIDI = 36; // C2
-    const END_MIDI = 83;   // B5 (4 octaven)
-    const keyElements = new Map();
-
-    function buildPianoKeyboard() {
-      const container = document.getElementById('pianoKeyboard');
-      container.innerHTML = '';
-      keyElements.clear();
-
-      const whiteMidis = [];
-      for (let m = START_MIDI; m <= END_MIDI; m++) {
-        const pc = m % 12;
-        const isBlack = [1, 3, 6, 8, 10].includes(pc);
-        if (!isBlack) whiteMidis.push(m);
-      }
-
-      const totalWhites = whiteMidis.length;
-      let whiteIndex = 0;
-
-      for (let m = START_MIDI; m <= END_MIDI; m++) {
-        const pc = m % 12;
-        const isBlack = [1, 3, 6, 8, 10].includes(pc);
-        const octave = Math.floor(m / 12) - 1;
-
-        const keyEl = document.createElement('div');
-        keyEl.dataset.midi = m;
-
-        if (!isBlack) {
-          keyEl.className = 'white-key';
-          const label = document.createElement('span');
-          label.className = 'key-label text-[10px] font-mono font-bold text-slate-500 pointer-events-none';
-          label.textContent = pc === 0 ? `C${octave}` : '';
-          keyEl.appendChild(label);
-
-          container.appendChild(keyEl);
-          whiteIndex++;
-        } else {
-          keyEl.className = 'black-key';
-          const leftPercent = (whiteIndex / totalWhites) * 100;
-          keyEl.style.left = `${leftPercent}%`;
-
-          const label = document.createElement('span');
-          label.className = 'key-label text-[9px] font-mono font-bold text-slate-950 pointer-events-none';
-          label.textContent = '';
-          keyEl.appendChild(label);
-
-          container.appendChild(keyEl);
-        }
-
-        // Klikken op een toets speelt Rhodes-geluid én zet de toets aan/uit voor testen zonder MIDI
-        keyEl.addEventListener('pointerdown', (e) => {
-          e.preventDefault();
-          playRhodesNote(m, audioCtx ? audioCtx.currentTime : 0, 1.0, 0.16);
-
-          if (state.mouseClickToggleMode) {
-            if (state.activeMidiNotes.has(m)) {
-              state.activeMidiNotes.delete(m);
-            } else {
-              state.activeMidiNotes.add(m);
-            }
-            evaluateMidiInput();
-          }
-        });
-
-        keyElements.set(m, keyEl);
-      }
-    }
-
-    // =========================================================================
-    // 8. UI RENDERING & LIVE MIDI KLAVIER VISUALISATIE
-    // =========================================================================
-    function renderChallenge() {
-      const ch = state.currentChallenge;
-      if (!ch) return;
-
-      const container = document.getElementById('chordDisplayContainer');
-      container.classList.remove('animate-chord');
-      void container.offsetWidth;
-      container.classList.add('animate-chord');
-
-      document.getElementById('chordSymbol').textContent = ch.symbol;
-      document.getElementById('chordFullName').textContent = ch.fullName;
-
-      const formulaBadge = document.getElementById('chordFormulaBadge');
-      formulaBadge.textContent = ch.formula;
-      if (state.revealed) {
-        formulaBadge.classList.remove('hidden');
-        formulaBadge.classList.add('inline-flex');
-      } else {
-        formulaBadge.classList.add('hidden');
-        formulaBadge.classList.remove('inline-flex');
-      }
-
-      document.getElementById('lhCardHeader').textContent = `Links (${ch.notesPerHand})`;
-      document.getElementById('rhCardHeader').textContent = `Rechts (${ch.notesPerHand})`;
-      document.getElementById('demoSolveBtnLabel').textContent = `Test Noten`;
-
-      document.getElementById('lhInversionName').textContent = ch.lh.inversionName;
-      document.getElementById('rhInversionName').textContent = ch.rh.inversionName;
-
-      const lhNotesEl = document.getElementById('lhNotesDisplay');
-      const rhNotesEl = document.getElementById('rhNotesDisplay');
-      const revealBtn = document.getElementById('revealBtn');
-      const revealBtnLabel = document.getElementById('revealBtnLabel');
-
-      const isTimedMode = state.gameMode !== 'free';
-      const hiddenDots = Array(ch.notesPerHand).fill('•').join(' ');
-
-      if (state.revealed) {
-        lhNotesEl.textContent = ch.lh.noteNames.join(' – ');
-        rhNotesEl.textContent = ch.rh.noteNames.join(' – ');
-        lhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-cyan-300';
-        rhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-amber-300';
-
-        revealBtn.disabled = true;
-        revealBtnLabel.textContent = state.solutionUsedForCurrentChord
-          ? (isTimedMode ? '+10s' : 'Getoond')
-          : 'Zichtbaar';
-      } else {
-        lhNotesEl.textContent = hiddenDots;
-        rhNotesEl.textContent = hiddenDots;
-        lhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-slate-500 tracking-widest';
-        rhNotesEl.className = 'font-mono text-[10px] sm:text-xs font-bold text-slate-500 tracking-widest';
-
-        revealBtn.disabled = false;
-        revealBtnLabel.textContent = isTimedMode ? '+10s' : 'Oplossing';
-      }
-
-      updatePianoHighlights();
-    }
-
-    function updatePianoHighlights() {
-      keyElements.forEach((el, midi) => {
-        el.classList.remove('lh-active', 'rh-active');
-        const label = el.querySelector('.key-label');
-        const pc = midi % 12;
-        const octave = Math.floor(midi / 12) - 1;
-        const isBlack = [1, 3, 6, 8, 10].includes(pc);
-        label.textContent = (!isBlack && pc === 0) ? `C${octave}` : '';
-        label.className = isBlack
-          ? 'key-label text-[9px] font-mono font-bold text-slate-950 pointer-events-none'
-          : 'key-label text-[10px] font-mono font-bold text-slate-500 pointer-events-none';
-      });
-
-      if (state.revealed && state.currentChallenge) {
-        const { lh, rh } = state.currentChallenge;
-
-        lh.midis.forEach((midi, idx) => {
-          const el = keyElements.get(midi);
-          if (el) {
-            el.classList.add('lh-active');
-            const label = el.querySelector('.key-label');
-            label.textContent = lh.noteNames[idx];
-            label.classList.remove('text-slate-500');
-            label.classList.add('text-slate-950');
-          }
-        });
-
-        rh.midis.forEach((midi, idx) => {
-          const el = keyElements.get(midi);
-          if (el) {
-            el.classList.add('rh-active');
-            const label = el.querySelector('.key-label');
-            label.textContent = rh.noteNames[idx];
-            label.classList.remove('text-slate-500');
-            label.classList.add('text-slate-950');
-          }
-        });
-      }
-
-      updateMidiKeyHighlights();
-    }
-
-    function projectMidiToVisibleRange(midi) {
-      let projected = midi;
-      let shifted = false;
-      while (projected < START_MIDI) {
-        projected += 12;
-        shifted = true;
-      }
-      while (projected > END_MIDI) {
-        projected -= 12;
-        shifted = true;
-      }
-      return { projected, shifted };
-    }
-
-    function updateMidiKeyHighlights() {
-      keyElements.forEach((el) => {
-        el.classList.remove('midi-pressed');
-        const oldDot = el.querySelector('.midi-dot');
-        if (oldDot) oldDot.remove();
-      });
-
-      let anyOctaveProjected = false;
-
-      state.activeMidiNotes.forEach((midi) => {
-        const { projected, shifted } = projectMidiToVisibleRange(midi);
-        if (shifted) anyOctaveProjected = true;
-
-        const el = keyElements.get(projected);
-        if (el) {
-          el.classList.add('midi-pressed');
-          if (!el.querySelector('.midi-dot')) {
-            const dot = document.createElement('span');
-            dot.className = 'midi-dot';
-            el.prepend(dot);
-          }
-        }
-      });
-
-      const hintEl = document.getElementById('octaveProjectionHint');
-      if (anyOctaveProjected) {
-        hintEl.classList.remove('hidden');
-      } else {
-        hintEl.classList.add('hidden');
-      }
-    }
-
-    // =========================================================================
-    // 9. WEB MIDI API & DYNAMISCHE 6- OF 8-NOOT INVERSIE-VALIDATIE PER HAND
-    // =========================================================================
-    function formatMidiNoteName(midi, rootObj = null) {
-      const pc = midi % 12;
-      const names = rootObj ? rootObj.notes : ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-      return `${names[pc]}`;
-    }
-
-    function arraysEqual(a, b) {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-      }
-      return true;
-    }
-
-    // Hybride validatie per hand:
-    // - Triads & Sevenths: Strikte inversie-volgorde (3 of 4 noten in close position).
-    // - Further Extensions (9, 11, 13): Slash-chord validatie (laagste noot = gevraagde slash-basnoot, 4 unieke toegestane akkoordtonen, en de karakteristieke extensietoon is verplicht aanwezig).
-    function validateHandNotes(handMidis, expectedPCs, ch, handObj) {
-      const n = ch.notesPerHand;
-      if (handMidis.length < n) {
-        return { valid: false, statusText: `${handMidis.length}/${n}`, state: 'waiting' };
-      }
-      const pcs = handMidis.map(m => m % 12);
-      const spanSemitones = handMidis[n - 1] - handMidis[0];
-
-      // 1. HYBRIDE SLASH-CHORD VALIDATIE VOOR FURTHER EXTENSIONS (9, 11, 13)
-      if (ch.isSlashExtension && handObj) {
-        const bassPc = pcs[0];
-        if (bassPc !== handObj.bassPc) {
-          const playedBassName = formatMidiNoteName(handMidis[0], ch.rootObj);
-          return {
-            valid: false,
-            statusText: `❌ Bas ≠ ${handObj.bassNoteName} (${playedBassName})`,
-            state: 'err'
-          };
-        }
-
-        // Controleer of alle 4 gespeelde noten binnen het toegestane akkoord-palet vallen (bijv. geen avoid note 11 op 13/maj13)
-        const invalidPc = pcs.find(pc => !ch.allowedPitchClasses.includes(pc));
-        if (invalidPc !== undefined) {
-          const badName = ch.rootObj.notes[invalidPc];
-          return {
-            valid: false,
-            statusText: `❌ ${badName} hoort niet`,
-            state: 'err'
-          };
-        }
-
-        // Controleer dat de 4 noten in de hand 4 verschillende pitch classes zijn
-        const uniquePcs = new Set(pcs);
-        if (uniquePcs.size < n) {
-          return {
-            valid: false,
-            statusText: '❌ Dubbele noot',
-            state: 'err'
-          };
-        }
-
-        // Controleer of de karakteristieke extensietoon (9, 11 of 13) daadwerkelijk gespeeld wordt
-        if (ch.requiredExtensionPc !== null && !uniquePcs.has(ch.requiredExtensionPc)) {
-          return {
-            valid: false,
-            statusText: `❌ Mis ${ch.chordDef.requiredExtensionLabel} (${ch.requiredExtensionNoteName})`,
-            state: 'err'
-          };
-        }
-
-        if (spanSemitones > 16) {
-          return {
-            valid: false,
-            statusText: '❌ Te wijd (>10e)',
-            state: 'err'
-          };
-        }
-
-        return { valid: true, statusText: '✅ Juist!', state: 'ok' };
-      }
-
-      // 2. KLASSIEKE STRIKTE INVERSIE-VALIDATIE VOOR DRIEKLANKEN & SEVENTHS
-      const matchesOrder = arraysEqual(pcs, expectedPCs);
-      const isClosePosition = spanSemitones <= 14;
-
-      if (matchesOrder && isClosePosition) {
-        return { valid: true, statusText: '✅ Juist!', state: 'ok' };
-      }
-
-      const bassPc = pcs[0];
-      const invIdx = ch.expectedPitchClasses.indexOf(bassPc);
-      if (invIdx !== -1 && !matchesOrder) {
-        return {
-          valid: false,
-          statusText: `❌ ${INVERSION_NAMES[invIdx]}`,
-          state: 'err'
-        };
-      }
-      return { valid: false, statusText: '❌ Fout', state: 'err' };
-    }
-
-    function updateHandStatusCard(handPrefix, evalResult) {
-      const badge = document.getElementById(`${handPrefix}StatusBadge`);
-      if (!badge) return;
-      badge.textContent = evalResult.statusText;
-      badge.className = 'text-xs font-mono font-bold px-2.5 py-1 rounded-lg border ';
-      if (evalResult.state === 'ok') {
-        badge.className += 'bg-emerald-950/90 border-emerald-500/50 text-emerald-300';
-      } else if (evalResult.state === 'err') {
-        badge.className += 'bg-rose-950/90 border-rose-500/50 text-rose-300';
-      } else {
-        badge.className += 'bg-club-950/80 border-slate-700 text-slate-300';
-      }
-    }
-
-    function evaluateMidiInput() {
-      updateMidiKeyHighlights();
-      const ch = state.currentChallenge;
-      if (!ch || state.view !== 'game') return;
-
-      const nPerHand = ch.notesPerHand;
-      const totalReq = ch.totalExpectedNotes;
-
-      const sorted = Array.from(state.activeMidiNotes).sort((a, b) => a - b);
-      const count = sorted.length;
-
-      const playedLhEl = document.getElementById('playedLhNotes');
-      const playedRhEl = document.getElementById('playedRhNotes');
-
-      if (count === 0) {
-        playedLhEl.textContent = '—';
-        playedRhEl.textContent = '—';
-        updateHandStatusCard('lh', { statusText: `0/${nPerHand}`, state: 'waiting' });
-        updateHandStatusCard('rh', { statusText: `0/${nPerHand}`, state: 'waiting' });
-        return;
-      }
-
-      const lhSlice = sorted.slice(0, Math.min(nPerHand, count));
-      const rhSlice = count > nPerHand ? sorted.slice(nPerHand, totalReq) : [];
-
-      playedLhEl.textContent = lhSlice.length
-        ? lhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' ')
-        : '—';
-      playedRhEl.textContent = rhSlice.length
-        ? rhSlice.map(m => formatMidiNoteName(m, ch.rootObj)).join(' ')
-        : '—';
-
-      if (state.challengeSolved) return;
-
-      // Controleer LH en RH (hybride: strikte inversie bij Triads/7ths, slash-voicing bij Further Extensions)
-      const lhEval = validateHandNotes(lhSlice, ch.lhExpectedPCs, ch, ch.lh);
-      const rhEval = validateHandNotes(rhSlice, ch.rhExpectedPCs, ch, ch.rh);
-      updateHandStatusCard('lh', lhEval);
-      updateHandStatusCard('rh', rhEval);
-
-      if (count < totalReq) {
-        return;
-      }
-
-      if (count > totalReq) {
-        updateHandStatusCard('lh', { statusText: `${count}/${totalReq} noten`, state: 'err' });
-        updateHandStatusCard('rh', { statusText: 'Te veel toetsen', state: 'err' });
-        return;
-      }
-
-      // Precies het vereiste aantal toetsen (6 of 8) ingedrukt
-      const handsSeparated = lhSlice[nPerHand - 1] < rhSlice[0];
-
-      if (lhEval.valid && rhEval.valid && handsSeparated) {
-        // VOLLEDIG JUIST!
-        state.challengeSolved = true;
-        state.streak++;
-        state.totalSolved++;
-        document.getElementById('streakCounter').textContent = state.streak;
-        document.getElementById('totalSolvedCounter').textContent = `${state.totalSolved}`;
-
-        if (!state.revealed) {
-          state.revealed = true;
-          renderChallenge();
-        }
-
-        playSuccessChime();
-
-        const gameEl = document.getElementById('gameView');
-        gameEl.classList.remove('flash-green');
-        void gameEl.offsetWidth;
-        gameEl.classList.add('flash-green');
-
-        if (state.autoNextOnCorrect || state.gameMode !== 'free') {
-          state.autoNextTimeoutId = setTimeout(() => {
-            handleChordCompleted(false);
-          }, 420);
-        }
-        return;
-      }
-
-      // Juist aantal noten ingedrukt, maar een van beide handen heeft de verkeerde omkering of handen kruisen elkaar
-      if (!handsSeparated && lhEval.valid && rhEval.valid) {
-        updateHandStatusCard('lh', { statusText: '❌ Handen kruisen', state: 'err' });
-        updateHandStatusCard('rh', { statusText: '❌ Speel RH hoger', state: 'err' });
-      }
-      state.streak = 0;
-      document.getElementById('streakCounter').textContent = '0';
-    }
-
-    function handleMidiMessage(event) {
-      const [status, note, velocity] = event.data;
-      const command = status & 0xf0;
-
-      if (command === 0x90 && velocity > 0) {
-        state.activeMidiNotes.add(note);
-        evaluateMidiInput();
-      } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
-        state.activeMidiNotes.delete(note);
-        evaluateMidiInput();
-      }
-    }
-
-    function refreshMidiInputs() {
-      if (!state.midiAccess) return;
-      const inputs = Array.from(state.midiAccess.inputs.values());
-      const badge = document.getElementById('midiStatusBadge');
-      const dot = document.getElementById('midiStatusDot');
-      const text = document.getElementById('midiStatusText');
-      const btnText = document.getElementById('connectMidiBtnText');
-      const selectEl = document.getElementById('midiDeviceSelect');
-
-      // Vul dropdown
-      selectEl.innerHTML = '<option value="all">Alle MIDI-apparaten</option>';
-      inputs.forEach(input => {
-        const opt = document.createElement('option');
-        opt.value = input.id;
-        opt.textContent = input.name || `MIDI Poort ${input.id}`;
-        selectEl.appendChild(opt);
-      });
-
-      inputs.forEach((input) => {
-        input.onmidimessage = (e) => {
-          if (state.selectedMidiInputId === 'all' || state.selectedMidiInputId === input.id) {
-            handleMidiMessage(e);
-          }
-        };
-      });
-
-      if (inputs.length > 0) {
-        state.midiConnected = true;
-        selectEl.classList.remove('hidden');
-        const deviceNames = inputs.map(i => i.name || 'MIDI Piano').join(', ');
-        badge.classList.remove('border-slate-700/80', 'text-slate-300');
-        badge.classList.add('border-emerald-500/50', 'bg-emerald-950/50', 'text-emerald-300');
-        dot.classList.remove('bg-slate-500', 'bg-amber-400');
-        dot.classList.add('bg-emerald-400', 'shadow-[0_0_8px_#10b981]');
-        text.textContent = `Verbonden: ${deviceNames}`;
-        btnText.textContent = 'MIDI Verbonden';
-      } else {
-        state.midiConnected = false;
-        selectEl.classList.add('hidden');
-        badge.classList.add('border-slate-700/80', 'text-slate-300');
-        badge.classList.remove('border-emerald-500/50', 'bg-emerald-950/50', 'text-emerald-300');
-        dot.classList.remove('bg-emerald-400', 'shadow-[0_0_8px_#10b981]');
-        dot.classList.add('bg-amber-400');
-        text.textContent = 'Geen USB-MIDI piano gedetecteerd (muis-klik actief)';
-        btnText.textContent = 'Verbind MIDI Piano';
-      }
-    }
-
-    async function connectMidiPiano() {
-      const unsupportedBanner = document.getElementById('midiUnsupportedBanner');
-      if (!navigator.requestMIDIAccess) {
-        unsupportedBanner.classList.remove('hidden');
-        document.getElementById('midiStatusText').textContent = 'Browser ondersteunt geen Web MIDI (gebruik muis-klik)';
-        return;
-      }
-
-      try {
-        const access = await navigator.requestMIDIAccess({ sysex: false });
-        state.midiAccess = access;
-        unsupportedBanner.classList.add('hidden');
-        access.onstatechange = () => refreshMidiInputs();
-        refreshMidiInputs();
-      } catch (err) {
-        document.getElementById('midiStatusText').textContent = 'MIDI-toegang geweigerd (gebruik muis-klik)';
-        document.getElementById('midiStatusDot').classList.add('bg-rose-500');
-      }
-    }
-
-    // =========================================================================
-    // 10. METRONOOM LOGICA (VOOR VRIJ OEFENEN)
-    // =========================================================================
-    function renderBeatDots() {
-      const container = document.getElementById('beatDotsContainer');
-      if (!container) return;
-      container.innerHTML = '';
-      for (let i = 1; i <= state.beatsPerChord; i++) {
-        const dot = document.createElement('div');
-        const isCurrent = state.timerRunning && state.currentBeat === i;
-        dot.className = `w-3.5 h-3.5 rounded-full transition-all ${
-          isCurrent
-            ? (i === 1 ? 'bg-amber-400 scale-125 shadow-[0_0_10px_#fbbf24]' : 'bg-cyan-400 scale-110 shadow-[0_0_8px_#22d3ee]')
-            : 'bg-slate-800 border border-slate-700'
-        }`;
-        container.appendChild(dot);
-      }
-    }
-
-    function startTimer() {
-      stopTimer();
-      state.timerRunning = true;
-      state.currentBeat = 0;
-
-      const btn = document.getElementById('timerToggleBtn');
-      btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-400');
-      btn.classList.add('bg-rose-500', 'hover:bg-rose-400');
-      document.getElementById('timerBtnIcon').textContent = '⏹';
-      document.getElementById('timerBtnText').textContent = 'Stop Metronoom';
-
-      const intervalMs = (60 / state.bpm) * 1000;
-      tickMetronome();
-      state.timerIntervalId = setInterval(tickMetronome, intervalMs);
-    }
-
-    function stopTimer() {
-      state.timerRunning = false;
-      if (state.timerIntervalId) {
-        clearInterval(state.timerIntervalId);
-        state.timerIntervalId = null;
-      }
-      state.currentBeat = 0;
-      renderBeatDots();
-
-      const btn = document.getElementById('timerToggleBtn');
-      if (btn) {
-        btn.classList.add('bg-emerald-500', 'hover:bg-emerald-400');
-        btn.classList.remove('bg-rose-500', 'hover:bg-rose-400');
-        document.getElementById('timerBtnIcon').textContent = '▶';
-        document.getElementById('timerBtnText').textContent = 'Start Metronoom';
-      }
-    }
-
-    function tickMetronome() {
-      state.currentBeat++;
-      if (state.currentBeat > state.beatsPerChord) {
-        state.currentBeat = 1;
-        generateNewChallenge(false);
-      }
-      if (state.practiceMode && state.currentBeat === state.beatsPerChord && !state.revealed) {
-        state.revealed = true;
-        renderChallenge();
-      }
-      playMetronomeClick(state.currentBeat === 1);
-      renderBeatDots();
-    }
-
-    // =========================================================================
-    // 11. EVENT LISTENERS & INITIALISATIE
-    // =========================================================================
-    function renderRootToggleButtons() {
-      const grid = document.getElementById('rootToggleGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      ROOTS.forEach(r => {
-        const active = state.enabledRoots.has(r.name);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = r.name;
-        btn.className = `py-1 rounded-lg font-mono text-xs font-bold border transition ${
-          active
-            ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
-            : 'bg-club-950 text-slate-500 border-slate-800 hover:text-slate-300'
-        }`;
-        btn.addEventListener('click', () => {
-          if (state.enabledRoots.has(r.name)) {
-            if (state.enabledRoots.size > 1) {
-              state.enabledRoots.delete(r.name);
-            }
-          } else {
-            state.enabledRoots.add(r.name);
-          }
-          renderRootToggleButtons();
-          if (state.view === 'game') generateNewChallenge(false);
-        });
-        grid.appendChild(btn);
-      });
-    }
-
-    function initEvents() {
-      renderRootToggleButtons();
-
-      const allRootsBtn = document.getElementById('allRootsBtn');
-      if (allRootsBtn) {
-        allRootsBtn.addEventListener('click', () => {
-          state.enabledRoots = new Set(ROOTS.map(r => r.name));
-          renderRootToggleButtons();
-          if (state.view === 'game') generateNewChallenge(false);
-        });
-      }
-
-      const basicRootsBtn = document.getElementById('basicRootsBtn');
-      if (basicRootsBtn) {
-        basicRootsBtn.addEventListener('click', () => {
-          state.enabledRoots = new Set(ROOTS.filter(r => r.basic).map(r => r.name));
-          renderRootToggleButtons();
-          if (state.view === 'game') generateNewChallenge(false);
-        });
-      }
-
-      const autoNextCb = document.getElementById('autoNextCheckbox');
-      if (autoNextCb) {
-        autoNextCb.addEventListener('change', (e) => {
-          state.autoNextOnCorrect = e.target.checked;
-        });
-      }
-
-      // Startscherm modus knoppen (10, 20, 50, Vrij Oefenen)
-      document.querySelectorAll('.start-mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const mode = btn.dataset.startMode;
-          startGameSession(mode);
-        });
-      });
-
-      // Start Daily Challenge knop
-      const startDailyBtn = document.getElementById('startDailyBtn');
-      if (startDailyBtn) {
-        startDailyBtn.addEventListener('click', () => {
-          startGameSession('daily');
-        });
-      }
-
-      // Spelersnaam synchronisatie tussen Startscherm en Eindscherm
-      const startNameInput = document.getElementById('startPlayerNameInput');
-      if (startNameInput) {
-        startNameInput.value = getStoredPlayerName();
-        startNameInput.addEventListener('input', (e) => {
-          setStoredPlayerName(e.target.value);
-        });
-      }
-
-      const resNameInput = document.getElementById('resultsPlayerNameInput');
-      if (resNameInput) {
-        resNameInput.value = getStoredPlayerName();
-        resNameInput.addEventListener('input', (e) => {
-          setStoredPlayerName(e.target.value);
-        });
-      }
-
-      // Online score opslaan knop op Eindscherm
-      const submitScoreBtn = document.getElementById('submitOnlineScoreBtn');
-      if (submitScoreBtn) {
-        submitScoreBtn.addEventListener('click', () => {
-          const nameVal = document.getElementById('resultsPlayerNameInput').value;
-          submitScoreToFirebase(nameVal);
-        });
-      }
-
-      // Deel Daily Score knop (Kopieert samenvatting naar klembord)
-      const shareDailyBtn = document.getElementById('shareDailyResultBtn');
-      if (shareDailyBtn) {
-        shareDailyBtn.addEventListener('click', () => {
-          if (!state.lastCompletedRun) return;
-          const run = state.lastCompletedRun;
-          const cleanCount = state.chordSplits.filter(s => !s.skipped && !s.usedSolution).length;
-          const shareText = `🎹 Jazz Inversie Daily (${run.displayDate}) — 10/10 in ${formatTimeDetailedMs(run.timeMs)} (${run.avgSec}s/akk • ✨ ${cleanCount}/10 zonder hulp)`;
-
-          const tempInput = document.createElement('textarea');
-          tempInput.value = shareText;
-          document.body.appendChild(tempInput);
-          tempInput.select();
-          try { document.execCommand('copy'); } catch (err) {}
-          document.body.removeChild(tempInput);
-
-          shareDailyBtn.textContent = '✅ Gekopieerd!';
-          setTimeout(() => {
-            shareDailyBtn.textContent = '📋 Deel Daily Score';
-          }, 2200);
-        });
-      }
-
-      // Leaderboard Tabs & Ververs-knop
-      document.querySelectorAll('.lb-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          setLeaderboardTab(btn.dataset.lbTab);
-        });
-      });
-
-      const refreshLbBtn = document.getElementById('refreshLeaderboardBtn');
-      if (refreshLbBtn) {
-        refreshLbBtn.addEventListener('click', () => {
-          fetchAndRenderLeaderboard();
-        });
-      }
-
-      // Terug naar Startscherm knoppen
-      document.getElementById('backToStartBtn').addEventListener('click', () => {
-        switchView('start');
-      });
-      const stopGameBtn = document.getElementById('stopGameBtn');
-      if (stopGameBtn) {
-        stopGameBtn.addEventListener('click', () => {
-          switchView('start');
-        });
-      }
-      document.getElementById('resultsToStartBtn').addEventListener('click', () => {
-        switchView('start');
-      });
-
-      // Opnieuw spelen op Eindscherm
-      document.getElementById('playAgainBtn').addEventListener('click', () => {
-        startGameSession(state.gameMode);
-      });
-
-      // Wis topscores
-      document.getElementById('clearHighscoresBtn').addEventListener('click', () => {
-        ['10', '20', '50'].forEach(k => {
-          try { localStorage.removeItem(STORAGE_KEY_PREFIX + k); } catch (e) {}
-        });
-        renderStartScreenHighscores();
-      });
-
-      // MIDI verbinden & poort selectie
-      document.getElementById('connectMidiBtn').addEventListener('click', () => {
-        connectMidiPiano();
-      });
-      document.getElementById('midiDeviceSelect').addEventListener('change', (e) => {
-        state.selectedMidiInputId = e.target.value;
-        state.activeMidiNotes.clear();
-        evaluateMidiInput();
-      });
-
-      // Reset toetsen
-      document.getElementById('resetMidiNotesBtn').addEventListener('click', () => {
-        state.activeMidiNotes.clear();
-        evaluateMidiInput();
-      });
-
-      // Muis-klik toggle modus
-      document.getElementById('clickToggleModeCheckbox').addEventListener('change', (e) => {
-        state.mouseClickToggleMode = e.target.checked;
-        if (!state.mouseClickToggleMode) {
-          state.activeMidiNotes.clear();
-          evaluateMidiInput();
-        }
-      });
-
-      // Test 8 Noten knop (vult direct de 8 gevraagde noten in om zonder MIDI te kunnen testen)
-      document.getElementById('demoSolveBtn').addEventListener('click', () => {
-        if (!state.currentChallenge || state.challengeSolved) return;
-        state.activeMidiNotes.clear();
-        state.currentChallenge.lh.midis.forEach(m => state.activeMidiNotes.add(m));
-        state.currentChallenge.rh.midis.forEach(m => state.activeMidiNotes.add(m));
-        evaluateMidiInput();
-      });
-
-      // Overslaan (+15s straf in timed mode)
-      document.getElementById('skipPenaltyBtn').addEventListener('click', () => {
-        if (state.view !== 'game' || state.challengeSolved) return;
-        if (state.gameMode !== 'free') {
-          state.penaltyMs += 15000;
-          if (state.stopwatchRunning) {
-            const now = performance.now();
-            state.elapsedMs = (now - state.runStartTimeMs) + state.penaltyMs;
-            document.getElementById('liveStopwatchDisplay').textContent = formatTimeMs(state.elapsedMs);
-          }
-          showPenaltyToast('+15s straftijd (Overgeslagen)');
-        }
-        state.streak = 0;
-        document.getElementById('streakCounter').textContent = '0';
-        handleChordCompleted(true);
-      });
-
-      // Volgend akkoord (Vrij Oefenen)
-      document.getElementById('nextChordBtn').addEventListener('click', () => {
-        if (state.timerRunning) {
-          state.currentBeat = 1;
-          renderBeatDots();
-        }
-        generateNewChallenge(false);
-      });
-
-      // Spatiebalk shortcut in Vrij Oefenen
-      window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && state.view === 'game' && state.gameMode === 'free' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'BUTTON') {
-          e.preventDefault();
-          generateNewChallenge(false);
-        }
-      });
-
-      // Beluister akkoord
-      document.getElementById('playChordBtn').addEventListener('click', () => {
-        playCurrentVoicing();
-      });
-
-      // Toon Oplossing (+10s straftijd in timed modes, eenmalig per akkoord)
-      document.getElementById('revealBtn').addEventListener('click', () => {
-        if (state.revealed || state.challengeSolved) return;
-        state.revealed = true;
-        state.solutionUsedForCurrentChord = true;
-
-        if (state.gameMode !== 'free') {
-          state.penaltyMs += 10000;
-          state.currentChordPenaltyMs += 10000;
-          if (state.stopwatchRunning) {
-            const now = performance.now();
-            state.elapsedMs = (now - state.runStartTimeMs) + state.penaltyMs;
-            document.getElementById('liveStopwatchDisplay').textContent = formatTimeMs(state.elapsedMs);
-          }
-          showPenaltyToast('+10s straftijd');
-        }
-
-        renderChallenge();
-        evaluateMidiInput();
-      });
-
-      // Oefenmodus knop bovenin schakelt ook de huidige weergave indien gewenst
-      const practiceBtn = document.getElementById('practiceModeBtn');
-      practiceBtn.addEventListener('click', () => {
-        if (!state.revealed) {
-          document.getElementById('revealBtn').click();
-        }
-      });
-
-      // Filters paneel tonen/verbergen tijdens spelen
-      document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
-        const panel = document.getElementById('settingsPanel');
-        panel.classList.toggle('hidden');
-      });
-
-      // Moeilijkheid Keuzevakken (Stap 1)
-      const diffCheckboxes = [
-        { id: 'cbDiffMajor', key: 'diffMajor' },
-        { id: 'cbDiffMinor', key: 'diffMinor' },
-        { id: 'cbDiffDiminished', key: 'diffDiminished' },
-        { id: 'cbDiffAugmented', key: 'diffAugmented' },
-        { id: 'cbDiffSevenths', key: 'diffSevenths' },
-        { id: 'cbDiffExtensions', key: 'diffExtensions' }
-      ];
-
-      function syncDifficultyFromDOM(changedCheckbox = null) {
-        const maj = document.getElementById('cbDiffMajor').checked;
-        const min = document.getElementById('cbDiffMinor').checked;
-        const dim = document.getElementById('cbDiffDiminished').checked;
-        const aug = document.getElementById('cbDiffAugmented').checked;
-        const warnEl = document.getElementById('filterWarning');
-
-        // Zorg dat er altijd minimaal 1 basisfamilie actief blijft
-        if (!maj && !min && !dim && !aug) {
-          if (changedCheckbox) changedCheckbox.checked = true;
-          else document.getElementById('cbDiffMajor').checked = true;
-          warnEl.classList.remove('hidden');
-        } else {
-          warnEl.classList.add('hidden');
-        }
-
-        state.diffMajor = document.getElementById('cbDiffMajor').checked;
-        state.diffMinor = document.getElementById('cbDiffMinor').checked;
-        state.diffDiminished = document.getElementById('cbDiffDiminished').checked;
-        state.diffAugmented = document.getElementById('cbDiffAugmented').checked;
-        state.diffSevenths = document.getElementById('cbDiffSevenths').checked;
-        state.diffExtensions = document.getElementById('cbDiffExtensions').checked;
-
-        computeActiveChordTypes();
-        if (state.view === 'game') {
-          generateNewChallenge(false);
-        }
-      }
-
-      diffCheckboxes.forEach(({ id }) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener('change', (e) => syncDifficultyFromDOM(e.target));
-        }
-      });
-
-      // Behoud simpele drieklanken in de mix
-      document.getElementById('includeTriadsWhenExtendedCb').addEventListener('change', (e) => {
-        state.includeTriadsWhenExtended = e.target.checked;
-        computeActiveChordTypes();
-        if (state.view === 'game') generateNewChallenge(false);
-      });
-
-      // Vink alles aan (Volledige Mix)
-      document.getElementById('selectAllDiffBtn').addEventListener('click', () => {
-        diffCheckboxes.forEach(({ id }) => {
-          document.getElementById(id).checked = true;
-        });
-        document.getElementById('includeTriadsWhenExtendedCb').checked = true;
-        state.includeTriadsWhenExtended = true;
-        syncDifficultyFromDOM();
-      });
-
-      // Basis Reset
-      document.getElementById('resetBasicDiffBtn').addEventListener('click', () => {
-        document.getElementById('cbDiffMajor').checked = true;
-        document.getElementById('cbDiffMinor').checked = true;
-        document.getElementById('cbDiffDiminished').checked = false;
-        document.getElementById('cbDiffAugmented').checked = false;
-        document.getElementById('cbDiffSevenths').checked = true;
-        document.getElementById('cbDiffExtensions').checked = false;
-        syncDifficultyFromDOM();
-      });
-
-      // Toonsoorten & Hand-regel
-      document.querySelectorAll('input[name="keySet"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          state.keySet = e.target.value;
-          if (state.view === 'game') generateNewChallenge(false);
-        });
-      });
-
-      document.querySelectorAll('input[name="handRule"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-          state.handRule = e.target.value;
-          if (state.view === 'game') generateNewChallenge(false);
-        });
-      });
-
-      // Metronoom controls (Vrij Oefenen)
-      document.getElementById('timerToggleBtn').addEventListener('click', () => {
-        if (state.timerRunning) stopTimer();
-        else startTimer();
-      });
-
-      document.getElementById('bpmSlider').addEventListener('input', (e) => {
-        state.bpm = parseInt(e.target.value, 10);
-        document.getElementById('bpmValue').textContent = state.bpm;
-        if (state.timerRunning) startTimer();
-      });
-
-      document.querySelectorAll('.beats-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.beatsPerChord = parseInt(btn.dataset.beats, 10);
-          document.querySelectorAll('.beats-btn').forEach(b => {
-            b.className = 'beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
-          });
-          btn.className = 'beats-btn px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 transition';
-          renderBeatDots();
-        });
-      });
-
-      document.getElementById('clickToggleBtn').addEventListener('click', (e) => {
-        state.clickSound = !state.clickSound;
-        const btn = e.currentTarget;
-        btn.querySelector('span:last-child').textContent = `Klik: ${state.clickSound ? 'Aan' : 'Uit'}`;
-        btn.classList.toggle('border-amber-500/40', state.clickSound);
-        btn.classList.toggle('text-amber-300', state.clickSound);
-        btn.classList.toggle('border-slate-700', !state.clickSound);
-        btn.classList.toggle('text-slate-400', !state.clickSound);
-      });
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      buildPianoKeyboard();
-      renderBeatDots();
-      computeActiveChordTypes();
-      renderStartScreenHighscores();
-      initEvents();
-      fetchAndRenderLeaderboard();
-      // Bereid het eerste voorbeeld (Cm7 met LH Root en RH 2e Inversie) alvast voor
-      generateNewChallenge(true);
-
-      // Probeer MIDI automatisch te koppelen als de browser dat toestaat
-      if (navigator.requestMIDIAccess) {
-        connectMidiPiano();
-      } else {
-        document.getElementById('midiUnsupportedBanner').classList.remove('hidden');
-      }
-
-      // Probeer Screen Wake Lock direct aan te vragen bij laden
-      requestWakeLock();
-    });
-
-    // =========================================================================
-    // 12. SCREEN WAKE LOCK API (HOUDT HET GSM-SCHERM WAKKER TIJDENS HET SPELEN)
-    // =========================================================================
-    let wakeLock = null;
-
-    function updateWakeLockUI(isActive) {
-      const dot = document.getElementById('wakeLockDot');
-      const text = document.getElementById('wakeLockText');
-      const badge = document.getElementById('wakeLockBadge');
-      if (!dot || !text || !badge) return;
-
-      if (isActive) {
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]';
-        text.textContent = 'Scherm blijft aan';
-        badge.classList.add('border-emerald-500/40', 'text-emerald-300');
-        badge.classList.remove('border-slate-800', 'text-slate-400');
-      } else {
-        dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-600';
-        text.textContent = 'Slaapstand-blokkade';
-        badge.classList.remove('border-emerald-500/40', 'text-emerald-300');
-        badge.classList.add('border-slate-800', 'text-slate-400');
-      }
-    }
-
-    async function requestWakeLock() {
-      if ('wakeLock' in navigator) {
-        try {
-          if (wakeLock && !wakeLock.released) return;
-          wakeLock = await navigator.wakeLock.request('screen');
-          updateWakeLockUI(true);
-          wakeLock.addEventListener('release', () => {
-            updateWakeLockUI(false);
-          });
-        } catch (err) {
-          console.warn('Wake Lock kon nog niet worden geactiveerd:', err.message);
-        }
-      }
-    }
-
-    // Activeer bij de eerste klik of aanraking op het scherm
-    document.addEventListener('click', () => {
-      if (!wakeLock || wakeLock.released) {
-        requestWakeLock();
-      }
-    });
-
-    document.addEventListener('touchstart', () => {
-      if (!wakeLock || wakeLock.released) {
-        requestWakeLock();
-      }
-    }, { passive: true });
-
-    // Vraag opnieuw aan wanneer je terugkeert naar het tabblad of de geïnstalleerde app
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        requestWakeLock();
-      }
-    });
-
-    // =========================================================================
-    // 13. PROGRESSIVE WEB APP (SERVICE WORKER REGISTRATIE)
-    // =========================================================================
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
-    }
-  </script>
+    <!-- Alleen zichtbaar na een Daily Challenge: Live Daily Stand -->
+    <section id="endDailyLeaderboardSection" class="hidden glass-card rounded-2xl p-4 shadow-lg">
+      <h3 class="text-sm font-extrabold text-white mb-2">
+        🏆 Stand van deze Daily Challenge
+      </h3>
+      <div id="endDailyLeaderboardList" class="flex flex-col gap-1.5"></div>
+    </section>
+  </main>
+
+  <!-- De 3 losse JavaScript-modules -->
+  <script src="./chords.js"></script>
+  <script src="./leaderboard.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
