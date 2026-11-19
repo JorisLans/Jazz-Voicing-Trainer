@@ -260,12 +260,47 @@ window.applyChordPreset = function (presetName) {
 
 window.getSelectedChordDefinitions = function () {
   const defs = [];
-  if (document.getElementById('cat_major')?.checked) defs.push(...window.CHORD_TYPES.major);
-  if (document.getElementById('cat_minor')?.checked) defs.push(...window.CHORD_TYPES.minor);
-  if (document.getElementById('cat_dim')?.checked) defs.push(...window.CHORD_TYPES.dim);
-  if (document.getElementById('cat_aug')?.checked) defs.push(...window.CHORD_TYPES.aug);
-  if (document.getElementById('cat_sevenths')?.checked) defs.push(...window.CHORD_TYPES.sevenths);
-  if (document.getElementById('cat_extensions')?.checked) defs.push(...window.CHORD_TYPES.extensions);
+  const majorChecked = document.getElementById('cat_major')?.checked;
+  const minorChecked = document.getElementById('cat_minor')?.checked;
+  const dimChecked = document.getElementById('cat_dim')?.checked;
+  const augChecked = document.getElementById('cat_aug')?.checked;
+  const sevChecked = document.getElementById('cat_sevenths')?.checked;
+  const extChecked = document.getElementById('cat_extensions')?.checked;
+
+  if (majorChecked) defs.push(...window.CHORD_TYPES.major);
+  if (minorChecked) defs.push(...window.CHORD_TYPES.minor);
+  if (dimChecked) defs.push(...window.CHORD_TYPES.dim);
+  if (augChecked) defs.push(...window.CHORD_TYPES.aug);
+
+  const anyTriadChecked = majorChecked || minorChecked || dimChecked || augChecked;
+
+  if (sevChecked) {
+    if (!anyTriadChecked) {
+      // Als er geen drieklank is aangevinkt (bijv. via preset 'Enkel 7ths'), neem alle sevenths mee
+      defs.push(...window.CHORD_TYPES.sevenths);
+    } else {
+      const filteredSevenths = window.CHORD_TYPES.sevenths.filter((c) => {
+        if (c.id === 'maj7' || c.id === '7') return majorChecked;
+        if (c.id === 'm7') return minorChecked;
+        if (c.id === 'm7b5' || c.id === 'dim7') return dimChecked;
+        return false;
+      });
+      defs.push(...filteredSevenths);
+    }
+  }
+
+  if (extChecked) {
+    if (!anyTriadChecked) {
+      defs.push(...window.CHORD_TYPES.extensions);
+    } else {
+      const filteredExt = window.CHORD_TYPES.extensions.filter((c) => {
+        const isMinorExt = c.id.startsWith('m') && !c.id.startsWith('maj');
+        return isMinorExt ? minorChecked : majorChecked;
+      });
+      defs.push(...filteredExt);
+    }
+  }
+
   return defs;
 };
 
